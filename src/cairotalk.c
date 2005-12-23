@@ -375,24 +375,23 @@ static void GDD_Text(double x, double y, char *str,  double rot, double hadj,  R
       printf("text \"%s\" @ %f:%f rot=%f hadj=%f [%08x:%08x]\n", str, x, y, rot, hadj, gc->col, gc->fill);
 #endif
 
-      /* debug - mark the origin of the text
+      /* debug - mark the origin of the text */
       Rcairo_set_color(cc, 0x8080ff);
       cairo_new_path(cc); cairo_move_to(cc,x-3.,y); cairo_line_to(cc,x+3.,y); cairo_stroke(cc);
-      cairo_new_path(cc); cairo_move_to(cc,x-3.,y); cairo_line_to(cc,x+3.,y); cairo_stroke(cc);
-      */
+      cairo_new_path(cc); cairo_move_to(cc,x,y-3.); cairo_line_to(cc,x,y+3.); cairo_stroke(cc);
 
       cairo_save(cc);
       cairo_move_to(cc, x, y);
-      /*
       if (hadj!=0. || rot!=0.) {
 	cairo_text_extents_t te;
 	cairo_text_extents(cc, str, &te);
-	if (hadj!=0.)
-	  cairo_rel_move_to(cc, 0, te.height*hadj);
 	if (rot!=0.)
-	  cairo_rotate(cc, rot);
-	  }
-      */
+	  cairo_rotate(cc, -rot/180.*M_PI);
+	if (hadj!=0.)
+	  cairo_rel_move_to(cc, -te.width*hadj, 0);
+	
+	/* Rcairo_set_color(cc, 0xff80ff); */
+      }
       Rcairo_set_color(cc, gc->col);
       cairo_show_text(cc, str);
       cairo_restore(cc);
