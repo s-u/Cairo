@@ -61,6 +61,22 @@ static void GDD_Text(double x, double y, char *str,
 #define Rcairo_set_color(cc, col) { if (CALPHA(col)==255) { Rcairo_set_source_rgb (cc, ((double)CREDC(col))/255., ((double)CGREENC(col))/255., ((double)CBLUEC(col))/255.); } else { Rcairo_set_source_rgba (cc, ((double)CREDC(col))/255., ((double)CGREENC(col))/255., ((double)CBLUEC(col))/255., ((double)CALPHA(col))/255.); }; }
 
 
+static void Rcairo_setup_font(GDDDesc* xd, R_GE_gcontext *gc) {
+  char *Cfontface="Helvetica";
+  int slant = CAIRO_FONT_SLANT_NORMAL;
+  int wght  = CAIRO_FONT_WEIGHT_NORMAL;
+  if (gc->fontface==5) Cfontface="Symbol";
+  if (gc->fontfamily[0]) Cfontface=gc->fontfamily;
+  if (gc->fontface==2 || gc->fontface==4) slant=CAIRO_FONT_SLANT_ITALIC;
+  if (gc->fontface==3 || gc->fontface==4) wght=CAIRO_FONT_WEIGHT_BOLD;
+  
+  cairo_select_font_face (xd->cc, Cfontface, slant, wght);
+  cairo_set_font_size (xd->cc, gc->cex*gc->ps);
+#ifdef JGD_DEBUG
+  printf("  font \"%s\" %fpt (slant:%d, weight:%d)\n", Cfontface, gc->cex*gc->ps, slant, wght);
+#endif
+}
+
 /*------- the R callbacks begin here ... ------------------------*/
 
 static void GDD_Activate(NewDevDesc *dd)
@@ -195,6 +211,8 @@ static void GDD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, double* d
       char str[3];
       str[0]=(char)c; str[1]=0;
       if (!c) { str[0]='M'; str[1]='g'; str[2]=0; /* this should give us reasonable descent (g) and almost max width (M) */ }
+
+      Rcairo_setup_font(xd, gc);
 
       cairo_text_extents(cc, str, &te);
       
@@ -373,12 +391,14 @@ static void GDD_Text(double x, double y, char *str,  double rot, double hadj,  R
       
 #ifdef JGD_DEBUG
       printf("text \"%s\" @ %f:%f rot=%f hadj=%f [%08x:%08x]\n", str, x, y, rot, hadj, gc->col, gc->fill);
-#endif
 
       /* debug - mark the origin of the text */
       Rcairo_set_color(cc, 0x8080ff);
       cairo_new_path(cc); cairo_move_to(cc,x-3.,y); cairo_line_to(cc,x+3.,y); cairo_stroke(cc);
       cairo_new_path(cc); cairo_move_to(cc,x,y-3.); cairo_line_to(cc,x,y+3.); cairo_stroke(cc);
+#endif
+
+      Rcairo_setup_font(xd,gc);
 
       cairo_save(cc);
       cairo_move_to(cc, x, y);
