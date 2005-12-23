@@ -1,0 +1,9 @@
+#!/bin/sh
+
+PNAME=Cairo
+VER=`awk -v ORS= '/Cairo v/ { print substr($6,2) }' src/cairogd.h`
+if test "$1" == "-f"; then 
+    echo "${PNAME}_${VER}.tar.gz"
+else
+    echo "${VER}"
+fi

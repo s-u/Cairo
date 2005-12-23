@@ -1,0 +1,117 @@
+# Process this file with autoconf to produce a configure script.
+AC_INIT(Cairo, 0.1, Simon.Urbanek@r-project.org)
+AC_CONFIG_SRCDIR([src/cairogd.c])
+#AC_CONFIG_HEADER([src/cairoconfig.h])
+
+# find R home and set CC/CFLAGS
+: ${R_HOME=`R RHOME`}
+if test -z "${R_HOME}"; then
+  echo "could not determine R_HOME"
+  exit 1
+fi
+CC=`${R_HOME}/bin/R CMD config CC`;
+CFLAGS=`${R_HOME}/bin/R CMD config CFLAGS`
+AC_SUBST(R_HOME)
+
+# platform check
+#AC_CANONICAL_HOST
+#case "${host_os}" in
+#  darwin*)
+#    AC_DEFINE(DARWIN, 1, [Set if the OS is Darwin/Mac OS X.])
+#    ;;
+#esac
+
+# Checks for programs.
+AC_PROG_CC
+
+# Checks for libraries.
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS([string.h sys/time.h unistd.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+#AC_HEADER_TIME
+
+# Checks for library functions.
+AC_FUNC_MALLOC
+#AC_TYPE_SIGNAL
+
+AC_PATH_PROG([PKGCONF],[pkg-config],[],[$PATH:/usr/local/bin:ext/bin:ext])
+
+have_cairo=no
+
+if test "xx$CAIRO_LIBS" == "xx"; then
+   if test "xx$PKGCONF" != "xx"; then
+      AC_MSG_CHECKING([whether pkg-config knows about cairo])
+      if ${PKGCONF} --exists cairo; then
+         AC_MSG_RESULT([yes])
+	 CAIRO_CFLAGS=`${PKGCONF} --cflags cairo`
+	 CAIRO_LIBS=`${PKGCONF} --libs cairo`
+      else
+	AC_MSG_RESULT([no])
+      fi
+   fi
+fi
+
+AC_MSG_NOTICE([CAIRO_CFLAGS=${CAIRO_CFLAGS}])
+CPPFLAGS="$CPPFLAGS ${CAIRO_CFLAGS}"
+
+AC_CHECK_HEADER(cairo.h,,AC_MSG_ERROR([Cannot find cairo.h! Please install cairo (http://www.cairographics.org/) and/or set CAIRO_CFLAGS/LIBS correspondingly.]))
+
+AC_MSG_CHECKING([for PNG support in Cairo])
+AC_LINK_IFELSE([
+#include "cairo.h"
+int main(void) {
+#ifndef CAIRO_HAS_PNG_FUNCTIONS
+#error no PNG support
+#endif
+    return 0;
+}],[AC_MSG_RESULT([yes])] ,[AC_MSG_RESULT([no])
+AC_MSG_ERROR([Cairo library has no PNG support.])])
+
+uses_ats=no
+AC_MSG_CHECKING([for ATS font support in Cairo])
+AC_LINK_IFELSE([
+#include "cairo.h"
+int main(void) {
+#ifndef CAIRO_HAS_ATSUI_FONT
+#error no PNG support
+#endif
+    return 0;
+}],[AC_MSG_RESULT([yes])
+uses_ats=yes],[AC_MSG_RESULT([no])])
+
+if test "xx${CAIRO_LIBS}" == "xx"; then
+   if test $uses_ats == "yes"; then
+      CAIRO_LIBS="-lcairo -lpng -lz -framework ApplicationServices"
+   else
+      CAIRO_LIBs="-lcairo -lpng -lz"
+   fi
+fi
+
+AC_MSG_NOTICE([CAIRO_LIBS=${CAIRO_LIBS}])
+
+LIBS="$LIBS ${CAIRO_LIBS}"
+
+#AC_CHECK_LIB(cairo, cairo_create,,
+#[AC_MSG_ERROR([Cannot link to cairo library. Please check config.log for details and set CAIRO_LIBS accordingly.])])
+
+AC_SEARCH_LIBS(deflate, z)
+
+AC_MSG_CHECKING([whether Cairo programs can be compiled])
+AC_LINK_IFELSE([
+#include "cairo.h"
+int main(void) {
+  cairo_surface_t *cs = 0;
+  cairo_t *cr;
+  cr = cairo_create(cs);
+  return 0;
+}
+],[AC_MSG_RESULT(yes)],
+	[AC_MSG_ERROR([Cannot compile a simple Cairo program. See config.log for details.])])
+
+AC_CONFIG_FILES([src/Makevars])
+AC_OUTPUT

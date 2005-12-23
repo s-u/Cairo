@@ -1,0 +1,10 @@
+Package: Cairo
+Version: 0.1-0
+Title: Graphics device using Cairo rendering library for creating bitmaps images or output.
+Author: Simon Urbanek <Simon.Urbanek@r-project.org>
+Maintainer: Simon Urbanek <Simon.Urbanek@r-project.org>
+Depends: R (>= 1.9.0)
+Description: This package 
+License: GPL version 2 or newer
+SystemRequirements: cairo (>= 1.0.2 http://www.cairographics.org/)
+URL: http://www.rosuda.org/R/Cairo/

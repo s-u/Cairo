@@ -1,0 +1,58 @@
+#!/bin/sh
+
+PNAME=Cairo
+SWD=`pwd`
+echo "Removing previous dist ..."
+rm -rf /tmp/${PNAME}
+echo "Copying package base ..."
+cp -r ../${PNAME} /tmp
+
+rm -f /tmp/${PNAME}/mkdist
+
+cd /tmp/${PNAME}
+
+if [ -e /tmp/${PNAME}/configure ]; then
+    echo "Note: autoreconf is *not* ran automatically if configure exists."
+    echo "      Run it manually if necessary."
+    rm -rf /tmp/${PNAME}/autom4te*
+else
+    echo "Running autoreconf ..."
+    autoreconf
+    rm -rf autom4te*
+fi
+
+echo "Removing CVS and backup stuff ..."
+find . -name CVS | xargs rm -rf
+find . -name \*~ | xargs rm -f
+
+echo "Updating version ..."
+VER=`./version`
+echo "$PNAME version ${VER}"
+cat DESCRIPTION| sed "s/Version:.*/Version: ${VER}/" > d
+mv d DESCRIPTION
+
+# if -f is not specified, only free fonts are kept in the package
+if test "$1" != "-f"; then
+    echo "Removing non-free fonts ..."
+#    cd inst/fonts
+#    rm -f ARIAL*.TTF
+# we have a more general basefont.mapping now, no need to use this anymore
+#    if test -e "blue highway free.ttf"; then
+#	echo "blue highway free.ttf" > basefont.mapping
+#	if test -e "blue highway free bold.ttf"; then
+#	    echo "blue highway free bold.ttf" >> basefont.mapping
+#	    echo "blue highway free bold.ttf" >> basefont.mapping
+#	    echo "blue highway free.ttf" >> basefont.mapping
+#	fi
+#    fi
+#    cd ../..
+fi
+
+echo "Creating package ..."
+cd ..
+tar fcz ${PNAME}_${VER}.tar.gz ${PNAME}
+cd ${SWD}
+cp /tmp/${PNAME}_${VER}.tar.gz ..
+rm -rf /tmp/${PNAME}
+echo "Done."
+ls -l ../${PNAME}_${VER}.tar.gz
