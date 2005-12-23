@@ -21,6 +21,7 @@ Rcairo_backend *Rcairo_new_image_backend()
   be->user = 0;
   be->create_surface = image_backend_create_surface;
   be->destroy_surface = image_backend_destroy_surface;
+  be->locator = 0; /* unsupported (img is non-interactive) */
   return be;
 }
 
