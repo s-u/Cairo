@@ -77,6 +77,22 @@ static void Rcairo_setup_font(GDDDesc* xd, R_GE_gcontext *gc) {
 #endif
 }
 
+static void Rcairo_set_line(GDDDesc* xd, R_GE_gcontext *gc) {
+  cairo_set_line_width(xd->cc, gc->lwd);
+  if (gc->lty==0 || gc->lty==-1)
+    cairo_set_dash(xd->cc,0,0,0);
+  else {
+    double ls[16]; /* max 16x4=64 bit */
+    int l=0, dt=gc->lty;
+    while (dt>0) {
+      ls[l]=(double)(dt&15);
+      dt>>=4;
+      l++;
+    }
+    cairo_set_dash(xd->cc, ls, l, 0);
+  }
+}
+
 /*------- the R callbacks begin here ... ------------------------*/
 
 static void GDD_Activate(NewDevDesc *dd)
@@ -102,9 +118,9 @@ static void GDD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  NewDev
 	Rcairo_set_color(cc, gc->fill);
 	cairo_fill_preserve(cc);
       }
-      if (CALPHA(gc->col)) {
+      if (CALPHA(gc->col) && gc->lty!=-1) {
 	Rcairo_set_color(cc, gc->col);
-	cairo_set_line_width(cc, gc->lwd);
+	Rcairo_set_line(xd, gc);
 	cairo_stroke(cc);
       } else cairo_new_path(cc);
     }
@@ -116,11 +132,12 @@ static void GDD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc *dd
     if(!xd || !xd->cc) return;
     if (x1<x0) { double h=x1; x1=x0; x0=h; };
     if (y1<y0) { double h=y1; y1=y0; y0=h; };
-    /*
+
+    cairo_reset_clip(xd->cc);
     cairo_new_path(xd->cc);
     cairo_rectangle(xd->cc, x0, y0, x1-x0, y1-y0);
     cairo_clip(xd->cc);
-    */
+
     
 #ifdef JGD_DEBUG
     printf("clipping %f/%f %f/%f\n", x0, y0, x1, y1);
@@ -188,13 +205,13 @@ static void GDD_Line(double x1, double y1, double x2, double y2,  R_GE_gcontext 
     printf("line %f/%f %f/%f [%08x/%08x]\n", x1, y1, x2, y2, gc->col, gc->fill);
 #endif
 
-    {
+    if (CALPHA(gc->col) && gc->lty!=-1) {
       cairo_t *cc = xd->cc;
       cairo_new_path(cc);
       cairo_move_to(cc, x1, y1);
       cairo_line_to(cc, x2, y2);
       Rcairo_set_color(cc, gc->col);
-      cairo_set_line_width(cc, gc->lwd);
+      Rcairo_set_line(xd, gc);
       cairo_stroke(cc);
     }
 }
@@ -302,17 +319,21 @@ static void GDD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDev
       cairo_t *cc = xd->cc;
 
 #ifdef JGD_DEBUG
-      printf("polygon %d points\n", n);
+      printf("polygon %d points [%08x/%08x]\n", n, gc->col, gc->fill);
 #endif
       cairo_new_path(cc);
       cairo_move_to(cc, x[0], y[0]);
       while (i<n) { cairo_line_to(cc, x[i], y[i]); i++; }
       cairo_close_path(cc);
-      Rcairo_set_color(cc, gc->fill);
-      cairo_fill_preserve(cc);
-      Rcairo_set_color(cc, gc->col);
-      cairo_set_line_width(cc, gc->lwd);
-      cairo_stroke(cc);
+      if (CALPHA(gc->fill)) {
+	Rcairo_set_color(cc, gc->fill);
+	cairo_fill_preserve(cc);
+      }
+      if (CALPHA(gc->col) && gc->lty!=-1) {
+	Rcairo_set_color(cc, gc->col);
+	Rcairo_set_line(xd, gc);
+	cairo_stroke(cc);
+      } else cairo_new_path(cc);
   }
 }
 
@@ -325,14 +346,14 @@ static void GDD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDe
       cairo_t *cc = xd->cc;
 
 #ifdef JGD_DEBUG
-      printf("polygon %d points\n", n);
+      printf("poly-line %d points [%08x]\n", n, gc->col);
 #endif
-      if (CALPHA(gc->col)) {
+      if (CALPHA(gc->col) && gc->lty!=-1) {
 	cairo_new_path(cc);
 	cairo_move_to(cc, x[0], y[0]);
 	while (i<n) { cairo_line_to(cc, x[i], y[i]); i++; }
 	Rcairo_set_color(cc, gc->col);
-	cairo_set_line_width(cc, gc->lwd);
+	Rcairo_set_line(xd, gc);
 	cairo_stroke(cc);
       }
   }
@@ -356,8 +377,11 @@ static void GDD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcontext 
 	Rcairo_set_color(cc, gc->fill);
 	cairo_fill_preserve(cc);
       }
-      Rcairo_set_color(cc, gc->col);
-      cairo_stroke(cc);
+      if (CALPHA(gc->col) && gc->lty!=-1) {
+	Rcairo_set_color(cc, gc->col);
+	Rcairo_set_line(xd, gc);
+	cairo_stroke(cc);
+      } else cairo_new_path(cc);
     }
 }
 
