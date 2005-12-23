@@ -1,4 +1,4 @@
-Cairo <- function(file="plot", type="png", width=400, height=300, ps=12, bg="white") {
-  invisible(.External("gdd_create_new_device", as.character(type), as.character(file), width, height, ps, bg, PACKAGE="Cairo"))
+Cairo <- function(width=640, height=480, file="plot", type="png", ps=12, bg="white", backend="image") {
+  if (is.null(file)) file<-"plot"
+  invisible(.External("cairo_create_new_device", as.character(type), as.character(file), width, height, ps, bg, PACKAGE="Cairo"))
 }
-

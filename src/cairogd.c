@@ -132,7 +132,7 @@ int gdd_set_new_device_data(NewDevDesc *dd, double gamma_fac, GDDDesc *xd)
     return(TRUE);
 }
 
-SEXP gdd_create_new_device(SEXP args)
+SEXP cairo_create_new_device(SEXP args)
 {
     NewDevDesc *dev = NULL;
     GEDevDesc *dd;

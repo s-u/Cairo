@@ -56,10 +56,13 @@ static void GDD_Text(double x, double y, char *str,
 
 
 
+#ifdef JGD_DEBUG
 #define Rcairo_set_source_rgb(C,R,G,B) { printf("S:RGB> %f %f %f\n", R, G, B); cairo_set_source_rgb(C,R,G,B); }
 #define Rcairo_set_source_rgba(C,R,G,B,A) { printf("S:RGBA> %f %f %f (%f)\n", R, G, B, A); cairo_set_source_rgb(C,R,G,B); }
 #define Rcairo_set_color(cc, col) { if (CALPHA(col)==255) { Rcairo_set_source_rgb (cc, ((double)CREDC(col))/255., ((double)CGREENC(col))/255., ((double)CBLUEC(col))/255.); } else { Rcairo_set_source_rgba (cc, ((double)CREDC(col))/255., ((double)CGREENC(col))/255., ((double)CBLUEC(col))/255., ((double)CALPHA(col))/255.); }; }
-
+#else
+#define Rcairo_set_color(cc, col) { if (CALPHA(col)==255) { cairo_set_source_rgb (cc, ((double)CREDC(col))/255., ((double)CGREENC(col))/255., ((double)CBLUEC(col))/255.); } else { cairo_set_source_rgba (cc, ((double)CREDC(col))/255., ((double)CGREENC(col))/255., ((double)CBLUEC(col))/255., ((double)CALPHA(col))/255.); }; }
+#endif
 
 static void Rcairo_setup_font(GDDDesc* xd, R_GE_gcontext *gc) {
   char *Cfontface="Helvetica";
