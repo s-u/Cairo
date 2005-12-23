@@ -7,7 +7,7 @@
 # include <config.h>
 #endif
 #ifdef HAVE_GDDCONFIG_H
-# include <gddconfig.h>
+# include <cairoconfig.h>
 #endif
 
 #include <R.h>
@@ -16,7 +16,8 @@
 #include <R_ext/GraphicsEngine.h>
 #include <Rgraphics.h>
 #include <Rdevices.h>
-#include <gd.h>
+#include <cairo.h>
+#include "backend.h"
 
 /* the internal representation of a color in this (R) API is RGBa with a=0 meaning transparent and a=255 meaning opaque (hence a means 'opacity'). previous implementation was different (inverse meaning and 0x80 as NA), so watch out. */
 #if R_VERSION < 0x20000
@@ -41,17 +42,21 @@ typedef struct {
     int windowHeight;		/* Window height (pixels) */
     int resize;				/* Window resized */
 
-	/* custom fields */
-	gdImagePtr img; /* current image handle */
-	gdFontPtr gd_font; /* current GD font (*not* FT!) */
-	int gd_fill, gd_draw; /* current GD colors */
-	double gd_ftsize, gd_ftm_ascent, gd_ftm_descent, gd_ftm_width;
-	int gd_ftm_char; /*gd_ftm_xxx are font-metric cached values - char specifying the last query */
+  /* --- custom fields --- */
+  cairo_t          *cc; /* cairo context */
+  cairo_surface_t  *cs; /* cairo surface */
+  Rcairo_backend   *cb; /* cairo backend */
+
+  int gd_bgcolor;
+
+  int gd_fill, gd_draw; /* current GD colors */
+  double gd_ftsize, gd_ftm_ascent, gd_ftm_descent, gd_ftm_width;
+  int gd_ftm_char; /*gd_ftm_xxx are font-metric cached values - char specifying the last query */
 	
-	char *img_name; /* file name prefix */
-	int img_seq; /* sequence # in case multiple pages are requested */
-	char img_type[8]; /* image type [png/png8/png24/gif] */
-	char *gd_ftfont; /* path to the current TTF file */
+  char *img_name; /* file name prefix */
+  int img_seq; /* sequence # in case multiple pages are requested */
+  char img_type[8]; /* image type [png/png8/png24/gif] */
+  char *gd_ftfont; /* path to the current TTF file */
 } GDDDesc;
 
 void      setupGDDfunctions(NewDevDesc *dd);

@@ -1,5 +1,5 @@
 /*
- *  GDD - gd-device   (C)2004,5 Simon Urbanek (simon.urbanek@r-project.org)
+ *  Cairo-based gd   (C)2004,5 Simon Urbanek (simon.urbanek@r-project.org)
  *
  *  Parts of this code are based on the X11 device skeleton from the R project
  *
@@ -19,7 +19,7 @@
  */
 
 #define R_GDD 1
-#include "GDD.h"
+#include "cairogd.h"
 
 double jGDdpiX = 100.0;
 double jGDdpiY = 100.0;
@@ -214,5 +214,5 @@ void gdd_get_display_param(double *par) {
 }
 
 void gdd_get_version(int *ver) {
-	*ver=GDD_VER;
+	*ver=CAIROGD_VER;
 }
