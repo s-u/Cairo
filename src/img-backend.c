@@ -4,7 +4,9 @@
 static cairo_surface_t *image_backend_create_surface(Rcairo_backend* be, int width, int height)
 {
   int stride = 4 * width;
-  void *buf = calloc (stride * height, 1);
+  void *buf = (void*) malloc (stride * height);
+  /* start off with fully transparent image */
+  memset(buf, 0xff, stride * height);
   
   return cairo_image_surface_create_for_data (buf,
 					      CAIRO_FORMAT_ARGB32,

@@ -1,10 +1,10 @@
 Package: Cairo
 Version: 0.1-0
-Title: Graphics device using Cairo rendering library for creating bitmaps images or output.
+Title: Graphics device using cairographics library for creating bitmap images or output.
 Author: Simon Urbanek <Simon.Urbanek@r-project.org>
 Maintainer: Simon Urbanek <Simon.Urbanek@r-project.org>
 Depends: R (>= 1.9.0)
-Description: This package 
-License: GPL version 2 or newer
+Description: This package provides a Cairo graphics device that can be use to create high-quality bitmap output (currently png) without the dependence on X11 or other external programs. This device supports alpha channel (semi-transparent drawing) and resulting images can contain transparent and semi-transparent regions.
+License: GPL version 2
 SystemRequirements: cairo (>= 1.0.2 http://www.cairographics.org/)
 URL: http://www.rosuda.org/R/Cairo/

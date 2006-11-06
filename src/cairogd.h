@@ -1,7 +1,7 @@
 #ifndef _DEV_GD_H
 #define _DEV_GD_H
 
-#define CAIROGD_VER 0x000101 /* Cairo v0.1-1 */
+#define CAIROGD_VER 0x000102 /* Cairo v0.1-2 */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>

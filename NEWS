@@ -1,0 +1,14 @@
+ NEWS/Changelog
+
+0.1-2 (under development)
+    o	add support for caps/joints (patch by Jeff Horner)
+
+    o	make rectangels to snap to grid (patch by Jeff Horner)
+
+    o	use transparent image background by default
+
+
+0.1-1
+    o	first official release, image backend works, others are
+	waiting to be implemented by volunteers
+

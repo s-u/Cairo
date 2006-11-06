@@ -107,13 +107,8 @@ int gdd_set_new_device_data(NewDevDesc *dd, double gamma_fac, GDDDesc *xd)
 
     dd->canResizePlot = FALSE;
     dd->canChangeFont = TRUE;
-#ifdef HAS_FTL
     dd->canRotateText = TRUE;
     dd->canResizeText = TRUE;
-#else
-    dd->canRotateText = FALSE;
-    dd->canResizeText = FALSE;
-#endif
     dd->canClip = TRUE;
     dd->canHAdj = 2;
     dd->canChangeGamma = FALSE;
@@ -201,13 +196,13 @@ SEXP cairo_create_new_device(SEXP args)
     return v;
 }
 
-void gdd_set_display_param(double *par) {
+void cairo_set_display_param(double *par) {
 	jGDdpiX = par[0];
 	jGDdpiY = par[1];
 	jGDasp  = par[2];
 }
 
-void gdd_get_display_param(double *par) {
+void cairo_get_display_param(double *par) {
 	par[0] = jGDdpiX;
 	par[1] = jGDdpiY;
 	par[2] = jGDasp;
