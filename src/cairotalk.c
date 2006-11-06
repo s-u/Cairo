@@ -81,7 +81,28 @@ static void Rcairo_setup_font(GDDDesc* xd, R_GE_gcontext *gc) {
 }
 
 static void Rcairo_set_line(GDDDesc* xd, R_GE_gcontext *gc) {
+	R_GE_lineend lend;
+	R_GE_linejoin ljoin;
+	
+	/* Line width: par lwd  */
   cairo_set_line_width(xd->cc, gc->lwd);
+
+	/* Line end: par lend  */
+	switch(gc->lend){
+		case GE_ROUND_CAP: lend = CAIRO_LINE_CAP_ROUND; break;
+		case GE_BUTT_CAP: lend = CAIRO_LINE_CAP_BUTT; break;
+		case GE_SQUARE_CAP: lend = CAIRO_LINE_CAP_SQUARE; break;
+	}
+	cairo_set_line_cap(xd->cc,lend);
+
+	/* Line join: par ljoin */
+	switch(gc->ljoin){
+		case GE_ROUND_JOIN: ljoin = CAIRO_LINE_JOIN_ROUND; break;
+		case GE_MITRE_JOIN: ljoin = CAIRO_LINE_JOIN_MITER; break;
+		case GE_BEVEL_JOIN: ljoin = CAIRO_LINE_JOIN_BEVEL; break;
+	} 
+	cairo_set_line_join(xd->cc,ljoin);
+
   if (gc->lty==0 || gc->lty==-1)
     cairo_set_dash(xd->cc,0,0,0);
   else {
@@ -371,8 +392,20 @@ static void GDD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcontext 
       if (x1<x0) { double h=x1; x1=x0; x0=h; }
       if (y1<y0) { double h=y1; y1=y0; y0=h; }
       /* if (x0<0) x0=0; if (y0<0) y0=0; */
+
 #ifdef JGD_DEBUG
       printf("gdRect: %x %f/%f %f/%f [%08x/%08x]\n", xd->cc, x0, y0, x1, y1, gc->col, gc->fill);
+#endif
+	  /* Snap to grid so that image() plots look nicer */
+	  {
+		  int ix0,ix1,iy0,iy1;
+		  ix0 = (int)x0;     x0 = (double)ix0;
+		  ix1 = (int)x1 + 1; x1 = (double)ix1;
+		  iy0 = (int)y0;     y0 = (double)iy0;
+		  iy1 = (int)y1 + 1; y1 = (double)iy1;
+	  }
+#ifdef JGD_DEBUG
+      printf("gdRect (snapped): %x %f/%f %f/%f [%08x/%08x]\n", xd->cc, x0, y0, x1, y1, gc->col, gc->fill);
 #endif
       cairo_new_path(cc);
       cairo_rectangle(cc, x0, y0, x1-x0, y1-y0);
