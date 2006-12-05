@@ -20,12 +20,13 @@
 
 #define R_GDD 1
 #include "cairogd.h"
+#include "cairotalk.h"
 
 double jGDdpiX = 100.0;
 double jGDdpiY = 100.0;
 double jGDasp  = 1.0;
 
-/* type: png[8/24], gif or jpeg
+/* type: png[24]
    file: file to write to
    width/heigth
    initps: initial PS
@@ -40,10 +41,16 @@ Rboolean gdd_new_device_driver(DevDesc *dd, char *type, char *file,
 	printf("gdd_new_device_driver(\"%s\", \"%s\", %f, %f, %f)\n",type,file,width,height,initps);
 #endif
 	
-	if (!type || (strcmp(type,"png") && strcmp(type,"png8") && 
-				  strcmp(type,"png24") && strcmp(type,"gif") &&
-				  strcmp(type,"jpeg") && strcmp(type,"jpg")))
-		error("Unsupported image type \"%s\" - choose from png, png8, png24, jpeg and gif.", type);
+	/* Currently, libcairo supports writing png's as 24 bit RGB, 24 bit RGB with 8 bit alpha,
+	 * and 8 bit grayscale. We'll create 24 bit RGB when extension is "png" and 24 bit RGB with
+	 * 8 bit alpha when extension is "png24".  We could go ahead and add 8 bit grayscale, but
+	 * who really uses that, and what would the extension be?
+	 * 
+	 * libcairo has palette-based png's (png8) and jpeg format in the works, so 
+	 * we'll add those when available.
+	 */
+	if (!type || (strcmp(type,"png") && strcmp(type,"png24")))
+		error("Unsupported image type \"%s\" - choose from png or png24.", type);
 	
     /* allocate new device description */
     if (!(xd = (GDDDesc*)calloc(1, sizeof(GDDDesc))))
@@ -132,7 +139,7 @@ SEXP cairo_create_new_device(SEXP args)
     NewDevDesc *dev = NULL;
     GEDevDesc *dd;
     
-    char *devname="GDD";
+    char *devname="Cairo";
 	char *type, *file;
 	double width, height, initps;
 	int bgcolor = -1;
@@ -210,4 +217,139 @@ void cairo_get_display_param(double *par) {
 
 void gdd_get_version(int *ver) {
 	*ver=CAIROGD_VER;
+}
+
+SEXP cairo_font_match(SEXP args){
+#if CAIRO_HAS_FT_FONT
+	SEXP v;
+	char *fcname;
+	int sort;
+	int verbose;
+
+	args = CDR(args);
+
+	/* Get fontname */
+	v = CAR(args); args = CDR(args);
+	if (!isString(v) || LENGTH(v)<1){
+		warning("fontname must be a character vector of length 1\n");
+		return R_NilValue;
+	}
+
+	fcname = CHAR(STRING_ELT(v,0));
+
+	/* Get sort option */
+	v=CAR(args); args=CDR(args);
+	if (!isLogical(v) || LENGTH(v)<1){
+		warning("sort options must be a logical\n");
+		return R_NilValue;
+	}
+	
+	sort = LOGICAL(v)[0];
+
+	/* Get verbose option */
+	v=CAR(args); args=CDR(args);
+	if (!isLogical(v) || LENGTH(v)<1){
+		warning("verbose options must be a logical\n");
+		return R_NilValue;
+	}
+
+	verbose = LOGICAL(v)[0];
+
+	/* Now search for fonts */
+	{
+		FcFontSet	*fs;
+		FcPattern   *pat;
+		FcResult	result;
+
+		if (!FcInit ()) {
+			warning ("Can't init font config library\n");
+			return R_NilValue;
+		}
+		pat = FcNameParse ((FcChar8 *)fcname);
+
+		if (!pat){
+			warning ("Problem with font config library in FcNameparse\n");
+			return R_NilValue;
+		}
+
+		FcConfigSubstitute (0, pat, FcMatchPattern);
+		FcDefaultSubstitute (pat);
+		if (sort) {
+			fs = FcFontSort (0, pat, FcTrue, 0, &result);
+		} else {
+			FcPattern   *match;
+			fs = FcFontSetCreate ();
+			match = FcFontMatch (0, pat, &result);
+			if (match) FcFontSetAdd (fs, match);
+		}
+		FcPatternDestroy (pat);
+
+		if (fs) {
+			int	j;
+
+			for (j = 0; j < fs->nfont; j++) {
+				FcChar8	*family;
+				FcChar8	*style;
+				FcChar8	*file;
+
+				if (FcPatternGetString (fs->fonts[j], FC_FILE, 0, &file) != FcResultMatch)
+					file = (FcChar8 *) "<unknown filename>";
+				/* else
+				   {
+				   FcChar8 *slash = (FcChar8 *) strrchr ((char *) file, '/');
+				   if (slash)
+				   file = slash+1;
+				   } */
+				if (FcPatternGetString (fs->fonts[j], FC_FAMILY, 0, &family) != FcResultMatch)
+					family = (FcChar8 *) "<unknown family>";
+				if (FcPatternGetString (fs->fonts[j], FC_STYLE, 0, &style) != FcResultMatch)
+					file = (FcChar8 *) "<unknown style>";
+
+				Rprintf ("%d. family: \"%s\", style: \"%s\", file: \"%s\"\n", j+1, family, style, file);
+				if (verbose) {
+					FcPattern   *vpat;
+					FcChar8 *fname;
+
+					fname = FcNameUnparse(fs->fonts[j]);
+					if (fname){
+						vpat = FcNameParse(fname);
+						FcPatternDel(vpat,FC_CHARSET);
+						FcPatternDel(vpat,FC_LANG);
+						free(fname);
+						fname = FcNameUnparse(vpat);
+						Rprintf("   \"%s\"\n",fname);
+						free(fname);
+						FcPatternDestroy (vpat);
+					}
+				}
+			}
+			FcFontSetDestroy (fs);
+		}
+	}
+#else 
+	warning("the R Cairo package was not installed with font matching capability. Please consider installing the cairo graphics engine (www.cairographics.org) with freetype and fontconfig support");
+#endif
+	return R_NilValue;
+}
+
+SEXP cairo_font_set(SEXP args){
+#if CAIRO_HAS_FT_FONT
+	SEXP v;
+	int i;
+	char *font;
+
+	args = CDR(args);
+
+	/* regular font */
+	for (i = 0; i < 5; i++){
+		v = CAR(args); args = CDR(args);
+		if (!isNull(v) && isString(v) && LENGTH(v)==1){
+			font = CHAR(STRING_ELT(v,0));
+			Rcairo_set_font(i,font);
+		}
+	}
+#else
+	warning("the R Cairo package was not installed with fontconfig. Please consider installing the cairo graphics engine (www.cairographics.org) with freetype and fontconfig support");
+	return R_NilValue;
+#endif
 }

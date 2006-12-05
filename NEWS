@@ -1,6 +1,13 @@
  NEWS/Changelog
 
-0.1-2 (under development)
+0.1-3 (under development)
+    o   add freetype and fontconfig support
+
+	o   fix memory leaks
+
+	o   make transparent background default with bg="transparent"
+
+0.1-2
     o	add support for caps/joints (patch by Jeff Horner)
 
     o	make rectangels to snap to grid (patch by Jeff Horner)

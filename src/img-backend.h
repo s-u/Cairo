@@ -3,6 +3,6 @@
 
 #include "backend.h"
 
-Rcairo_backend *Rcairo_new_image_backend();
+Rcairo_backend *Rcairo_new_image_backend(char *filetype);
 
 #endif

@@ -1,5 +1,5 @@
 Package: Cairo
-Version: 0.1-0
+Version: 0.1-3
 Title: Graphics device using cairographics library for creating bitmap images or output.
 Author: Simon Urbanek <Simon.Urbanek@r-project.org>
 Maintainer: Simon Urbanek <Simon.Urbanek@r-project.org>
