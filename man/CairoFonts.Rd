@@ -59,3 +59,4 @@ CairoFonts(
 	bolditalic="FreeSans:style=BoldOblique"
 )
 }}
+\keyword{device}

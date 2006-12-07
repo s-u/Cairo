@@ -1,7 +1,7 @@
 #ifndef _DEV_GD_H
 #define _DEV_GD_H
 
-#define CAIROGD_VER 0x000103 /* Cairo v0.1-3 */
+#define CAIROGD_VER 0x000104 /* Cairo v0.1-4 */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -51,9 +51,11 @@ typedef struct {
     int resize;				/* Window resized */
 
   /* --- custom fields --- */
-  cairo_t          *cc; /* cairo context */
-  cairo_surface_t  *cs; /* cairo surface */
   Rcairo_backend   *cb; /* cairo backend */
+
+  /* These have moved to Rcairo_backend */
+  /* cairo_t          *cc; */ /* cairo context */
+  /* cairo_surface_t  *cs; */ /* cairo surface */
 
   int gd_bgcolor;
 
@@ -61,9 +63,11 @@ typedef struct {
   double gd_ftsize, gd_ftm_ascent, gd_ftm_descent, gd_ftm_width;
   int gd_ftm_char; /*gd_ftm_xxx are font-metric cached values - char specifying the last query */
 	
-  char *img_name; /* file name prefix */
-  int img_seq; /* sequence # in case multiple pages are requested */
-  char img_type[8]; /* image type [png/png8/png24/gif] */
+  /* Moved to Rcairo_backend */
+  /* char *img_name; */ /* file name prefix */
+  /* char img_type[8]; */ /* image type [png/png8/png24/gif] */
+
+  int npages; /* sequence # in case multiple pages are requested */
 } GDDDesc;
 
 Rboolean  gdd_new_device_driver(DevDesc*, char*, char *, double, double, double, int);

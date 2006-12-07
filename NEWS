@@ -1,9 +1,14 @@
  NEWS/Changelog
 
-0.1-3 (under development)
-    o   add freetype and fontconfig support
+0.1-4 (under development)
+    o   add pdf backend (Jeff Horner)
 
-	o   fix memory leaks
+	o   fix up backend infrastructure (Jeff Horner)
+
+0.1-3 
+    o   add freetype and fontconfig support (Jeff Horner)
+
+	o   fix memory leaks (Jeff Horner)
 
 	o   make transparent background default with bg="transparent"
 

@@ -41,16 +41,6 @@ Rboolean gdd_new_device_driver(DevDesc *dd, char *type, char *file,
 	printf("gdd_new_device_driver(\"%s\", \"%s\", %f, %f, %f)\n",type,file,width,height,initps);
 #endif
 	
-	/* Currently, libcairo supports writing png's as 24 bit RGB, 24 bit RGB with 8 bit alpha,
-	 * and 8 bit grayscale. We'll create 24 bit RGB when extension is "png" and 24 bit RGB with
-	 * 8 bit alpha when extension is "png24".  We could go ahead and add 8 bit grayscale, but
-	 * who really uses that, and what would the extension be?
-	 * 
-	 * libcairo has palette-based png's (png8) and jpeg format in the works, so 
-	 * we'll add those when available.
-	 */
-	if (!type || (strcmp(type,"png") && strcmp(type,"png24")))
-		error("Unsupported image type \"%s\" - choose from png or png24.", type);
 	
     /* allocate new device description */
     if (!(xd = (GDDDesc*)calloc(1, sizeof(GDDDesc))))

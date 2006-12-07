@@ -86,3 +86,4 @@ as the font name is read."
   \code{\link{CairoFonts}},
   \code{\link{Cairo}}
 }
+\keyword{device}
