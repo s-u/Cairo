@@ -5,7 +5,15 @@ Cairo <- function(width=640, height=480, file="plot", type="png24", ps=14, bg="t
 		warning("Type png does not support transparency. Changing type to png24")
 		type="png24"
 	}
-	gdn<-.External("cairo_create_new_device", as.character(type), as.character(file), width, height, ps, bg, PACKAGE="Cairo")
+
+	if (typeof(file) == "character" && length(file) != 1){
+		warning("file must be a character vector of length 1")
+		return()
+	} else if (inherits(file,"connection") && (summary(file)$opened != "opened" || summary(file)$"can write" != "yes")){
+		warning("connection must be open and writeable")
+		return()
+	} 
+	gdn<-.External("cairo_create_new_device", as.character(type), file, width, height, ps, bg, PACKAGE="Cairo")
 	par(bg=bg)
 	invisible(gdn)
 }

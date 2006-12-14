@@ -438,7 +438,7 @@ static void GDD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	cairo_paint(cc);
 }
 
-Rboolean GDD_Open(NewDevDesc *dd, GDDDesc *xd,  char *type, char *file, double w, double h, int bgcolor)
+Rboolean GDD_Open(NewDevDesc *dd, GDDDesc *xd,  char *type, int conn, char *file, double w, double h, int bgcolor)
 {
 	cairo_t *cc;
 
@@ -462,9 +462,9 @@ Rboolean GDD_Open(NewDevDesc *dd, GDDDesc *xd,  char *type, char *file, double w
 	 * we'll add those when available.
 	 */
 	if (!strcmp(type,"png") || !strcmp(type,"png24"))
-		xd->cb = Rcairo_new_image_backend(file,type,(int)w,(int)h); 
+		xd->cb = Rcairo_new_image_backend(conn,file,type,(int)w,(int)h); 
 	else if (!strcmp(type,"pdf"))
-		xd->cb = Rcairo_new_pdf_backend(file,(int)w,(int)h);
+		xd->cb = Rcairo_new_pdf_backend(conn,file,(int)w,(int)h);
 	else {
 		error("Unsupported image type \"%s\" - choose from png, png24, or pdf.", type);
 		return FALSE;

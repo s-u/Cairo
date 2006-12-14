@@ -1,7 +1,7 @@
 #ifndef _DEV_GD_H
 #define _DEV_GD_H
 
-#define CAIROGD_VER 0x000104 /* Cairo v0.1-4 */
+#define CAIROGD_VER 0x000105 /* Cairo v0.1-5 */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -70,7 +70,7 @@ typedef struct {
   int npages; /* sequence # in case multiple pages are requested */
 } GDDDesc;
 
-Rboolean  gdd_new_device_driver(DevDesc*, char*, char *, double, double, double, int);
+Rboolean  gdd_new_device_driver(DevDesc*, char*, int conn, char *, double, double, double, int);
 int       gdd_set_new_device_data(NewDevDesc *dd, double gamma_fac, GDDDesc *xd);
 
 #endif

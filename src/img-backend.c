@@ -1,3 +1,13 @@
+#ifdef HAVE_RCONN_H
+#include <R.h>
+#include <Rinternals.h>
+#include <Rdefines.h>
+#define R_INTERFACE_PTRS
+#include <Rinterface.h>
+#include <Rembedded.h>
+#include <R_ext/Print.h>
+#include <R_ext/RConn.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +17,7 @@
 typedef struct st_Rcairo_image_backend {
 	void *buf;
 	char *filename;
+	int conn;
 } Rcairo_image_backend;
 
 static void image_backend_destroy(Rcairo_backend* be)
@@ -42,7 +53,24 @@ static void image_save_page_png(Rcairo_backend* be, int pageno){
 	free(fn);
 }
 
-Rcairo_backend *Rcairo_new_image_backend(char *filename, char *type, int width, int height)
+#ifdef HAVE_RCONN_H
+static cairo_status_t send_image_data(void *closure, const unsigned char *data, unsigned int length)
+{
+	Rcairo_backend *be = (Rcairo_backend *)closure;
+	Rcairo_image_backend *image;
+	image = (Rcairo_image_backend *)be->backendSpecific;
+
+	if (R_WriteConnection(image->conn, data, length, 1))
+		return CAIRO_STATUS_SUCCESS;
+	else
+		return CAIRO_STATUS_WRITE_ERROR;
+}
+static void image_send_page(Rcairo_backend* be, int pageno){
+			cairo_surface_write_to_png_stream (be->cs, send_image_data , (void *)be);
+}
+#endif
+
+Rcairo_backend *Rcairo_new_image_backend(int conn, char *filename, char *type, int width, int height)
 {
 	Rcairo_backend *be;
 	Rcairo_image_backend *image;
@@ -54,11 +82,21 @@ Rcairo_backend *Rcairo_new_image_backend(char *filename, char *type, int width, 
 		free(be); return NULL;
 	}
 
-	if ( !(image->filename = malloc(strlen(filename)+1))){
-		free(be); free(image); return NULL;
-	}
+	if (filename){
+		if ( !(image->filename = malloc(strlen(filename)+1))){
+			free(be); free(image); return NULL;
+		}
 
-	strcpy(image->filename,filename);
+		strcpy(image->filename,filename);
+	} else {
+#ifdef HAVE_RCONN_H
+		image->conn = conn;
+		be->save_page = image_send_page;
+#else
+		free(be); free(image); return NULL;
+		return NULL;
+#endif
+	}
 
 	be->destroy_backend = image_backend_destroy;
 	be->backendSpecific = (void *)image;
@@ -79,12 +117,12 @@ Rcairo_backend *Rcairo_new_image_backend(char *filename, char *type, int width, 
 		be->cs = cairo_image_surface_create_for_data (image->buf,
 				CAIRO_FORMAT_ARGB32,
 				width, height, stride);
-		be->save_page = image_save_page_png;
+		if (!be->save_page) be->save_page = image_save_page_png;
 
 	} else if (!strcmp(type,"png")){
 
 		be->cs = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
-		be->save_page = image_save_page_png;
+		if (!be->save_page) be->save_page = image_save_page_png;
 
 	} /* else if (!strcmp(image->type,"jpg")) {
 

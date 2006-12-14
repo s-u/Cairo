@@ -7,6 +7,6 @@
 #include <cairo-pdf.h>
 #endif
 
-Rcairo_backend *Rcairo_new_pdf_backend(char *filename, int width, int height);
+Rcairo_backend *Rcairo_new_pdf_backend(int conn, char *filename, int width, int height);
 
 #endif

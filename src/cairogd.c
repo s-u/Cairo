@@ -31,7 +31,7 @@ double jGDasp  = 1.0;
    width/heigth
    initps: initial PS
    bgcolor: currently only -1 (transparent) and 0xffffff (white) are really supported */
-Rboolean gdd_new_device_driver(DevDesc *dd, char *type, char *file,
+Rboolean gdd_new_device_driver(DevDesc *dd, char *type, int conn, char *file,
 							   double width, double height, double initps,
 							   int bgcolor)
 {
@@ -51,7 +51,7 @@ Rboolean gdd_new_device_driver(DevDesc *dd, char *type, char *file,
     xd->basefontface = 1;
     xd->basefontsize = initps;
 	
-	if (!GDD_Open((NewDevDesc*)(dd), xd, type, file, width, height, bgcolor)) {
+	if (!GDD_Open((NewDevDesc*)(dd), xd, type, conn, file, width, height, bgcolor)) {
 		free(xd);
 		return FALSE;
 	}
@@ -130,9 +130,10 @@ SEXP cairo_create_new_device(SEXP args)
     GEDevDesc *dd;
     
     char *devname="Cairo";
-	char *type, *file;
+	char *type, *file = NULL;
 	double width, height, initps;
 	int bgcolor = -1;
+	int conn = -1;
 
 	SEXP v;
 	args=CDR(args);
@@ -140,10 +141,24 @@ SEXP cairo_create_new_device(SEXP args)
 	if (!isString(v) || LENGTH(v)<1) error("output type must be a string");
 	PROTECT(v);
 	type=CHAR(STRING_ELT(v,0));
+	UNPROTECT(1);
+
 	v=CAR(args); args=CDR(args);
-	if (!isString(v) || LENGTH(v)<1) error("file name must be a string");
-	PROTECT(v);
-	file=CHAR(STRING_ELT(v,0));
+	if (isString(v)){
+		PROTECT(v);
+		file=CHAR(STRING_ELT(v,0));
+		UNPROTECT(1);
+	} else if (isInteger(v)){
+#ifdef HAVE_RCONN_H
+		conn = asInteger(v);
+#else
+		error("file must be a filename. to support writing to a connection, recompile R and Cairo with the R Connection Patch. ");
+#endif
+	} else {
+		error("file must be a filename");
+	}
+
+
 	v=CAR(args); args=CDR(args);
 	if (!isNumeric(v)) error("`width' must be a number");
 	width=asReal(v);
@@ -171,13 +186,11 @@ SEXP cairo_create_new_device(SEXP args)
 
 	dev->savedSnapshot = R_NilValue;
 
-	if (!gdd_new_device_driver((DevDesc*)(dev), type, file, width, height, initps, bgcolor))
+	if (!gdd_new_device_driver((DevDesc*)(dev), type, conn, file, width, height, initps, bgcolor))
 	{
 	    free(dev);
 	    error("unable to start device %s", devname);
 	}
-	
-	UNPROTECT(2); /* file and type strings */
 	
 	gsetVar(install(".Device"), mkString(devname), R_NilValue);
 	dd = GEcreateDevDesc(dev);

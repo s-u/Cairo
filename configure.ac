@@ -57,7 +57,18 @@ if test "xx$CAIRO_LIBS" == "xx"; then
 fi
 
 AC_MSG_NOTICE([CAIRO_CFLAGS=${CAIRO_CFLAGS}])
-CPPFLAGS="$CPPFLAGS ${CAIRO_CFLAGS}"
+
+# Check for Rconn patch
+AC_MSG_CHECKING([if R was compiled with the RConn patch])
+if test -f "${R_HOME}/include/R_ext/RConn.h"; then
+	AC_MSG_RESULT([yes])
+	HAVE_RCONN_H="-DHAVE_RCONN_H"
+else
+	AC_MSG_RESULT([no])
+	HAVE_RCONN_H=""
+fi
+
+CPPFLAGS="$CPPFLAGS ${CAIRO_CFLAGS} ${HAVE_RCONN_H}"
 
 AC_CHECK_HEADER(cairo.h,,AC_MSG_ERROR([Cannot find cairo.h! Please install cairo (http://www.cairographics.org/) and/or set CAIRO_CFLAGS/LIBS correspondingly.]))
 
