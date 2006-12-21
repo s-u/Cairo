@@ -49,7 +49,19 @@ Rcairo_backend *Rcairo_new_pdf_backend(int conn, char *filename, int width, int 
 	be->destroy_backend = pdf_backend_destroy;
 	be->save_page = pdf_save_page;
 	if (filename){
+		char *fn = NULL;
+		int len = strlen(filename);
+
+		/* Add .pdf extension if necessary */
+		if (len>3 && strcmp(filename+len-4,".pdf")){
+			fn = malloc(len + 5);
+			if (!fn) { free(be); return NULL; }
+			strcpy(fn,filename);
+			strcat(fn,".pdf");
+			filename = fn;
+		}
 		be->cs = cairo_pdf_surface_create(filename,(double)width,(double)height);
+		if (fn) free(fn);
 	} else {
 #ifdef HAVE_RCONN_H
 		if ( ! (be->backendSpecific =  calloc(1,sizeof(int)))){
