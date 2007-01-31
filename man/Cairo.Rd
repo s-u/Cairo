@@ -5,8 +5,10 @@
 }
 \description{
   \code{Cairo} initializes a new graphics device that uses the Cairo
-  graphics library for rendering. The current implementation uses
-  "image" back-end of Cairo to produce high-quality PNG bitmap files.
+  graphics library for rendering. The current implementation produces
+  high-quality PNG bitmap files and high resolution PDF files with embedded
+  fonts.
+
 }
 \usage{
 Cairo(width = 640, height = 480, file="plot", type="png24", ps=14, 
