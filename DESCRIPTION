@@ -1,6 +1,6 @@
 Package: Cairo
 Version: 0.1-4
-Title: Graphics device using cairographics library for creating bitmap images or output.
+Title: R Graphics device using cairographics library for creating PNG and PDF output.
 Author: Simon Urbanek <Simon.Urbanek@r-project.org>, Jeffrey Horner <jeff.horner@vanderbilt.edu>
 Maintainer: Jeffrey Horner <jeff.horner@vanderbilt.edu>
 Depends: R (>= 1.9.0)
