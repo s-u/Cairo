@@ -345,7 +345,6 @@ static void CairoGD_Hold(NewDevDesc *dd)
 {
     CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
     if(!xd || !xd->cb) return;
-    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 }
 
 static Rboolean CairoGD_Locator(double *x, double *y, NewDevDesc *dd)
