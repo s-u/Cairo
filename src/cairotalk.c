@@ -271,13 +271,13 @@ static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
 
 static void CairoGD_Activate(NewDevDesc *dd)
 {
-    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
     if(!xd || !xd->cb) return;
 }
 
 static void CairoGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb) return;
 	{
 		cairo_t *cc = xd->cb->cc;
@@ -302,7 +302,7 @@ static void CairoGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  Ne
 
 static void CairoGD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc *dd)
 {
-    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
     if(!xd || !xd->cb) return;
 
@@ -322,7 +322,7 @@ static void CairoGD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc
 
 static void CairoGD_Close(NewDevDesc *dd)
 {
-  CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+  CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
   if(!xd || !xd->cb) return;
   
   xd->cb->save_page(xd->cb,xd->npages);
@@ -334,17 +334,17 @@ static void CairoGD_Close(NewDevDesc *dd)
 
 static void CairoGD_Deactivate(NewDevDesc *dd)
 {
-    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 }
 
 static void CairoGD_Hold(NewDevDesc *dd)
 {
-    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 }
 
 static Rboolean CairoGD_Locator(double *x, double *y, NewDevDesc *dd)
 {
-    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
     if(!xd || !xd->cb) return FALSE;
     if (xd->cb && xd->cb->locator) return xd->cb->locator(xd->cb, x, y);
     return FALSE;
@@ -352,7 +352,7 @@ static Rboolean CairoGD_Locator(double *x, double *y, NewDevDesc *dd)
 
 static void CairoGD_Line(double x1, double y1, double x2, double y2,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
     if(!xd || !xd->cb) return;
     
 #ifdef JGD_DEBUG
@@ -372,7 +372,7 @@ static void CairoGD_Line(double x1, double y1, double x2, double y2,  R_GE_gcont
 
 static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, double* descent,  double* width, NewDevDesc *dd)
 {
-	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
 	cairo_text_extents_t te = {0, 0, 0, 0, 0, 0};
 	char str[3], utf8[8];
@@ -411,12 +411,12 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 
 static void CairoGD_Mode(int mode, NewDevDesc *dd)
 {
-    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 }
 
 static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 {
-	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
 	if(!xd || !xd->cb) return;
 
@@ -438,7 +438,7 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	cairo_paint(cc);
 }
 
-Rboolean CairoGD_Open(NewDevDesc *dd, GDDDesc *xd,  char *type, int conn, char *file, double w, double h, int bgcolor)
+Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, char *file, double w, double h, int bgcolor)
 {
 	cairo_t *cc;
 
@@ -515,7 +515,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, GDDDesc *xd,  char *type, int conn, char *
 
 static void CairoGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb || n<2) return;
 	{
 		int i=1;
@@ -543,7 +543,7 @@ static void CairoGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  Ne
 
 static void CairoGD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb || n<2) return;
 	{
 		int i=1;
@@ -565,7 +565,7 @@ static void CairoGD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  N
 
 static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb) return;
 	{
 		cairo_t *cc = xd->cb->cc;
@@ -609,7 +609,7 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 
 static void CairoGD_Size(double *left, double *right,  double *bottom, double *top,  NewDevDesc *dd)
 {
-    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
     if(!xd || !xd->cb) return;	
     *left=*top=0.0;
     *right=xd->windowWidth;
@@ -618,7 +618,7 @@ static void CairoGD_Size(double *left, double *right,  double *bottom, double *t
 
 static double CairoGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	int slen = strlen(str);
 	if (!str) return 0;
 	if(!xd || !xd->cb) return slen*8;
@@ -652,7 +652,7 @@ static double CairoGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
 
 static void CairoGD_Text(double x, double y, char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
 	char buf[32];
 	char *utf8;

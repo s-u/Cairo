@@ -43,7 +43,7 @@ Rboolean gdd_new_device_driver(DevDesc *dd, char *type, int conn, char *file,
 	
 	
     /* allocate new device description */
-    if (!(xd = (CairoGDDesc*)calloc(1, sizeof(GDDDesc))))
+    if (!(xd = (CairoGDDesc*)calloc(1, sizeof(CairoGDDesc))))
 		return FALSE;
 	
     xd->fontface = -1;
