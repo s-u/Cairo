@@ -7,9 +7,9 @@
 
 #include "cairo.h"
 
-extern void setupGDDfunctions(NewDevDesc *dd);
-extern void      setupGDDfunctions(NewDevDesc *dd);
-extern Rboolean  GDD_Open(NewDevDesc *dd, GDDDesc *xd,  char *type, int conn, char *file, double w, double h, int bgcolor);
+extern void setupCairoGDfunctions(NewDevDesc *dd);
+extern void      setupCairoGDfunctions(NewDevDesc *dd);
+extern Rboolean  CairoGD_Open(NewDevDesc *dd, GDDDesc *xd,  char *type, int conn, char *file, double w, double h, int bgcolor);
 
 #ifdef CAIRO_HAS_FT_FONT
 extern void Rcairo_set_font(int i, char *fcname);

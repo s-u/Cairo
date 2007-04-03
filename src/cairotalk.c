@@ -15,41 +15,41 @@
 #define CBLUEC(C) ((((unsigned int)(C))&0xff0000)>>16)
 #define CALPHA(C) ((((unsigned int)(C))&0xff000000)>>24)
 
-static void GDD_Activate(NewDevDesc *dd);
-static void GDD_Circle(double x, double y, double r,
+static void CairoGD_Activate(NewDevDesc *dd);
+static void CairoGD_Circle(double x, double y, double r,
 			  R_GE_gcontext *gc,
 			  NewDevDesc *dd);
-static void GDD_Clip(double x0, double x1, double y0, double y1,
+static void CairoGD_Clip(double x0, double x1, double y0, double y1,
 			NewDevDesc *dd);
-static void GDD_Close(NewDevDesc *dd);
-static void GDD_Deactivate(NewDevDesc *dd);
-static void GDD_Hold(NewDevDesc *dd);
-static Rboolean GDD_Locator(double *x, double *y, NewDevDesc *dd);
-static void GDD_Line(double x1, double y1, double x2, double y2,
+static void CairoGD_Close(NewDevDesc *dd);
+static void CairoGD_Deactivate(NewDevDesc *dd);
+static void CairoGD_Hold(NewDevDesc *dd);
+static Rboolean CairoGD_Locator(double *x, double *y, NewDevDesc *dd);
+static void CairoGD_Line(double x1, double y1, double x2, double y2,
 			R_GE_gcontext *gc,
 			NewDevDesc *dd);
-static void GDD_MetricInfo(int c, 
+static void CairoGD_MetricInfo(int c, 
 			      R_GE_gcontext *gc,
 			      double* ascent, double* descent,
 			      double* width, NewDevDesc *dd);
-static void GDD_Mode(int mode, NewDevDesc *dd);
-static void GDD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd);
-static void GDD_Polygon(int n, double *x, double *y,
+static void CairoGD_Mode(int mode, NewDevDesc *dd);
+static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd);
+static void CairoGD_Polygon(int n, double *x, double *y,
 			   R_GE_gcontext *gc,
 			   NewDevDesc *dd);
-static void GDD_Polyline(int n, double *x, double *y,
+static void CairoGD_Polyline(int n, double *x, double *y,
 			     R_GE_gcontext *gc,
 			     NewDevDesc *dd);
-static void GDD_Rect(double x0, double y0, double x1, double y1,
+static void CairoGD_Rect(double x0, double y0, double x1, double y1,
 			 R_GE_gcontext *gc,
 			 NewDevDesc *dd);
-static void GDD_Size(double *left, double *right,
+static void CairoGD_Size(double *left, double *right,
 			 double *bottom, double *top,
 			 NewDevDesc *dd);
-static double GDD_StrWidth(char *str, 
+static double CairoGD_StrWidth(char *str, 
 			       R_GE_gcontext *gc,
 			       NewDevDesc *dd);
-static void GDD_Text(double x, double y, char *str,
+static void CairoGD_Text(double x, double y, char *str,
 			 double rot, double hadj,
 			 R_GE_gcontext *gc,
 			 NewDevDesc *dd);
@@ -187,7 +187,7 @@ static char *ascii2utf8(char *ascii, char *ret){
 	return ret;
 }
 
-static void Rcairo_setup_font(GDDDesc* xd, R_GE_gcontext *gc) {
+static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	cairo_t *cc = xd->cb->cc;
 
 #ifdef CAIRO_HAS_FT_FONT
@@ -229,7 +229,7 @@ static void Rcairo_setup_font(GDDDesc* xd, R_GE_gcontext *gc) {
   cairo_set_font_size (cc, gc->cex * gc->ps + 0.5);
 }
 
-static void Rcairo_set_line(GDDDesc* xd, R_GE_gcontext *gc) {
+static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	cairo_t *cc = xd->cb->cc;
 	R_GE_lineend lend;
 	R_GE_linejoin ljoin;
@@ -269,15 +269,15 @@ static void Rcairo_set_line(GDDDesc* xd, R_GE_gcontext *gc) {
 
 /*------- the R callbacks begin here ... ------------------------*/
 
-static void GDD_Activate(NewDevDesc *dd)
+static void CairoGD_Activate(NewDevDesc *dd)
 {
-    GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
     if(!xd || !xd->cb) return;
 }
 
-static void GDD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void CairoGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-	GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb) return;
 	{
 		cairo_t *cc = xd->cb->cc;
@@ -300,9 +300,9 @@ static void GDD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  NewDev
 	}
 }
 
-static void GDD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc *dd)
+static void CairoGD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc *dd)
 {
-    GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
     if(!xd || !xd->cb) return;
 
@@ -320,9 +320,9 @@ static void GDD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc *dd
 #endif
 }
 
-static void GDD_Close(NewDevDesc *dd)
+static void CairoGD_Close(NewDevDesc *dd)
 {
-  GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+  CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
   if(!xd || !xd->cb) return;
   
   xd->cb->save_page(xd->cb,xd->npages);
@@ -332,27 +332,27 @@ static void GDD_Close(NewDevDesc *dd)
   dd->deviceSpecific=NULL;
 }
 
-static void GDD_Deactivate(NewDevDesc *dd)
+static void CairoGD_Deactivate(NewDevDesc *dd)
 {
-    GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
 }
 
-static void GDD_Hold(NewDevDesc *dd)
+static void CairoGD_Hold(NewDevDesc *dd)
 {
-    GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
 }
 
-static Rboolean GDD_Locator(double *x, double *y, NewDevDesc *dd)
+static Rboolean CairoGD_Locator(double *x, double *y, NewDevDesc *dd)
 {
-    GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
     if(!xd || !xd->cb) return FALSE;
     if (xd->cb && xd->cb->locator) return xd->cb->locator(xd->cb, x, y);
     return FALSE;
 }
 
-static void GDD_Line(double x1, double y1, double x2, double y2,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void CairoGD_Line(double x1, double y1, double x2, double y2,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-    GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
     if(!xd || !xd->cb) return;
     
 #ifdef JGD_DEBUG
@@ -370,9 +370,9 @@ static void GDD_Line(double x1, double y1, double x2, double y2,  R_GE_gcontext 
     }
 }
 
-static void GDD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, double* descent,  double* width, NewDevDesc *dd)
+static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, double* descent,  double* width, NewDevDesc *dd)
 {
-	GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
 	cairo_text_extents_t te = {0, 0, 0, 0, 0, 0};
 	char str[3], utf8[8];
@@ -409,14 +409,14 @@ static void GDD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, double* d
 #endif
 }
 
-static void GDD_Mode(int mode, NewDevDesc *dd)
+static void CairoGD_Mode(int mode, NewDevDesc *dd)
 {
-    GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
 }
 
-static void GDD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
+static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 {
-	GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
 	if(!xd || !xd->cb) return;
 
@@ -438,7 +438,7 @@ static void GDD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	cairo_paint(cc);
 }
 
-Rboolean GDD_Open(NewDevDesc *dd, GDDDesc *xd,  char *type, int conn, char *file, double w, double h, int bgcolor)
+Rboolean CairoGD_Open(NewDevDesc *dd, GDDDesc *xd,  char *type, int conn, char *file, double w, double h, int bgcolor)
 {
 	cairo_t *cc;
 
@@ -488,7 +488,7 @@ Rboolean GDD_Open(NewDevDesc *dd, GDDDesc *xd,  char *type, int conn, char *file
 	/* Ensure that freetype library is ready */
 	if (!Rcairo_ft_library){
 		if (FT_Init_FreeType(&Rcairo_ft_library)){
-			error("Failed to initialize freetype library in GDD_Open!\n");
+			error("Failed to initialize freetype library in CairoGD_Open!\n");
 			return FALSE;
 		}
 	}
@@ -513,9 +513,9 @@ Rboolean GDD_Open(NewDevDesc *dd, GDDDesc *xd,  char *type, int conn, char *file
 	return TRUE;
 }
 
-static void GDD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void CairoGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-	GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb || n<2) return;
 	{
 		int i=1;
@@ -541,9 +541,9 @@ static void GDD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDev
 	}
 }
 
-static void GDD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void CairoGD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-	GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb || n<2) return;
 	{
 		int i=1;
@@ -563,9 +563,9 @@ static void GDD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDe
 	}
 }
 
-static void GDD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-	GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb) return;
 	{
 		cairo_t *cc = xd->cb->cc;
@@ -607,18 +607,18 @@ static void GDD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcontext 
 	}
 }
 
-static void GDD_Size(double *left, double *right,  double *bottom, double *top,  NewDevDesc *dd)
+static void CairoGD_Size(double *left, double *right,  double *bottom, double *top,  NewDevDesc *dd)
 {
-    GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+    CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
     if(!xd || !xd->cb) return;	
     *left=*top=0.0;
     *right=xd->windowWidth;
     *bottom=xd->windowHeight;
 }
 
-static double GDD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static double CairoGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-	GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
 	int slen = strlen(str);
 	if (!str) return 0;
 	if(!xd || !xd->cb) return slen*8;
@@ -638,7 +638,7 @@ static double GDD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
 			cairo_text_extents(cc, utf8, &te);
 			if (slen > 16) free(utf8);
 		} else {
-			warning("No memory from GDD_StrWidth");
+			warning("No memory from CairoGD_StrWidth");
 			return slen*8;
 		}
 #else
@@ -650,9 +650,9 @@ static double GDD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
 	}
 }
 
-static void GDD_Text(double x, double y, char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void CairoGD_Text(double x, double y, char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-	GDDDesc *xd = (GDDDesc *) dd->deviceSpecific;
+	CairoGDDesc *xd = (GDDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
 	char buf[32];
 	char *utf8;
@@ -720,23 +720,23 @@ static void GDD_Text(double x, double y, char *str,  double rot, double hadj,  R
 }
 
 /** fill the R device structure with callback functions */
-void setupGDDfunctions(NewDevDesc *dd) {
-    dd->open = GDD_Open;
-    dd->close = GDD_Close;
-    dd->activate = GDD_Activate;
-    dd->deactivate = GDD_Deactivate;
-    dd->size = GDD_Size;
-    dd->newPage = GDD_NewPage;
-    dd->clip = GDD_Clip;
-    dd->strWidth = GDD_StrWidth;
-    dd->text = GDD_Text;
-    dd->rect = GDD_Rect;
-    dd->circle = GDD_Circle;
-    dd->line = GDD_Line;
-    dd->polyline = GDD_Polyline;
-    dd->polygon = GDD_Polygon;
-    dd->locator = GDD_Locator;
-    dd->mode = GDD_Mode;
-    dd->hold = GDD_Hold;
-    dd->metricInfo = GDD_MetricInfo;
+void setupCairoGDfunctions(NewDevDesc *dd) {
+    dd->open = CairoGD_Open;
+    dd->close = CairoGD_Close;
+    dd->activate = CairoGD_Activate;
+    dd->deactivate = CairoGD_Deactivate;
+    dd->size = CairoGD_Size;
+    dd->newPage = CairoGD_NewPage;
+    dd->clip = CairoGD_Clip;
+    dd->strWidth = CairoGD_StrWidth;
+    dd->text = CairoGD_Text;
+    dd->rect = CairoGD_Rect;
+    dd->circle = CairoGD_Circle;
+    dd->line = CairoGD_Line;
+    dd->polyline = CairoGD_Polyline;
+    dd->polygon = CairoGD_Polygon;
+    dd->locator = CairoGD_Locator;
+    dd->mode = CairoGD_Mode;
+    dd->hold = CairoGD_Hold;
+    dd->metricInfo = CairoGD_MetricInfo;
 }

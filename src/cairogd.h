@@ -6,7 +6,7 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#ifdef HAVE_GDDCONFIG_H
+#ifdef HAVE_CAIROCONFIG_H
 # include <cairoconfig.h>
 #endif
 
@@ -68,10 +68,10 @@ typedef struct {
   /* char img_type[8]; */ /* image type [png/png8/png24/gif] */
 
   int npages; /* sequence # in case multiple pages are requested */
-} GDDDesc;
+} CairoGDDesc;
 
 Rboolean  gdd_new_device_driver(DevDesc*, char*, int conn, char *, double, double, double, int);
-int       gdd_set_new_device_data(NewDevDesc *dd, double gamma_fac, GDDDesc *xd);
+int       gdd_set_new_device_data(NewDevDesc *dd, double gamma_fac, CairoGDDesc *xd);
 
 #endif
 

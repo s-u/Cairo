@@ -18,7 +18,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define R_GDD 1
+#define R_CairoGD 1
 #include "cairogd.h"
 #include "cairotalk.h"
 
@@ -35,7 +35,7 @@ Rboolean gdd_new_device_driver(DevDesc *dd, char *type, int conn, char *file,
 							   double width, double height, double initps,
 							   int bgcolor)
 {
-	GDDDesc *xd;
+	CairoGDDesc *xd;
 	
 #ifdef JGD_DEBUG
 	printf("gdd_new_device_driver(\"%s\", \"%s\", %f, %f, %f)\n",type,file,width,height,initps);
@@ -43,7 +43,7 @@ Rboolean gdd_new_device_driver(DevDesc *dd, char *type, int conn, char *file,
 	
 	
     /* allocate new device description */
-    if (!(xd = (GDDDesc*)calloc(1, sizeof(GDDDesc))))
+    if (!(xd = (CairoGDDesc*)calloc(1, sizeof(GDDDesc))))
 		return FALSE;
 	
     xd->fontface = -1;
@@ -51,7 +51,7 @@ Rboolean gdd_new_device_driver(DevDesc *dd, char *type, int conn, char *file,
     xd->basefontface = 1;
     xd->basefontsize = initps;
 	
-	if (!GDD_Open((NewDevDesc*)(dd), xd, type, conn, file, width, height, bgcolor)) {
+	if (!CairoGD_Open((NewDevDesc*)(dd), xd, type, conn, file, width, height, bgcolor)) {
 		free(xd);
 		return FALSE;
 	}
@@ -66,7 +66,7 @@ Rboolean gdd_new_device_driver(DevDesc *dd, char *type, int conn, char *file,
   methods/functions. It also specifies the current values of the
   dimensions of the device, and establishes the fonts, line styles, etc.
  */
-int gdd_set_new_device_data(NewDevDesc *dd, double gamma_fac, GDDDesc *xd)
+int gdd_set_new_device_data(NewDevDesc *dd, double gamma_fac, CairoGDDesc *xd)
 {
 #ifdef JGD_DEBUG
 	printf("gdd_set_new_device_data\n");
@@ -74,7 +74,7 @@ int gdd_set_new_device_data(NewDevDesc *dd, double gamma_fac, GDDDesc *xd)
     dd->newDevStruct = 1;
 
     /*	Set up Data Structures. */
-    setupGDDfunctions(dd);
+    setupCairoGDfunctions(dd);
 
     dd->left = dd->clipLeft = 0;			/* left */
     dd->right = dd->clipRight = xd->windowWidth;	/* right */
