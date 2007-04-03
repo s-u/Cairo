@@ -2,6 +2,7 @@
 #include "cairotalk.h"
 #include "img-backend.h"
 #include "pdf-backend.h"
+#include "svn-backend.h"
 #include <Rversion.h>
 
 /* Device Driver Actions */
@@ -273,6 +274,7 @@ static void CairoGD_Activate(NewDevDesc *dd)
 {
     CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
     if(!xd || !xd->cb) return;
+	if (xd->cb->activation) xd->cb->activation(xd->cb, 1);
 }
 
 static void CairoGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  NewDevDesc *dd)
@@ -335,10 +337,13 @@ static void CairoGD_Close(NewDevDesc *dd)
 static void CairoGD_Deactivate(NewDevDesc *dd)
 {
     CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
+    if(!xd || !xd->cb) return;
+	if (xd->cb->activation) xd->cb->activation(xd->cb, 0);
 }
 
 static void CairoGD_Hold(NewDevDesc *dd)
 {
+    if(!xd || !xd->cb) return;
     CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 }
 
@@ -412,6 +417,8 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 static void CairoGD_Mode(int mode, NewDevDesc *dd)
 {
     CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
+    if(!xd || !xd->cb) return;
+	if (xd->cb->mode) xd->cb->mode(xd->cb, mode);
 }
 
 static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
@@ -465,6 +472,8 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 		xd->cb = Rcairo_new_image_backend(conn,file,type,(int)w,(int)h); 
 	else if (!strcmp(type,"pdf"))
 		xd->cb = Rcairo_new_pdf_backend(conn,file,(int)w,(int)h);
+	else if (!strcmp(type,"svg"))
+		xd->cb = Rcairo_new_svg_backend(conn,file,(int)w,(int)h);
 	else {
 		error("Unsupported image type \"%s\" - choose from png, png24, or pdf.", type);
 		return FALSE;
