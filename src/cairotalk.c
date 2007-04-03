@@ -2,7 +2,7 @@
 #include "cairotalk.h"
 #include "img-backend.h"
 #include "pdf-backend.h"
-#include "svn-backend.h"
+#include "svg-backend.h"
 #include <Rversion.h>
 
 /* Device Driver Actions */
@@ -343,6 +343,7 @@ static void CairoGD_Deactivate(NewDevDesc *dd)
 
 static void CairoGD_Hold(NewDevDesc *dd)
 {
+    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
     if(!xd || !xd->cb) return;
     CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 }

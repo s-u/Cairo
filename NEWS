@@ -1,8 +1,12 @@
  NEWS/Changelog
 0.1-5 (under development)
-    o	fix function names to not conflict with GDD
+    o	additional back-ends: svg
 
-    o   add R connections patch support at config time.
+    o	enhanced back-end API
+
+    o	fixed function names to not conflict with GDD
+
+    o   added R connections patch support at config time.
         see 
 		http://wiki.r-project.org/rwiki/doku.php?id=developers:r_connections_api
 
