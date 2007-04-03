@@ -3,6 +3,7 @@
 #include "img-backend.h"
 #include "pdf-backend.h"
 #include "svg-backend.h"
+#include "ps-backend.h"
 #include <Rversion.h>
 
 /* Device Driver Actions */
@@ -472,6 +473,8 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 		xd->cb = Rcairo_new_image_backend(conn,file,type,(int)w,(int)h); 
 	else if (!strcmp(type,"pdf"))
 		xd->cb = Rcairo_new_pdf_backend(conn,file,(int)w,(int)h);
+	else if (!strcmp(type,"ps") || !strcmp(type,"postscript"))
+		xd->cb = Rcairo_new_ps_backend(conn,file,(int)w,(int)h);
 	else if (!strcmp(type,"svg"))
 		xd->cb = Rcairo_new_svg_backend(conn,file,(int)w,(int)h);
 	else {

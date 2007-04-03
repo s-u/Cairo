@@ -1,6 +1,6 @@
  NEWS/Changelog
 0.1-5 (under development)
-    o	additional back-ends: svg
+    o	additional back-ends: svg, ps
 
     o	enhanced back-end API
 

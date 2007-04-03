@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include "pdf-backend.h"
+#include "ps-backend.h"
 #ifdef HAVE_RCONN_H
 #include <R.h>
 #include <Rinternals.h>
@@ -14,7 +14,7 @@
 
 #if CAIRO_HAS_PDF_SURFACE
 
-static void pdf_save_page(Rcairo_backend* be, int pageno){
+static void ps_save_page(Rcairo_backend* be, int pageno){
 	cairo_show_page(be->cc);
 }
 
@@ -32,35 +32,35 @@ static cairo_status_t send_image_data(void *closure, const unsigned char *data, 
 }
 #endif
 
-static void pdf_backend_destroy(Rcairo_backend* be)
+static void ps_backend_destroy(Rcairo_backend* be)
 {
 	cairo_surface_destroy(be->cs);
 	cairo_destroy(be->cc);
 	free(be);
 }
 
-Rcairo_backend *Rcairo_new_pdf_backend(int conn, char *filename, int width, int height)
+Rcairo_backend *Rcairo_new_ps_backend(int conn, char *filename, int width, int height)
 {
 	Rcairo_backend *be;
 
 	if ( ! (be = (Rcairo_backend*) calloc(1,sizeof(Rcairo_backend))))
 		return NULL;
 
-	be->destroy_backend = pdf_backend_destroy;
-	be->save_page = pdf_save_page;
+	be->destroy_backend = ps_backend_destroy;
+	be->save_page = ps_save_page;
 	if (filename){
 		char *fn = NULL;
 		int len = strlen(filename);
 
-		/* Add .pdf extension if necessary */
-		if (len>3 && strcmp(filename+len-4,".pdf")){
+		/* Add .ps extension if necessary */
+		if (len>3 && strcmp(filename+len-4,".ps")){
 			fn = malloc(len + 5);
 			if (!fn) { free(be); return NULL; }
 			strcpy(fn,filename);
-			strcat(fn,".pdf");
+			strcat(fn,".ps");
 			filename = fn;
 		}
-		be->cs = cairo_pdf_surface_create(filename,(double)width,(double)height);
+		be->cs = cairo_ps_surface_create(filename,(double)width,(double)height);
 		if (fn) free(fn);
 	} else {
 #ifdef HAVE_RCONN_H
@@ -68,7 +68,7 @@ Rcairo_backend *Rcairo_new_pdf_backend(int conn, char *filename, int width, int 
 			free(be); return NULL;
 		}
 		*(int *)be->backendSpecific = conn;
-		be->cs = cairo_pdf_surface_create_for_stream(send_image_data,(void *)be,(double)width,(double)height);
+		be->cs = cairo_ps_surface_create_for_stream(send_image_data,(void *)be,(double)width,(double)height);
 #else
 		free(be); return NULL;
 #endif
@@ -91,9 +91,9 @@ Rcairo_backend *Rcairo_new_pdf_backend(int conn, char *filename, int width, int 
 	return be;
 }
 #else
-Rcairo_backend *Rcairo_new_pdf_backend(char *filename, int width, int height)
+Rcairo_backend *Rcairo_new_ps_backend(char *filename, int width, int height)
 {
-	error("cairo library was compiled without PDF back-end.");
+        error("cairo library was compiled without PostScript back-end.");
 	return NULL;
 }
 #endif
