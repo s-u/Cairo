@@ -4,6 +4,7 @@
 #include "pdf-backend.h"
 #include "svg-backend.h"
 #include "ps-backend.h"
+#include "xlib-backend.h"
 #include <Rversion.h>
 
 /* Device Driver Actions */
@@ -477,8 +478,10 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 		xd->cb = Rcairo_new_ps_backend(conn,file,(int)w,(int)h);
 	else if (!strcmp(type,"svg"))
 		xd->cb = Rcairo_new_svg_backend(conn,file,(int)w,(int)h);
+	else if (!strcmp(type,"x11") || !strcmp(type,"X11") || !strcmp(type,"xlib"))
+		xd->cb = Rcairo_new_xlib_backend(file,(int)w,(int)h);
 	else {
-		error("Unsupported image type \"%s\" - choose from png, png24, or pdf.", type);
+		error("Unsupported output type \"%s\" - choose from png, png24, pdf, ps, svg and x11.", type);
 		return FALSE;
 	}
 	if (!xd->cb){
@@ -486,6 +489,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 		return FALSE;
 	}
 
+	xd->cb->dd = dd;
 	cc = xd->cb->cc;
 
 	Rcairo_set_color(cc, bgcolor);
@@ -751,4 +755,32 @@ void setupCairoGDfunctions(NewDevDesc *dd) {
     dd->mode = CairoGD_Mode;
     dd->hold = CairoGD_Hold;
     dd->metricInfo = CairoGD_MetricInfo;
+}
+
+void Rcairo_backend_resize(Rcairo_backend *be, int width, int height) {
+  if (!be || !be->dd) return;
+  if (be->resize) {
+    CairoGDDesc *xd = (CairoGDDesc *) be->dd->deviceSpecific;
+    if(!xd) return;
+    printf("cairotalk.resize(%d,%d) %d:%d %dx%d\n", width, height, be->dd->top, be->dd->left, be->dd->right, be->dd->bottom);
+    
+    xd->windowWidth=width;
+    xd->windowHeight=height;
+    be->dd->size(&(be->dd->left), &(be->dd->right), &(be->dd->bottom), &(be->dd->top), be->dd);
+    be->resize(be, width, height);
+  }
+}
+
+void Rcairo_backend_repaint(Rcairo_backend *be) {
+  if (!be || !be->dd) return;
+  {
+    int devNum = devNumber((DevDesc*) be->dd);
+    if (devNum > 0)
+      GEplayDisplayList((GEDevDesc*) GetDevice(devNum));
+  }
+}
+
+void Rcairo_backend_kill(Rcairo_backend *be) {
+  if (!be || !be->dd) return;
+  KillDevice((DevDesc*) GetDevice(devNumber((DevDesc*) be->dd)));
 }
