@@ -1,5 +1,7 @@
+/* -*- mode: C; tab-width: 4; c-basic-offset: 4 -*- */
 #include "cairogd.h"
 #include "cairotalk.h"
+#include "backend.h"
 #include "img-backend.h"
 #include "pdf-backend.h"
 #include "svg-backend.h"
@@ -274,8 +276,8 @@ static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
 
 static void CairoGD_Activate(NewDevDesc *dd)
 {
-    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
-    if(!xd || !xd->cb) return;
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
+	if(!xd || !xd->cb) return;
 	if (xd->cb->activation) xd->cb->activation(xd->cb, 1);
 }
 
@@ -430,6 +432,7 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	if(!xd || !xd->cb) return;
 
 	cc = xd->cb->cc;
+	Rprintf("---new-page---\n");
 
 	if (xd->npages!=-1)  /* first request is not saved as this is part of the init */
 		xd->cb->save_page(xd->cb,xd->npages);
@@ -443,9 +446,11 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	Rcairo_set_color(cc, xd->gd_bgcolor);
 	/* cairo_set_operator(cc, CAIRO_OPERATOR_SOURCE); */ 
 
+	cairo_reset_clip(cc);
 	cairo_new_path(cc);
 	cairo_paint(cc);
 }
+
 
 Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, char *file, double w, double h, int bgcolor)
 {
@@ -492,34 +497,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 	xd->cb->dd = dd;
 	cc = xd->cb->cc;
 
-	Rcairo_set_color(cc, bgcolor);
-	cairo_paint(cc);
-
-#ifdef CAIRO_HAS_FT_FONT
-	/* Ensure that fontconfig library is ready */
-	if (!FcInit ()) {
-		error ("Can't init font config library\n");
-		return FALSE;
-	}
-	/* Ensure that freetype library is ready */
-	if (!Rcairo_ft_library){
-		if (FT_Init_FreeType(&Rcairo_ft_library)){
-			error("Failed to initialize freetype library in CairoGD_Open!\n");
-			return FALSE;
-		}
-	}
-	if (Rcairo_fonts[0].face == NULL) Rcairo_set_font(0,"Helvetica:style=Regular");
-	if (Rcairo_fonts[1].face == NULL) Rcairo_set_font(1,"Helvetica:style=Bold");
-	if (Rcairo_fonts[2].face == NULL) Rcairo_set_font(2,"Helvetica:style=Italic");
-	if (Rcairo_fonts[3].face == NULL) Rcairo_set_font(3,"Helvetica:style=Bold Italic,BoldItalic");
-	if (Rcairo_fonts[4].face == NULL) Rcairo_set_font(4,"Symbol");
-#else
-	cairo_select_font_face (cc, "Helvetica",
-			CAIRO_FONT_SLANT_NORMAL,
-			CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_set_font_size (cc, 14);
-#endif
-
+	Rcairo_backend_init_surface(xd->cb);
 	/* cairo_save(cc); */
 
 #ifdef JGD_DEBUG
@@ -625,11 +603,11 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 
 static void CairoGD_Size(double *left, double *right,  double *bottom, double *top,  NewDevDesc *dd)
 {
-    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
-    if(!xd || !xd->cb) return;	
-    *left=*top=0.0;
-    *right=xd->windowWidth;
-    *bottom=xd->windowHeight;
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
+	if(!xd || !xd->cb) return;	
+	*left=*top=0.0;
+	*right=xd->windowWidth;
+	*bottom=xd->windowHeight;
 }
 
 static double CairoGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
@@ -692,6 +670,7 @@ static void CairoGD_Text(double x, double y, char *str,  double rot, double hadj
 
 	Rcairo_setup_font(xd,gc);
 
+	Rprintf(" - text \"%s\" face %d  %f:%f rot=%f hadj=%f [%08x:%08x]\n", str, gc->fontface, x, y, rot, hadj, gc->col, gc->fill);
 #ifdef JGD_DEBUG
 	printf("text \"%s\" face %d  %f:%f rot=%f hadj=%f [%08x:%08x]\n", str, gc->fontface, x, y, rot, hadj, gc->col, gc->fill);
 	printf(" length %d\n",len);
@@ -758,29 +737,66 @@ void setupCairoGDfunctions(NewDevDesc *dd) {
 }
 
 void Rcairo_backend_resize(Rcairo_backend *be, int width, int height) {
-  if (!be || !be->dd) return;
-  if (be->resize) {
-    CairoGDDesc *xd = (CairoGDDesc *) be->dd->deviceSpecific;
-    if(!xd) return;
-    printf("cairotalk.resize(%d,%d) %d:%d %dx%d\n", width, height, be->dd->top, be->dd->left, be->dd->right, be->dd->bottom);
-    
-    xd->windowWidth=width;
-    xd->windowHeight=height;
-    be->dd->size(&(be->dd->left), &(be->dd->right), &(be->dd->bottom), &(be->dd->top), be->dd);
-    be->resize(be, width, height);
-  }
+	if (!be || !be->dd) return;
+	if (be->resize) {
+		CairoGDDesc *xd = (CairoGDDesc *) be->dd->deviceSpecific;
+		if(!xd) return;
+		printf("cairotalk.resize(%d,%d) %d:%d %dx%d\n", width, height, be->dd->top, be->dd->left, be->dd->right, be->dd->bottom);
+		
+		xd->windowWidth=width;
+		xd->windowHeight=height;
+		be->dd->size(&(be->dd->left), &(be->dd->right), &(be->dd->bottom), &(be->dd->top), be->dd);
+		be->resize(be, width, height);
+	}
 }
 
 void Rcairo_backend_repaint(Rcairo_backend *be) {
-  if (!be || !be->dd) return;
-  {
-    int devNum = devNumber((DevDesc*) be->dd);
-    if (devNum > 0)
-      GEplayDisplayList((GEDevDesc*) GetDevice(devNum));
-  }
+	if (!be || !be->dd) return;
+	{
+		int devNum = devNumber((DevDesc*) be->dd);
+		if (devNum > 0)
+			GEplayDisplayList((GEDevDesc*) GetDevice(devNum));
+	}
 }
 
 void Rcairo_backend_kill(Rcairo_backend *be) {
-  if (!be || !be->dd) return;
-  KillDevice((DevDesc*) GetDevice(devNumber((DevDesc*) be->dd)));
+	if (!be || !be->dd) return;
+	KillDevice((DevDesc*) GetDevice(devNumber((DevDesc*) be->dd)));
 }
+
+static int has_initd_fc = 0;
+
+void Rcairo_backend_init_surface(Rcairo_backend *be) {
+	cairo_t *cc = be->cc;
+	/*
+	CairoGDDesc *cd = (CairoGDDesc *) be->dd->deviceSpecific;
+
+	Rcairo_set_color(cc, cd->bgcolor);
+	cairo_paint(cc); */
+
+	cairo_reset_clip(cc);
+
+#ifdef CAIRO_HAS_FT_FONT
+	/* Ensure that fontconfig library is ready */
+	if (!has_initd_fc && !FcInit ())
+		error ("Can't init font config library\n");
+	has_initd_fc = 1;
+
+	/* Ensure that freetype library is ready */
+	if (!Rcairo_ft_library &&
+		FT_Init_FreeType(&Rcairo_ft_library))
+		error("Failed to initialize freetype library in CairoGD_Open!\n");
+
+	if (Rcairo_fonts[0].face == NULL) Rcairo_set_font(0,"Helvetica:style=Regular");
+	if (Rcairo_fonts[1].face == NULL) Rcairo_set_font(1,"Helvetica:style=Bold");
+	if (Rcairo_fonts[2].face == NULL) Rcairo_set_font(2,"Helvetica:style=Italic");
+	if (Rcairo_fonts[3].face == NULL) Rcairo_set_font(3,"Helvetica:style=Bold Italic,BoldItalic");
+	if (Rcairo_fonts[4].face == NULL) Rcairo_set_font(4,"Symbol");
+#else
+	cairo_select_font_face (cc, "Helvetica",
+			CAIRO_FONT_SLANT_NORMAL,
+			CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size (cc, 14);
+#endif
+}
+

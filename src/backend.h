@@ -29,5 +29,5 @@ typedef struct st_Rcairo_backend {
 void Rcairo_backend_resize(Rcairo_backend *be, int width, int height); /* won't do anything if resize is not implemented in the back-end */
 void Rcairo_backend_repaint(Rcairo_backend *be); /* re-plays the display list */
 void Rcairo_backend_kill(Rcairo_backend *be); /* kills the devide */
-
+void Rcairo_backend_init_surface(Rcairo_backend *be); /* initialize a new surface */
 #endif
