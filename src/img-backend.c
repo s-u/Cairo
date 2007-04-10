@@ -171,14 +171,14 @@ Rcairo_backend *Rcairo_new_image_backend(int conn, char *filename, char *type, i
 		be->cs = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
 		be->save_page = image_save_page_jpg;
 #else
-		error("Sorry, this Cairo was compiled without jpeg support.")
+		error("Sorry, this Cairo was compiled without jpeg support.");
 #endif
 	} else if (!strcmp(type,"tif") || !strcmp(type,"tiff")) {
 #ifdef SUPPORTS_TIFF
 		be->cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
 		be->save_page = image_save_page_tiff;
 #else
-		error("Sorry, this Cairo was compiled without tiff support.")
+		error("Sorry, this Cairo was compiled without tiff support.");
 #endif
 	} /* etc. */
 
