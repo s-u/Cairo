@@ -74,7 +74,8 @@ Rcairo_backend *Rcairo_new_image_backend(int conn, char *filename, char *type, i
 {
 	Rcairo_backend *be;
 	Rcairo_image_backend *image;
-	
+	int alpha_plane = 0;
+
 	if ( ! (be = (Rcairo_backend*) calloc(1,sizeof(Rcairo_backend))))
 		return NULL;
 
@@ -110,13 +111,13 @@ Rcairo_backend *Rcairo_new_image_backend(int conn, char *filename, char *type, i
 			return NULL;
 		}
 
-		/* What does this do? JRH */
-		/* start off with fully transparent image */
-		/* memset(image->buf, 0xff, stride * height); */
+		/* initialize image (default is 0/0/0/0 due to calloc) 
+		   memset(image->buf, 255, stride * height); */
 
 		be->cs = cairo_image_surface_create_for_data (image->buf,
 				CAIRO_FORMAT_ARGB32,
 				width, height, stride);
+		alpha_plane = 1;
 		if (!be->save_page) be->save_page = image_save_page_png;
 
 	} else if (!strcmp(type,"png")){
@@ -143,8 +144,11 @@ Rcairo_backend *Rcairo_new_image_backend(int conn, char *filename, char *type, i
 		return NULL;
 	}
 
-	cairo_set_operator(be->cc,CAIRO_OPERATOR_SOURCE);
-
+	/* Note: back-ends with alpha-plane don't work with ATOP, because cairo doesn't increase
+	   the opacity and thus the resulting picture will be fully transparent. OVER doesn't
+	   blend alpha, so the result is not as expected, but at least in works on transparent
+	   backgrounds. */
+	cairo_set_operator(be->cc,alpha_plane?CAIRO_OPERATOR_OVER:CAIRO_OPERATOR_ATOP);
 	return be;
 }
 

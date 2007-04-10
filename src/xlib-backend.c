@@ -378,7 +378,7 @@ Rcairo_backend *Rcairo_new_xlib_backend(char *display, int width, int height)
 		return NULL;
 	}
 
-	cairo_set_operator(be->cc,CAIRO_OPERATOR_OVER);
+	cairo_set_operator(be->cc,CAIRO_OPERATOR_ATOP);
 
 	return be;
 }
