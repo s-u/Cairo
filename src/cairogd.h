@@ -1,14 +1,10 @@
 #ifndef _DEV_GD_H
 #define _DEV_GD_H
 
-#define CAIROGD_VER 0x000105 /* Cairo v0.1-5 */
+#define CAIROGD_VER 0x010200 /* Cairo v1.2-0 */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
-#ifdef HAVE_CAIROCONFIG_H
-# include <cairoconfig.h>
-#endif
+/* cairo R package config */
+#include "cconfig.h"
 
 #include <R.h>
 #include <Rinternals.h>

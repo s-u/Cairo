@@ -475,7 +475,9 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 	 * libcairo has palette-based png's (png8) and jpeg format in the works, so 
 	 * we'll add those when available.
 	 */
-	if (!strcmp(type,"png") || !strcmp(type,"png24"))
+	/* Cairo 1.2-0: jpeg and tiff are created via external libraries (libjpeg/libtiff) by our code */
+	if (!strcmp(type,"png") || !strcmp(type,"png24")  || !strcmp(type,"jpeg") || !strcmp(type,"jpg") ||
+		!strcmp(type,"tif")  || !strcmp(type,"tiff"))
 		xd->cb = Rcairo_new_image_backend(conn,file,type,(int)w,(int)h); 
 	else if (!strcmp(type,"pdf"))
 		xd->cb = Rcairo_new_pdf_backend(conn,file,(int)w,(int)h);

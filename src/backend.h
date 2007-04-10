@@ -1,6 +1,9 @@
 #ifndef __CAIRO_BACKEND_H__
 #define __CAIRO_BACKEND_H__
 
+/* Cario config from configure */
+#include "cconfig.h"
+
 #include <cairo.h>
 #include <R.h>
 #include <Rinternals.h>

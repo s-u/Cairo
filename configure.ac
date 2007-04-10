@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(Cairo, 0.1, Simon.Urbanek@r-project.org)
+AC_INIT(Cairo, 1.2, Simon.Urbanek@r-project.org)
 AC_CONFIG_SRCDIR([src/cairogd.c])
-#AC_CONFIG_HEADER([src/cairoconfig.h])
+AC_CONFIG_HEADER([src/cconfig.h])
 
 # find R home and set CC/CFLAGS
 : ${R_HOME=`R RHOME`}
@@ -36,7 +36,7 @@ AC_C_CONST
 #AC_HEADER_TIME
 
 # Checks for library functions.
-AC_FUNC_MALLOC
+#AC_FUNC_MALLOC
 #AC_TYPE_SIGNAL
 
 AC_PATH_PROG([PKGCONF],[pkg-config],[],[$PATH:/usr/local/bin:ext/bin:ext])
@@ -123,6 +123,39 @@ int main(void) {
 }
 ],[AC_MSG_RESULT(yes)],
 	[AC_MSG_ERROR([Cannot compile a simple Cairo program. See config.log for details.])])
+
+# --- check for JPEG support ---
+AC_MSG_CHECKING([wheter libjpeg works])
+zLIBS="${LIBS}"
+LIBS="${LIBS} -ljpeg"
+AC_LINK_IFELSE([
+#include <stdio.h>
+#include <jpeglib.h>
+int main(void) {
+  struct jpeg_compress_struct cinfo;
+  jpeg_create_compress(&cinfo);
+  return 0;
+}
+],[ AC_MSG_RESULT([yes])
+    AC_DEFINE(SUPPORTS_JPEG, 1, [Define to 1 if libjpeg is present and working])],
+  [ AC_MSG_RESULT(no)
+    LIBS="${zLIBS}"])
+
+# --- check for TIFF support
+AC_MSG_CHECKING([wheter libtiff works])
+zLIBS="${LIBS}"
+LIBS="${LIBS} -ltiff"
+AC_LINK_IFELSE([
+#include <tiffio.h>
+int main(void) {
+  TIFF *out = TIFFOpen("new.tif", "w");
+  TIFFSetField (out, TIFFTAG_IMAGEWIDTH, 100);
+  return 0;
+}
+],[ AC_MSG_RESULT([yes])
+    AC_DEFINE(SUPPORTS_TIFF, 1, [Define to 1 if libtiff is present and working])],
+  [ AC_MSG_RESULT(no)
+    LIBS="${zLIBS}"])
 
 AC_CONFIG_FILES([src/Makevars])
 AC_OUTPUT

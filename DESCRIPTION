@@ -1,10 +1,10 @@
 Package: Cairo
-Version: 0.1-4
-Title: R Graphics device using cairographics library for creating PNG and PDF output.
+Version: 1.2-0
+Title: R graphics device using cairographics library for creating high-quality PNG, PDF, SVG, PostScript output and interactive display devices such as X11.
 Author: Simon Urbanek <Simon.Urbanek@r-project.org>, Jeffrey Horner <jeff.horner@vanderbilt.edu>
-Maintainer: Jeffrey Horner <jeff.horner@vanderbilt.edu>
+Maintainer: Simon Urbanek <Simon.Urbanek@r-project.org>
 Depends: R (>= 1.9.0)
-Description: This package provides a Cairo graphics device that can be use to create high-quality PDF and bitmap output (currently png) without the dependence on X11 or other external programs. This device supports alpha channel (semi-transparent drawing) and resulting images can contain transparent and semi-transparent regions.
+Description: This package provides a Cairo graphics device that can be use to create high-quality vector (PDF, PostScript and SVG) and bitmap output (PNG), and high-quality rendering in displays (X11). Since it uses the same back-end for all output, copying across formats is WYSIWYG. Files are created without the dependence on X11 or other external programs. This device supports alpha channel (semi-transparent drawing) and resulting images can contain transparent and semi-transparent regions. It is ideal for use in server environemnts (file output) and as a replacement for other devices such as X11 that don't have Cairo's capabilities such as alpha support or anti-aliasing. Backends are modular such that any subset of backends is supported.
 License: GPL version 2
-SystemRequirements: cairo (>= 1.0.2 http://www.cairographics.org/)
-URL: http://www.rosuda.org/R/Cairo/
+SystemRequirements: cairo (>= 1.2 http://www.cairographics.org/)
+URL: http://www.rforge.net/Cairo/

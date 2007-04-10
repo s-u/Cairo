@@ -1,3 +1,8 @@
+/* -*- mode: C; tab-width: 4; c-basic-offset: 4 -*-
+   Copyright (C) 2004-2007   Simon Urbanek
+   Copyright (C) 2006        Jeffrey Horner
+   License: GPL v2 */
+
 #ifdef HAVE_RCONN_H
 #include <R.h>
 #include <Rinternals.h>
@@ -13,11 +18,15 @@
 #include <string.h>
 #include <cairo.h>
 #include "img-backend.h"
+#include "img-jpeg.h"
+#include "img-tiff.h"
+
+#define default_jpeg_quality 60
 
 typedef struct st_Rcairo_image_backend {
 	void *buf;
 	char *filename;
-	int conn;
+	int  conn;
 } Rcairo_image_backend;
 
 static void image_backend_destroy(Rcairo_backend* be)
@@ -34,22 +43,55 @@ static void image_backend_destroy(Rcairo_backend* be)
 	free(be);
 }
 
-/* static void image_save_page_jpg(Rcairo_backend* be, int pageno){
-} */
+/* utility function: create a filename based on the original specification and the pageno
+   result must be freed by the caller */
+static char *image_filename(Rcairo_backend* be, int pageno) {
+	Rcairo_image_backend *image = (Rcairo_image_backend *)be->backendSpecific;
+	char *fn;
+	int l = strlen(image->filename)+16;
+
+	fn=(char*) malloc(l);
+	fn[l-1] = 0;
+	snprintf(fn, l-1, image->filename, pageno);
+	return fn;
+}
+
+static void image_save_page_jpg(Rcairo_backend* be, int pageno){
+	Rcairo_image_backend *image = (Rcairo_image_backend *)be->backendSpecific;
+	char *fn = image_filename(be, pageno);
+	int width = cairo_image_surface_get_width(be->cs);
+	int height = cairo_image_surface_get_height(be->cs);
+	unsigned char *buf = cairo_image_surface_get_data (be->cs);
+	int res = save_jpeg_file(buf, width, height, fn, default_jpeg_quality);
+	free(fn);
+	if (res == -2)
+		error("Sorry, this Cario was compiled without jpeg support.");
+	if (res)
+		error("Unable to write jpeg file.");
+}
+
+static void image_save_page_tiff(Rcairo_backend* be, int pageno){
+	Rcairo_image_backend *image = (Rcairo_image_backend *)be->backendSpecific;
+	char *fn = image_filename(be, pageno);
+	int width = cairo_image_surface_get_width(be->cs);
+	int height = cairo_image_surface_get_height(be->cs);
+	int stride = cairo_image_surface_get_stride(be->cs);
+	unsigned char *buf = cairo_image_surface_get_data (be->cs);
+	int res = save_tiff_file(buf, width, height, fn, stride/width);
+	free(fn);
+	if (res == -2)
+		error("Sorry, this Cario was compiled without tiff support.");
+	if (res)
+		error("Unable to write tiff file.");
+}
 
 static void image_save_page_png(Rcairo_backend* be, int pageno){
 	Rcairo_image_backend *image = (Rcairo_image_backend *)be->backendSpecific;
 	char *fn;
 	int   nl;
 
-	fn=(char*) malloc(strlen(image->filename)+16);
-	strcpy(fn, image->filename);
-	if (pageno>0) sprintf(fn+strlen(fn),"%d",pageno);
-	nl = strlen(fn);
-
-	if (nl>3 && strcmp(fn+nl-4,".png")) strcat(fn, ".png");
+	fn=image_filename(be, pageno);
 	cairo_surface_write_to_png(be->cs, fn);
-
 	free(fn);
 }
 
@@ -103,7 +145,6 @@ Rcairo_backend *Rcairo_new_image_backend(int conn, char *filename, char *type, i
 	be->backendSpecific = (void *)image;
 
 	if (!strcmp(type,"png24")){
-
 		int stride = 4 * width;
 
 		if ( ! (image->buf = calloc (stride * height, 1))){
@@ -125,12 +166,21 @@ Rcairo_backend *Rcairo_new_image_backend(int conn, char *filename, char *type, i
 		be->cs = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
 		if (!be->save_page) be->save_page = image_save_page_png;
 
-	} /* else if (!strcmp(image->type,"jpg")) {
-
+	} else if (!strcmp(type,"jpg") || !strcmp(type,"jpeg")) {
+#ifdef SUPPORTS_JPEG
 		be->cs = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
 		be->save_page = image_save_page_jpg;
-
-	} */ /* etc. */
+#else
+		error("Sorry, this Cairo was compiled without jpeg support.")
+#endif
+	} else if (!strcmp(type,"tif") || !strcmp(type,"tiff")) {
+#ifdef SUPPORTS_TIFF
+		be->cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+		be->save_page = image_save_page_tiff;
+#else
+		error("Sorry, this Cairo was compiled without tiff support.")
+#endif
+	} /* etc. */
 
 	if (cairo_surface_status(be->cs) != CAIRO_STATUS_SUCCESS){
 		if (image->buf) free(image->buf); free(be); free(image->filename); free(image);
