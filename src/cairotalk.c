@@ -7,6 +7,7 @@
 #include "svg-backend.h"
 #include "ps-backend.h"
 #include "xlib-backend.h"
+#include "w32-backend.h"
 #include <Rversion.h>
 
 /* Device Driver Actions */
@@ -487,6 +488,8 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 		xd->cb = Rcairo_new_svg_backend(conn,file,(int)w,(int)h);
 	else if (!strcmp(type,"x11") || !strcmp(type,"X11") || !strcmp(type,"xlib"))
 		xd->cb = Rcairo_new_xlib_backend(file,(int)w,(int)h);
+	else if (!strncmp(type,"win",3))
+		xd->cb = Rcairo_new_w32_backend(file,(int)w,(int)h);
 	else {
 		error("Unsupported output type \"%s\" - choose from png, png24, pdf, ps, svg and x11.", type);
 		return FALSE;
@@ -672,7 +675,6 @@ static void CairoGD_Text(double x, double y, char *str,  double rot, double hadj
 
 	Rcairo_setup_font(xd,gc);
 
-	Rprintf(" - text \"%s\" face %d  %f:%f rot=%f hadj=%f [%08x:%08x]\n", str, gc->fontface, x, y, rot, hadj, gc->col, gc->fill);
 #ifdef JGD_DEBUG
 	printf("text \"%s\" face %d  %f:%f rot=%f hadj=%f [%08x:%08x]\n", str, gc->fontface, x, y, rot, hadj, gc->col, gc->fill);
 	printf(" length %d\n",len);

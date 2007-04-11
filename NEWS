@@ -1,7 +1,7 @@
 NEWS/Changelog
 
 1.2-0	(under development)
-    o	additional interactive back end: X11 (XLib)
+    o	additional interactive back ends: X11 (XLib) and win (Win32)
 
     o	enhanced back-end API to support interactive back-ends
 
