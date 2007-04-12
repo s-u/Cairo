@@ -433,7 +433,6 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	if(!xd || !xd->cb) return;
 
 	cc = xd->cb->cc;
-	Rprintf("---new-page---\n");
 
 	if (xd->npages!=-1)  /* first request is not saved as this is part of the init */
 		xd->cb->save_page(xd->cb,xd->npages);
@@ -758,8 +757,12 @@ void Rcairo_backend_repaint(Rcairo_backend *be) {
 	if (!be || !be->dd) return;
 	{
 		int devNum = devNumber((DevDesc*) be->dd);
-		if (devNum > 0)
+		if (devNum > 0) {
+			be->in_replay = 1;
 			GEplayDisplayList((GEDevDesc*) GetDevice(devNum));
+			be->in_replay = 0;
+			if (be->mode) be->mode(be, -1);
+		}
 	}
 }
 

@@ -15,6 +15,12 @@ typedef struct st_Rcairo_backend {
   cairo_t          *cc;  /* cairo context */
   cairo_surface_t  *cs;  /* cairo surface */
   NewDevDesc       *dd;  /* device descriptor */
+  int               in_replay; /* set to 1 if it is known where the painting stops
+				  and thus the backend doesn't need to perform
+				  any synchronization until we're done.
+				  if mode is set, it is called ater replay
+				  with mode=-1
+			       */
 
   /*----- back-end global callbacks (=methods) -----*/
   /* cairo_surface_t *(*create_surface)(struct st_Rcairo_backend *be, int width, int height); */
@@ -24,7 +30,7 @@ typedef struct st_Rcairo_backend {
   /* optional callbacks - must be set to 0 if unsupported */
   int  (*locator)(struct st_Rcairo_backend *be, double *x, double *y);
   void (*activation)(struct st_Rcairo_backend *be, int activate);  /* maps both Activate/Deactivate */
-  void (*mode)(struct st_Rcairo_backend *be, int mode);
+  void (*mode)(struct st_Rcairo_backend *be, int mode); /* in addition it is called after internal replay with mode -1 */
   void (*resize)(struct st_Rcairo_backend *be, int width, int height);
 } Rcairo_backend;
 
