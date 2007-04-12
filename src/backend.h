@@ -21,6 +21,8 @@ typedef struct st_Rcairo_backend {
 				  if mode is set, it is called ater replay
 				  with mode=-1
 			       */
+  int               truncate_rect; /* set to 1 to truncate rectangle coordinates
+				      to integers. Useful with bitmap back-ends. */
 
   /*----- back-end global callbacks (=methods) -----*/
   /* cairo_surface_t *(*create_surface)(struct st_Rcairo_backend *be, int width, int height); */

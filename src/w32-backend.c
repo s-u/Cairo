@@ -329,6 +329,7 @@ Rcairo_backend *Rcairo_new_w32_backend(char *display, int width, int height)
 	be->resize = w32_resize;
 	be->mode = w32_mode;
 	be->locator = w32_locator;
+	be->truncate_rect = 1;
 
 #ifdef NATIVE_UI
 	if (!inited_w32) {

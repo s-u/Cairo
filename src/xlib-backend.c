@@ -49,7 +49,6 @@ static void handleDisplayEvent(Display *display, XEvent event);
 
 /*---- save page ----*/
 static void xlib_save_page(Rcairo_backend* be, int pageno){
-	Rprintf("Cairo.xlib-backend:xlib_save_page %d\n", pageno);
 	cairo_show_page(be->cc);
 
 	cairo_set_source_rgba(be->cc,1,1,1,1);
@@ -61,7 +60,6 @@ static void xlib_save_page(Rcairo_backend* be, int pageno){
 /*---- resize ----*/
 static void xlib_resize(Rcairo_backend* be, int width, int height){
 	Rcairo_xlib_data *xd = (Rcairo_xlib_data *) be->backendSpecific;
-	Rprintf("Cairo.xlib_resize %d x %d (xd=%x)\n", width, height, xd);
 	if (xd) {
 		xd->width=width;
 		xd->height=height;
@@ -73,10 +71,9 @@ static void xlib_resize(Rcairo_backend* be, int width, int height){
 
 /*---- mode ---- (0=done, 1=busy, 2=locator) */
 static void xlib_mode(Rcairo_backend* be, int which){
-	Rprintf("Cairo.xlib_mode %d\n", which);
-	if (which == 0)	{
+	if (be->in_replay) return;
+	if (which < 1)	{
 		Rcairo_xlib_data *xd = (Rcairo_xlib_data *) be->backendSpecific;
-		/* cairo_copy_page(be->cc); */
 		if (xd->display) XSync(xd->display, 0);
 	}
 }
@@ -92,8 +89,7 @@ int  xlib_locator(struct st_Rcairo_backend *be, double *x, double *y) {
 
     ProcessX11Events((void*)NULL);    /* discard pending events */
     XSync(display, 1);
-    /* handle X events as normal until get a button */
-    /* click in the desired device */
+    /* handle X events as normal until get a button click in the desired device */
 	while (!done /* && displayOpen FIXME! */) {
 		XNextEvent(display, &event);
 		/* possibly later R_CheckUserInterrupt(); */
@@ -160,7 +156,7 @@ typedef struct Rcairo_display_list_s {
 
 static Rcairo_display_list display_list = { 0, 0 };
 
-/* this is bad - we need to associate it with a display */
+/* FIXME: this is bad - we need to associate it with a display */
 static Atom _XA_WM_PROTOCOLS, protocol;
 
 static void ProcessX11DisplayEvents(Display *display)
@@ -169,7 +165,6 @@ static void ProcessX11DisplayEvents(Display *display)
 	
 	while (display && XPending(display)) {
 		XNextEvent(display, &event);
-		printf("ProcessX11DisplayEvents.type=%d\n", event.xany.type);
 		handleDisplayEvent(display, event);
 	}
 }
@@ -182,7 +177,7 @@ static void handleDisplayEvent(Display *display, XEvent event) {
 	int do_update = 0;
 		
 	if (event.xany.type == Expose) {
-		printf(" - expose\n");
+		/* printf(" - expose\n"); */
 		while(XCheckTypedEvent(display, Expose, &event))
 			;
 		XFindContext(display, event.xexpose.window,
@@ -200,7 +195,7 @@ static void handleDisplayEvent(Display *display, XEvent event) {
 			xd->height != event.xconfigure.height)
 			do_update = 1;
 		
-		printf(" - configure %d x %d (vs %d x %d, update=%d)\n", event.xconfigure.width, event.xconfigure.height, xd->width, xd->height, do_update);
+		/* printf(" - configure %d x %d (vs %d x %d, update=%d)\n", event.xconfigure.width, event.xconfigure.height, xd->width, xd->height, do_update); */
 		
 		if (do_update) { 				
 			Rcairo_backend_resize(xd->be, event.xconfigure.width, event.xconfigure.height);
@@ -216,10 +211,6 @@ static void handleDisplayEvent(Display *display, XEvent event) {
 			xd = (Rcairo_xlib_data *) temp;
 			Rcairo_backend_kill(xd->be);
 		}
-	
-	Rprintf(" - do_update = %d\n", do_update);
-	/* if (do_update)
-	   Rcairo_backend_repaint(xd->be); */
 }
 
 static void ProcessX11Events(void *foo)
@@ -356,6 +347,7 @@ Rcairo_backend *Rcairo_new_xlib_backend(char *display, int width, int height)
 	be->resize = xlib_resize;
 	be->mode = xlib_mode;
 	be->locator = xlib_locator;
+	be->truncate_rect = 1;
 
 	if (Rcairo_xlib_new_window(xd, display, width, height)) {
 		free(be); free(xd);

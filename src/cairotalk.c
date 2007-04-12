@@ -372,6 +372,12 @@ static void CairoGD_Line(double x1, double y1, double x2, double y2,  R_GE_gcont
     if (CALPHA(gc->col) && gc->lty!=-1) {
       cairo_t *cc = xd->cb->cc;
       cairo_new_path(cc);
+	  if ((x1==x2 || y1==y2) &&xd->cb->truncate_rect) {
+		  /* if we are snapping rectangles to grid, we also need to snap straight
+			 lines to make sure they match - e.g. tickmarks, baselines etc. */
+		  x1=trunc(x1)+0.5; x2=trunc(x2)+0.5;
+		  y1=trunc(y1)+0.5; y2=trunc(y2)+0.5;
+	  }
       cairo_move_to(cc, x1, y1);
       cairo_line_to(cc, x2, y2);
       Rcairo_set_color(cc, gc->col);
@@ -567,6 +573,7 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 	if(!xd || !xd->cb) return;
 	{
 		cairo_t *cc = xd->cb->cc;
+		double snap_add = 0.0;
 		if (x1<x0) { double h=x1; x1=x0; x0=h; }
 		if (y1<y0) { double h=y1; y1=y0; y0=h; }
 		/* if (x0<0) x0=0; if (y0<0) y0=0; */
@@ -577,28 +584,30 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 		printf("rect: %x %f/%f %f/%f [%08x/%08x]\n", cc, x0, y0, x1, y1, gc->col, gc->fill);
 #endif
 
-		/* Snap to grid so that image() plots look nicer, but only do this
-		 * for raster outputs. */
-		if (cairo_surface_get_type(xd->cb->cs) == CAIRO_SURFACE_TYPE_IMAGE) {
-			int ix0,ix1,iy0,iy1;
+		/* Snap to grid so that image() plots and rectangles look nicer, but only if the backend wishes so */
+		if (xd->cb->truncate_rect) {
 			cairo_user_to_device(cc,&x0,&y0);
 			cairo_user_to_device(cc,&x1,&y1);
-			ix0 = (int)x0; x0 = (double)ix0;
-			ix1 = (int)x1; x1 = (double)ix1;
-			iy0 = (int)y0; y0 = (double)iy0;
-			iy1 = (int)y1; y1 = (double)iy1;
-
+			x0 = trunc(x0); x1 = trunc(x1);
+			y0 = trunc(y0); y1 = trunc(y1);
 			cairo_device_to_user(cc,&x0,&y0);
 			cairo_device_to_user(cc,&x1,&y1);
+			snap_add=1;
 		}
 
 		cairo_new_path(cc);
-		cairo_rectangle(cc, x0, y0, x1-x0, y1-y0);
+		cairo_rectangle(cc, x0, y0, x1-x0+snap_add, y1-y0+snap_add);
 		if (CALPHA(gc->fill)) {
 			Rcairo_set_color(cc, gc->fill);
 			cairo_fill_preserve(cc);
 		}
 		if (CALPHA(gc->col) && gc->lty!=-1) {
+			/* if we are snapping, note that lines must be in 0.5 offset to fills in order
+			   hit the same pixels, because lines extend to both sides */
+			if (xd->cb->truncate_rect) {
+				cairo_new_path(cc);
+				cairo_rectangle(cc, x0+0.5, y0+0.5, x1-x0, y1-y0);
+			}
 			Rcairo_set_color(cc, gc->col);
 			cairo_stroke(cc);
 		} else cairo_new_path(cc);
@@ -744,7 +753,7 @@ void Rcairo_backend_resize(Rcairo_backend *be, int width, int height) {
 	if (be->resize) {
 		CairoGDDesc *xd = (CairoGDDesc *) be->dd->deviceSpecific;
 		if(!xd) return;
-		printf("cairotalk.resize(%d,%d) %d:%d %dx%d\n", width, height, be->dd->top, be->dd->left, be->dd->right, be->dd->bottom);
+		/* printf("cairotalk.resize(%d,%d) %d:%d %dx%d\n", width, height, be->dd->top, be->dd->left, be->dd->right, be->dd->bottom); */
 		
 		xd->windowWidth=width;
 		xd->windowHeight=height;

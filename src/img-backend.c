@@ -143,6 +143,7 @@ Rcairo_backend *Rcairo_new_image_backend(int conn, char *filename, char *type, i
 
 	be->destroy_backend = image_backend_destroy;
 	be->backendSpecific = (void *)image;
+	be->truncate_rect = 1;
 
 	if (!strcmp(type,"png24")){
 		int stride = 4 * width;
