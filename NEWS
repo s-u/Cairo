@@ -1,6 +1,18 @@
 NEWS/Changelog
 
-1.2-0	(under development)
+1.2-1	(under development)
+    o	improve rendering on bitmap devices by aligning straight lines
+	to the pixel grid and adding bleed to such fills.
+
+    o	added wrappers that take exactly the same parameters as
+	existing devices such as png, jpeg, pdf, postscript, X11 or
+	windows and map them to calls to Cairo. They can be used to
+	replace native devices by Cairo without the need to change
+	existing code.
+
+    o	added namespace
+
+1.2-0
     o	additional interactive back ends: X11 (XLib) and win (Win32)
 
     o	enhanced back-end API to support interactive back-ends
