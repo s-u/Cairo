@@ -21,8 +21,8 @@ else
     rm -rf autom4te*
 fi
 
-echo "Removing CVS and backup stuff ..."
-find . -name CVS | xargs rm -rf
+echo "Removing SVN/CVS and backup stuff ..."
+find . -name CVS -o -name .svn | xargs rm -rf
 find . -name \*~ | xargs rm -f
 
 echo "Updating version ..."
