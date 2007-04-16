@@ -237,8 +237,8 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 
 static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	cairo_t *cc = xd->cb->cc;
-	R_GE_lineend lend;
-	R_GE_linejoin ljoin;
+	R_GE_lineend lend = CAIRO_LINE_CAP_SQUARE;
+	R_GE_linejoin ljoin = CAIRO_LINE_JOIN_ROUND;
 	
 	/* Line width: par lwd  */
 	cairo_set_line_width(cc, gc->lwd);
@@ -391,7 +391,7 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
 	cairo_text_extents_t te = {0, 0, 0, 0, 0, 0};
-	char str[3], utf8[8];
+	char str[3], utf8[8] = {0};
 
 	if(!xd || !xd->cb) return;
 
@@ -446,10 +446,10 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 
 	/* Set new parameters from graphical context.
 	 * do we need more than fill color for background?
-	 */
-	xd->gd_bgcolor = gc->fill;
+	 * is fill really the desired background ?
+	 xd->gd_bgcolor = gc->fill; */
 
-	Rcairo_set_color(cc, xd->gd_bgcolor);
+	Rcairo_set_color(cc, xd->canvas);
 	/* cairo_set_operator(cc, CAIRO_OPERATOR_SOURCE); */ 
 
 	cairo_reset_clip(cc);
@@ -457,19 +457,35 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	cairo_paint(cc);
 }
 
+static SEXP findArg(char *name, SEXP list) {
+	SEXP ns = install(name);
+	while (list && list!=R_NilValue) {
+		if (TAG(list)==ns) return CAR(list);
+		list=CDR(list);
+	}
+	return 0;
+}
 
-Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, char *file, double w, double h, int bgcolor)
+Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, char *file, double w, double h,
+					  double umpl, SEXP aux)
 {
 	cairo_t *cc;
 
-	xd->fill = 0xffffffff; /* transparent, was R_RGB(255, 255, 255); */
-	xd->col = R_RGB(0, 0, 0);
+	if (umpl==0) error("unit multiplier cannot be zero");
+
+	xd->fill   = 0xffffffff; /* transparent, was R_RGB(255, 255, 255); */
+	xd->col    = R_RGB(0, 0, 0);
 	xd->canvas = R_RGB(255, 255, 255);
-	xd->windowWidth = w;
+	xd->windowWidth  = w;
 	xd->windowHeight = h;
 
 	xd->npages=-1;	
-	xd->gd_bgcolor = bgcolor;
+	xd->cb = (Rcairo_backend*) calloc(1,sizeof(Rcairo_backend));
+	if (!xd->cb) return FALSE;
+
+	xd->cb->dd = dd;
+	xd->cb->dpix = xd->dpix;	
+	xd->cb->dpiy = xd->dpiy;	
 
 	/* Select Cairo backend */
 
@@ -483,35 +499,81 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 	 */
 	/* Cairo 1.2-0: jpeg and tiff are created via external libraries (libjpeg/libtiff) by our code */
 	if (!strcmp(type,"png") || !strcmp(type,"png24")  || !strcmp(type,"jpeg") || !strcmp(type,"jpg") ||
-		!strcmp(type,"tif")  || !strcmp(type,"tiff"))
-		xd->cb = Rcairo_new_image_backend(conn,file,type,(int)w,(int)h); 
-	else if (!strcmp(type,"pdf"))
-		xd->cb = Rcairo_new_pdf_backend(conn,file,(int)w,(int)h);
-	else if (!strcmp(type,"ps") || !strcmp(type,"postscript"))
-		xd->cb = Rcairo_new_ps_backend(conn,file,(int)w,(int)h);
-	else if (!strcmp(type,"svg"))
-		xd->cb = Rcairo_new_svg_backend(conn,file,(int)w,(int)h);
-	else if (!strcmp(type,"x11") || !strcmp(type,"X11") || !strcmp(type,"xlib"))
-		xd->cb = Rcairo_new_xlib_backend(file,(int)w,(int)h);
-	else if (!strncmp(type,"win",3))
-		xd->cb = Rcairo_new_w32_backend(file,(int)w,(int)h);
-	else {
-		error("Unsupported output type \"%s\" - choose from png, png24, pdf, ps, svg and x11.", type);
-		return FALSE;
+		!strcmp(type,"tif")  || !strcmp(type,"tiff")) {
+		int quality = 0; /* fid otu if we have quality setting */
+		if (!strcmp(type,"jpeg") || !strcmp(type,"jpg")) {
+			SEXP arg = findArg("quality", aux);
+			if (arg && arg!=R_NilValue)
+				quality = asInteger(arg);
+			if (quality<0) quality=0;
+			if (quality>100) quality=100;
+		}
+		if (umpl>=0) {
+			if (xd->dpix <= 0)
+				error("images cannot be created with other units than 'px' if dpi is not specified");
+			if (xd->dpiy <= 0) xd->dpiy=xd->dpix;
+			w = w*umpl*xd->dpix;
+			h = h*umpl*xd->dpiy;
+		} else {
+			if (umpl != -1) {
+				w = (-umpl)*w;
+				h = (-umpl)*h;
+			}
+		}
+		xd->cb = Rcairo_new_image_backend(xd->cb, conn, file, type, (int)(w+0.5), (int)(h+0.5), quality);
 	}
-	if (!xd->cb){
+	else if (!strcmp(type,"pdf") || !strcmp(type,"ps") || !strcmp(type,"postscript") || !strcmp(type,"svg")) {
+		/* devices using native units, covert those to points */
+		if (umpl<0) {
+			if (xd->dpix <= 0)
+				error("dpi must be specified when creating vector devices with units='px'");
+			if (xd->dpiy <= 0) xd->dpiy=xd->dpix;
+			w = w/xd->dpix;
+			h = h/xd->dpiy;
+			umpl=1;
+		}
+		w = w * umpl * 72; /* inches * 72 = pt */
+		h = h * umpl * 72;
+		if (!strcmp(type,"pdf"))
+			xd->cb = Rcairo_new_pdf_backend(xd->cb, conn, file, w, h);
+		else if (!strcmp(type,"ps") || !strcmp(type,"postscript"))
+			xd->cb = Rcairo_new_ps_backend(xd->cb, conn, file, w, h);
+		else if (!strcmp(type,"svg"))
+			xd->cb = Rcairo_new_svg_backend(xd->cb, conn, file, w, h);
+	} else {
+		/* following devices are pixel-based yet supporting umpl */
+		if (umpl>0 && xd->dpix>0) { /* convert if we can */
+			if (xd->dpiy <= 0) xd->dpiy=xd->dpix;
+			w = w * umpl * xd->dpix;
+			h = h * umpl * xd->dpiy;
+			umpl = -1;
+		} /* otherwise device's dpi will be used */
+		if (!strcmp(type,"x11") || !strcmp(type,"X11") || !strcmp(type,"xlib"))
+			xd->cb = Rcairo_new_xlib_backend(xd->cb, file, w, h, umpl);
+		else if (!strncmp(type,"win",3))
+			xd->cb = Rcairo_new_w32_backend(xd->cb, file, w, h, umpl);
+		else {
+			error("Unsupported output type \"%s\" - choose from png, png24, jpeg, tiff, pdf, ps, svg, win and x11.", type);
+			return FALSE;
+		}
+	}
+	if (!xd->cb) {
 		error("Failed to create Cairo backend!");
 		return FALSE;
 	}
 
-	xd->cb->dd = dd;
 	cc = xd->cb->cc;
+	
+	/* get modified dpi in case the backend has set it */
+	xd->dpix = xd->cb->dpix;
+	xd->dpiy = xd->cb->dpiy;
+	if (xd->dpix>0 && xd->dpiy>0) xd->asp = xd->dpix / xd->dpiy;
 
 	Rcairo_backend_init_surface(xd->cb);
 	/* cairo_save(cc); */
 
 #ifdef JGD_DEBUG
-	printf("open %dx%d\n", (int)w, (int)h);
+	printf("open [type='%s'] %d x %d\n", type, (int)w, (int)h);
 #endif
 
 	return TRUE;

@@ -27,6 +27,7 @@ typedef struct st_Rcairo_image_backend {
 	void *buf;
 	char *filename;
 	int  conn;
+	int  quality;
 } Rcairo_image_backend;
 
 static void image_backend_destroy(Rcairo_backend* be)
@@ -62,7 +63,7 @@ static void image_save_page_jpg(Rcairo_backend* be, int pageno){
 	int width = cairo_image_surface_get_width(be->cs);
 	int height = cairo_image_surface_get_height(be->cs);
 	unsigned char *buf = cairo_image_surface_get_data (be->cs);
-	int res = save_jpeg_file(buf, width, height, fn, default_jpeg_quality);
+	int res = save_jpeg_file(buf, width, height, fn, image->quality?image->quality:default_jpeg_quality);
 	free(fn);
 	if (res == -2)
 		error("Sorry, this Cario was compiled without jpeg support.");
@@ -112,14 +113,11 @@ static void image_send_page(Rcairo_backend* be, int pageno){
 }
 #endif
 
-Rcairo_backend *Rcairo_new_image_backend(int conn, char *filename, char *type, int width, int height)
+Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, char *filename, char *type,
+										 int width, int height, int quality)
 {
-	Rcairo_backend *be;
 	Rcairo_image_backend *image;
 	int alpha_plane = 0;
-
-	if ( ! (be = (Rcairo_backend*) calloc(1,sizeof(Rcairo_backend))))
-		return NULL;
 
 	if ( ! (image = (Rcairo_image_backend *)calloc(1,sizeof(Rcairo_image_backend)))){
 		free(be); return NULL;
@@ -169,6 +167,7 @@ Rcairo_backend *Rcairo_new_image_backend(int conn, char *filename, char *type, i
 
 	} else if (!strcmp(type,"jpg") || !strcmp(type,"jpeg")) {
 #ifdef SUPPORTS_JPEG
+		image->quality = quality;
 		be->cs = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
 		be->save_page = image_save_page_jpg;
 #else

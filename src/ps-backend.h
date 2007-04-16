@@ -7,6 +7,6 @@
 #include <cairo-ps.h>
 #endif
 
-Rcairo_backend *Rcairo_new_ps_backend(int conn, char *filename, int width, int height);
+Rcairo_backend *Rcairo_new_ps_backend(Rcairo_backend *be, int conn, char *filename, double width, double height);
 
 #endif

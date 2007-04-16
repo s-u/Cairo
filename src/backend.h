@@ -9,6 +9,8 @@
 #include <Rinternals.h>
 #include <R_ext/GraphicsDevice.h>
 
+#define CDF_HAS_UI  0x0001  /* backend has UI (e.g. window) */
+
 typedef struct st_Rcairo_backend {
   /*----- instance variables -----*/
   void *backendSpecific; /* private data for backend use */
@@ -23,6 +25,10 @@ typedef struct st_Rcairo_backend {
 			       */
   int               truncate_rect; /* set to 1 to truncate rectangle coordinates
 				      to integers. Useful with bitmap back-ends. */
+
+  /*----- back-end global variables (capabilities etc.) -----*/
+  int  flags; /* see CDF_xxx above */
+  double dpix, dpiy;
 
   /*----- back-end global callbacks (=methods) -----*/
   /* cairo_surface_t *(*create_surface)(struct st_Rcairo_backend *be, int width, int height); */

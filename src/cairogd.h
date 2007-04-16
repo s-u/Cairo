@@ -1,7 +1,7 @@
 #ifndef _DEV_GD_H
 #define _DEV_GD_H
 
-#define CAIROGD_VER 0x010201 /* Cairo v1.2-1 */
+#define CAIROGD_VER 0x010300 /* Cairo v1.3-0 */
 
 /* cairo R package config */
 #include "cconfig.h"
@@ -49,25 +49,20 @@ typedef struct {
   /* --- custom fields --- */
   Rcairo_backend   *cb; /* cairo backend */
 
-  /* These have moved to Rcairo_backend */
-  /* cairo_t          *cc; */ /* cairo context */
-  /* cairo_surface_t  *cs; */ /* cairo surface */
-
-  int gd_bgcolor;
+  /* those are set before Open is invoked such that we can pass
+     any number of initial parameters without modifying the code */
+  int bg;  /* bg */
+  double gamma; /* gamma */
+  double dpix, dpiy, asp; /* DPI and aspect ratio. These have a dual role:
+			     to initliaze devices that need it and to 
+			     provide feedback from devices that set it */
 
   int gd_fill, gd_draw; /* current GD colors */
   double gd_ftsize, gd_ftm_ascent, gd_ftm_descent, gd_ftm_width;
   int gd_ftm_char; /*gd_ftm_xxx are font-metric cached values - char specifying the last query */
 	
-  /* Moved to Rcairo_backend */
-  /* char *img_name; */ /* file name prefix */
-  /* char img_type[8]; */ /* image type [png/png8/png24/gif] */
-
   int npages; /* sequence # in case multiple pages are requested */
 } CairoGDDesc;
-
-Rboolean  gdd_new_device_driver(DevDesc*, char*, int conn, char *, double, double, double, int);
-int       gdd_set_new_device_data(NewDevDesc *dd, double gamma_fac, CairoGDDesc *xd);
 
 #endif
 

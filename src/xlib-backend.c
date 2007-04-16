@@ -172,8 +172,6 @@ static void ProcessX11DisplayEvents(Display *display)
 static void handleDisplayEvent(Display *display, XEvent event) {
 	caddr_t temp;
 	Rcairo_xlib_data *xd = NULL;
-	NewDevDesc *dd = NULL;
-	int devNum = 0;
 	int do_update = 0;
 		
 	if (event.xany.type == Expose) {
@@ -222,119 +220,10 @@ static void ProcessX11Events(void *foo)
 	}
 }
 
-static int Rcairo_xlib_new_window(Rcairo_xlib_data *xd, char *display,
-								  int width, int height) {
-	int depth;
-	int blackpixel = 0;
-	int whitepixel = 0;
-	static XSetWindowAttributes attributes;    /* Window attributes */
-	XSizeHints *hint;
-	XEvent event;
-	char *title = "Cairo display";
-	
-	if (!display) {
-		display=getenv("DISPLAY");
-		if (!display) display=":0.0";
-	}
-	
-	xd->display = XOpenDisplay(display);
-	if (!xd->display)
-		error("Update to open X11 display %s", display);
-	
-	{ /* we maintain a list of displays we used so far.
-		 let's see if we encountered this display already.
-		 if not, setup the event handler etc.
-	  */
-		Rcairo_display_list *l = &display_list;
-		while (l->display != xd->display && l->next) l=l->next;
-		if (l->display)
-			l = l->next = (Rcairo_display_list *)calloc(1, sizeof(Rcairo_display_list));
-		if (l->display != xd->display) { /* new display */
-			l->display = xd->display;
-			addInputHandler(R_InputHandlers, ConnectionNumber(xd->display),
-							ProcessX11Events, 71);
-			Rcairo_init_xlib();
-    }
-	}
-
-	xd->screen = DefaultScreen(xd->display);
-	xd->rootwin = DefaultRootWindow(xd->display);
-	depth = DefaultDepth(xd->display, xd->screen);    
-	xd->visual = DefaultVisual(xd->display, xd->screen);
-	if (!xd->visual)
-		error("Unable to get visual from X11 display %s", display);
-	if (xd->visual->class != TrueColor)
-		error("Sorry, Cairo Xlib back-end supports true-color displays only.");
-	
-	{ int d=depth; for (;d;d--) whitepixel=(whitepixel << 1)|1; }
-	
-	devPtrContext = XUniqueContext();
-	
-	memset(&attributes, 0, sizeof(attributes));
-	attributes.background_pixel = whitepixel;
-	attributes.border_pixel = blackpixel;
-	attributes.backing_store = Always;
-	attributes.event_mask = ButtonPressMask
-		| ExposureMask
-		| StructureNotifyMask;
-	
-	hint = XAllocSizeHints();
-	hint->x = 10;
-	hint->y = 10;
-	xd->width = hint->width = width;
-	xd->height = hint->height= height;
-	hint->flags  = PPosition | PSize;
-	
-	xd->window = XCreateSimpleWindow(xd->display,
-									 xd->rootwin,
-									 hint->x,hint->y,
-									 hint->width, hint->height,
-									 1,
-									 blackpixel,
-									 whitepixel);
-	if (!xd->window) {
-		XFree(hint);
-		error("Unable to create X11 window on display %s", display);
-	}
-	
-	XSetWMNormalHints(xd->display, xd->window, hint);
-	XFree(hint);
-	XChangeWindowAttributes(xd->display, xd->window,
-							CWEventMask | CWBackPixel |
-							CWBorderPixel | CWBackingStore,
-							&attributes);
-	
-	XStoreName(xd->display, xd->window, title);
-	
-	xd->gcursor = XCreateFontCursor(xd->display, XC_crosshair);
-	XDefineCursor(xd->display, xd->window, xd->gcursor);
-	
-	{ /* FIXME: this is really display-dependent */
-		_XA_WM_PROTOCOLS = XInternAtom(xd->display, "WM_PROTOCOLS", 0);
-		protocol = XInternAtom(xd->display, "WM_DELETE_WINDOW", 0);
-		XSetWMProtocols(xd->display, xd->window, &protocol, 1);
-	}
-	
-	XSaveContext(xd->display, xd->window, devPtrContext, (caddr_t) xd);
-	
-	XSelectInput(xd->display, xd->window,
-				 ExposureMask | ButtonPressMask | StructureNotifyMask);
-	XMapWindow(xd->display, xd->window);
-	XSync(xd->display, 0);
-	while ( XPeekEvent(xd->display, &event),
-			!XCheckTypedEvent(xd->display, Expose, &event))
-		;
-	
-	return 0;
-}
-
-Rcairo_backend *Rcairo_new_xlib_backend(char *display, int width, int height)
+Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, char *display, double width, double height, double umpl)
 {
-	Rcairo_backend *be;
 	Rcairo_xlib_data *xd;
 
-	if ( ! (be = (Rcairo_backend*) calloc(1,sizeof(Rcairo_backend))))
-		return NULL;
 	if ( ! (xd = (Rcairo_xlib_data*) calloc(1,sizeof(Rcairo_xlib_data)))) {
 		free(be);
 		return NULL;
@@ -349,12 +238,134 @@ Rcairo_backend *Rcairo_new_xlib_backend(char *display, int width, int height)
 	be->locator = xlib_locator;
 	be->truncate_rect = 1;
 
-	if (Rcairo_xlib_new_window(xd, display, width, height)) {
-		free(be); free(xd);
-		error("Unable to create X11 windows");
-		return NULL;
-	}
+	{
+		int depth;
+		int blackpixel = 0;
+		int whitepixel = 0;
+		static XSetWindowAttributes attributes;    /* Window attributes */
+		XSizeHints *hint;
+		XEvent event;
+		char *title = "Cairo display";
+		
+		if (!display) {
+			display=getenv("DISPLAY");
+			if (!display) display=":0.0";
+		}
 	
+		xd->display = XOpenDisplay(display);
+		if (!xd->display)
+			error("Update to open X11 display %s", display);
+	
+		{ /* we maintain a list of displays we used so far.
+			 let's see if we encountered this display already.
+			 if not, setup the event handler etc.
+		  */
+			Rcairo_display_list *l = &display_list;
+			while (l->display != xd->display && l->next) l=l->next;
+			if (l->display)
+				l = l->next = (Rcairo_display_list *)calloc(1, sizeof(Rcairo_display_list));
+			if (l->display != xd->display) { /* new display */
+				l->display = xd->display;
+				addInputHandler(R_InputHandlers, ConnectionNumber(xd->display),
+								ProcessX11Events, 71);
+				Rcairo_init_xlib();
+			}
+		}
+
+		xd->screen = DefaultScreen(xd->display);
+		{ /* adjust width and height to be in pixels */
+			int dwp = DisplayWidth(xd->display,xd->screen);
+			int dwr = DisplayWidthMM(xd->display,xd->screen);
+			int dhp = DisplayHeight(xd->display,xd->screen);
+			int dhr = DisplayHeightMM(xd->display,xd->screen);
+			if (dwp && dwr && dhp && dhr) {
+				be->dpix = ((double)dwp)/((double)dwr)/0.0254;
+				be->dpiy = ((double)dhp)/((double)dhr)/0.0254;
+			} 
+			if (umpl>0 && be->dpix<=0) {
+				warning("cannot determine DPI from the screen, assuming 72dpi");
+				be->dpix = 72; be->dpiy = 72;
+			}
+			if (be->dpiy==0 && be->dpix>0) be->dpiy=be->dpix;
+			if (umpl>0) {
+				width = width * umpl * be->dpix;
+				height = height * umpl * be->dpiy;
+				umpl=-1;
+			}
+			if (umpl!=-1) {
+				width *= (-umpl);
+				height *= (-umpl);
+			}
+		}
+
+		xd->rootwin = DefaultRootWindow(xd->display);
+		depth = DefaultDepth(xd->display, xd->screen);    
+		xd->visual = DefaultVisual(xd->display, xd->screen);
+		if (!xd->visual)
+			error("Unable to get visual from X11 display %s", display);
+		if (xd->visual->class != TrueColor)
+			error("Sorry, Cairo Xlib back-end supports true-color displays only.");
+	
+		{ int d=depth; for (;d;d--) whitepixel=(whitepixel << 1)|1; }
+	
+		devPtrContext = XUniqueContext();
+	
+		memset(&attributes, 0, sizeof(attributes));
+		attributes.background_pixel = whitepixel;
+		attributes.border_pixel = blackpixel;
+		attributes.backing_store = Always;
+		attributes.event_mask = ButtonPressMask
+			| ExposureMask
+			| StructureNotifyMask;
+		
+		hint = XAllocSizeHints();
+		hint->x = 10;
+		hint->y = 10;
+		xd->width = hint->width = width;
+		xd->height = hint->height= height;
+		hint->flags  = PPosition | PSize;
+	
+		xd->window = XCreateSimpleWindow(xd->display,
+										 xd->rootwin,
+										 hint->x,hint->y,
+										 hint->width, hint->height,
+										 1,
+										 blackpixel,
+										 whitepixel);
+		if (!xd->window) {
+			XFree(hint);
+			error("Unable to create X11 window on display %s", display);
+		}
+		
+		XSetWMNormalHints(xd->display, xd->window, hint);
+		XFree(hint);
+		XChangeWindowAttributes(xd->display, xd->window,
+								CWEventMask | CWBackPixel |
+								CWBorderPixel | CWBackingStore,
+								&attributes);
+		
+		XStoreName(xd->display, xd->window, title);
+		
+		xd->gcursor = XCreateFontCursor(xd->display, XC_crosshair);
+		XDefineCursor(xd->display, xd->window, xd->gcursor);
+		
+		{ /* FIXME: this is really display-dependent */
+			_XA_WM_PROTOCOLS = XInternAtom(xd->display, "WM_PROTOCOLS", 0);
+			protocol = XInternAtom(xd->display, "WM_DELETE_WINDOW", 0);
+			XSetWMProtocols(xd->display, xd->window, &protocol, 1);
+		}
+		
+		XSaveContext(xd->display, xd->window, devPtrContext, (caddr_t) xd);
+		
+		XSelectInput(xd->display, xd->window,
+					 ExposureMask | ButtonPressMask | StructureNotifyMask);
+		XMapWindow(xd->display, xd->window);
+		XSync(xd->display, 0);
+		while ( XPeekEvent(xd->display, &event),
+				!XCheckTypedEvent(xd->display, Expose, &event))
+			;
+	}
+
 	be->cs = cairo_xlib_surface_create(xd->display, xd->window, xd->visual,
 									   (double)width,(double)height);
 	
@@ -362,7 +373,7 @@ Rcairo_backend *Rcairo_new_xlib_backend(char *display, int width, int height)
 		free(be);
 		return NULL;
 	}
-
+	
 	be->cc = cairo_create(be->cs);
 	
 	if (cairo_status(be->cc) != CAIRO_STATUS_SUCCESS){
@@ -375,7 +386,7 @@ Rcairo_backend *Rcairo_new_xlib_backend(char *display, int width, int height)
 	return be;
 }
 #else
-Rcairo_backend *Rcairo_new_xlib_backend(char *filename, int width, int height)
+Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, char *display, double width, double height, double umpl)
 {
 	error("cairo library was compiled without XLIB back-end.");
 	return NULL;

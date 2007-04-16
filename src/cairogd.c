@@ -1,5 +1,5 @@
-/*
- *  Cairo-based gd   (C)2004,5 Simon Urbanek (simon.urbanek@r-project.org)
+/* -*- mode: C; tab-width: 4; c-basic-offset: 4 -*-
+ *  Cairo-based gd   (C)2004,5,7 Simon Urbanek (simon.urbanek@r-project.org)
  *
  *  Parts of this code are based on the X11 device skeleton from the R project
  *
@@ -30,15 +30,19 @@ double jGDasp  = 1.0;
    file: file to write to
    width/heigth
    initps: initial PS
-   bgcolor: currently only -1 (transparent) and 0xffffff (white) are really supported */
-Rboolean gdd_new_device_driver(DevDesc *dd, char *type, int conn, char *file,
-							   double width, double height, double initps,
-							   int bgcolor)
+   bgcolor: currently only -1 (transparent) and 0xffffff (white) are really supported
+   -
+   gamma: 0.6
+*/
+Rboolean Rcairo_new_device_driver(DevDesc *dd_arg, char *type, int conn, char *file,
+								  double width, double height, double initps,
+								  int bgcolor, int canvas, double umul, double *dpi, SEXP aux)
 {
 	CairoGDDesc *xd;
+	NewDevDesc *dd = (NewDevDesc *) dd_arg;
 	
 #ifdef JGD_DEBUG
-	printf("gdd_new_device_driver(\"%s\", \"%s\", %f, %f, %f)\n",type,file,width,height,initps);
+	Rprintf("Rcairo_new_device_driver(\"%s\", \"%s\", %f, %f, %f)\n",type,file,width,height,initps);
 #endif
 	
 	
@@ -50,35 +54,25 @@ Rboolean gdd_new_device_driver(DevDesc *dd, char *type, int conn, char *file,
     xd->fontsize = -1;
     xd->basefontface = 1;
     xd->basefontsize = initps;
-	
-	if (!CairoGD_Open((NewDevDesc*)(dd), xd, type, conn, file, width, height, bgcolor)) {
-		free(xd);
-		return FALSE;
+	xd->canvas = canvas;
+	xd->bg = bgcolor;
+	xd->gamma = 1.0;
+	xd->asp = 1.0;
+	if (dpi) {
+		xd->dpix = dpi[0];
+		xd->dpiy = dpi[1];
+		if (xd->dpix>0 && xd->dpiy>0) xd->asp = xd->dpix / xd->dpiy;
+	} else {
+		xd->dpix = xd->dpiy = 0.0;
 	}
-	
-	gdd_set_new_device_data((NewDevDesc*)(dd), 0.6, xd);
-	
-	return TRUE;
-}
 
-/**
-  This fills the general device structure (dd) with the XGD-specific
-  methods/functions. It also specifies the current values of the
-  dimensions of the device, and establishes the fonts, line styles, etc.
- */
-int gdd_set_new_device_data(NewDevDesc *dd, double gamma_fac, CairoGDDesc *xd)
-{
-#ifdef JGD_DEBUG
-	printf("gdd_set_new_device_data\n");
-#endif
+	/* ---- fill dd ----- */
     dd->newDevStruct = 1;
 
     /*	Set up Data Structures. */
     setupCairoGDfunctions(dd);
 
     dd->left = dd->clipLeft = 0;			/* left */
-    dd->right = dd->clipRight = xd->windowWidth;	/* right */
-    dd->bottom = dd->clipBottom = xd->windowHeight;	/* bottom */
     dd->top = dd->clipTop = 0;			/* top */
 
     /* Nominal Character Sizes in Pixels */
@@ -94,15 +88,9 @@ int gdd_set_new_device_data(NewDevDesc *dd, double gamma_fac, CairoGDDesc *xd)
     dd->yCharOffset = 0.3333;
     dd->yLineBias = 0.1;
 
-    /* Inches per raster unit */
-
-    dd->ipr[0] = 1/jGDdpiX;
-    dd->ipr[1] = 1/jGDdpiY;
-    dd->asp = jGDasp;
-
     /* Device capabilities */
 
-    dd->canResizePlot = FALSE;
+    dd->canResizePlot = TRUE; /* opt */
     dd->canChangeFont = TRUE;
     dd->canRotateText = TRUE;
     dd->canResizeText = TRUE;
@@ -110,14 +98,30 @@ int gdd_set_new_device_data(NewDevDesc *dd, double gamma_fac, CairoGDDesc *xd)
     dd->canHAdj = 2;
     dd->canChangeGamma = FALSE;
 
-    dd->startps = xd->basefontsize;
-    dd->startcol = xd->col;
-    dd->startfill = xd->fill;
-    dd->startlty = LTY_SOLID;
-    dd->startfont = 1;
-    dd->startgamma = gamma_fac;
+    dd->startlty   = LTY_SOLID;
+    dd->startfont  = 1;
 
     dd->deviceSpecific = (void *) xd;
+
+	/* open the device */
+    if (!CairoGD_Open(dd, xd, type, conn, file, width, height, umul, aux)) {
+		free(xd);
+		dd->deviceSpecific = 0;
+		return FALSE;
+	}
+
+	/* those were deferred, because they depend on xd and Open may have modified them */
+    dd->right = dd->clipRight = xd->windowWidth;	/* right */
+    dd->bottom = dd->clipBottom = xd->windowHeight;	/* bottom */
+    dd->startps    = xd->basefontsize; /* = initps */
+    dd->startcol   = xd->col;
+    dd->startfill  = xd->fill;
+    dd->startgamma = xd->gamma;
+
+    /* Inches per raster unit */
+   	dd->ipr[0] = (xd->dpix>0)?1/xd->dpix:(1/72);
+   	dd->ipr[1] = (xd->dpiy>0)?1/xd->dpiy:(1/72);
+    dd->asp = (xd->asp>0)?xd->asp:1.0;
 
     dd->displayListOn = TRUE;
 
@@ -131,8 +135,8 @@ SEXP cairo_create_new_device(SEXP args)
     
     char *devname="Cairo";
 	char *type, *file = NULL;
-	double width, height, initps;
-	int bgcolor = -1;
+	double width, height, initps, umul, dpi[2];
+	int bgcolor = -1, canvas = -1;
 	int conn = -1;
 
 	SEXP v;
@@ -172,8 +176,18 @@ SEXP cairo_create_new_device(SEXP args)
 	if (!isString(v) && !isInteger(v) && !isLogical(v) && !isReal(v))
 		error("invalid color specification for `bg'");
 	bgcolor = RGBpar(v, 0);
+	v=CAR(args); args=CDR(args);
+	if (!isString(v) && !isInteger(v) && !isLogical(v) && !isReal(v))
+		error("invalid color specification for `canvas'");
+	canvas = RGBpar(v, 0);
+	v=CAR(args); args=CDR(args);
+	if (!isNumeric(v)) error("unit multiplier must be a number");
+	umul = asReal(v);
+	v=CAR(args); args=CDR(args);
+	if (!isNumeric(v)) error("dpi must be a number");
+	dpi[0] = dpi[1] = asReal(v);	
 #ifdef JGD_DEBUG
-	printf("type=%s, file=%s, bgcolor=0x%08x\n", type, file, bgcolor);
+	Rprintf("type=%s, file=%s, bgcolor=0x%08x, canvas=0x%08x, umul=%f, dpi=%f\n", type, file, bgcolor, canvas, umul, dpi[0]);
 #endif
 	
     R_CheckDeviceAvailable();
@@ -186,7 +200,8 @@ SEXP cairo_create_new_device(SEXP args)
 
 	dev->savedSnapshot = R_NilValue;
 
-	if (!gdd_new_device_driver((DevDesc*)(dev), type, conn, file, width, height, initps, bgcolor))
+	if (!Rcairo_new_device_driver((DevDesc*)(dev), type, conn, file, width, height, initps,
+								 bgcolor, canvas, umul, dpi, args))
 	{
 	    free(dev);
 	    error("unable to start device %s", devname);
@@ -197,7 +212,7 @@ SEXP cairo_create_new_device(SEXP args)
 	addDevice((DevDesc*) dd);
 	GEinitDisplayList(dd);
 #ifdef JGD_DEBUG
-	printf("XGD> devNum=%d, dd=%x\n", devNumber((DevDesc*) dd), dd);
+	Rprintf("CairoGD> devNum=%d, dd=%x\n", devNumber((DevDesc*) dd), dd);
 #endif
     
 	PROTECT(v = allocVector(INTSXP, 1));

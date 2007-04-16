@@ -307,16 +307,13 @@ static void HelpResize(window w, rect r)
 
 #endif
 
-Rcairo_backend *Rcairo_new_w32_backend(char *display, int width, int height)
+Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, char *display, double width, double height, double umpl)
 {
-	Rcairo_backend *be;
 	Rcairo_w32_data *xd;
 #ifdef NATIVE_UI
 	w32chain_t *l = &wchain;
 #endif
 
-	if ( ! (be = (Rcairo_backend*) calloc(1,sizeof(Rcairo_backend))))
-		return NULL;
 	if ( ! (xd = (Rcairo_w32_data*) calloc(1,sizeof(Rcairo_w32_data)))) {
 		free(be);
 		return NULL;
@@ -330,6 +327,35 @@ Rcairo_backend *Rcairo_new_w32_backend(char *display, int width, int height)
 	be->mode = w32_mode;
 	be->locator = w32_locator;
 	be->truncate_rect = 1;
+
+	{ /* try to find out the DPI setting */
+		HWND dw = GetDesktopWindow();
+		if (dw) {
+			HDC  dc = GetDC(dw);
+			if (dc) {
+				int dpix = GetDeviceCaps(dc, LOGPIXELSX);
+				int dpiy = GetDeviceCaps(dc, LOGPIXELSY);
+				ReleaseDC(dw, dc);
+				Rprintf("DPI: %d x %d\n");
+				if (dpix>0) be->dpix=(double)dpix;
+				if (dpiy>0) be->dpiy=(double)dpiy;
+			}
+		}
+	}
+	/* adjust width and height to be in pixels */
+	if (umpl>0 && bd->dpix<=0) {
+		be->dpix = 96; be->dpiy = 96;
+	}
+	if (be->dpiy==0 && be->dpix>0) be->dpiy=be->dpix;
+	if (umpl>0) {
+		width = width * umpl * be->dpix;
+		height = height * umpl * be->dpiy;
+		umpl=-1;
+	}
+	if (umpl!=-1) {
+		width *= (-umpl);
+		height *= (-umpl);
+	}
 
 #ifdef NATIVE_UI
 	if (!inited_w32) {
@@ -436,7 +462,7 @@ Rcairo_backend *Rcairo_new_w32_backend(char *display, int width, int height)
 	return be;
 }
 #else
-Rcairo_backend *Rcairo_new_w32_backend(char *filename, int width, int height)
+Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, char *display, double width, double height, double umpl)
 {
 	error("cairo library was compiled without win32 back-end.");
 	return NULL;

@@ -6,7 +6,7 @@
 					  pdf="pdf",svg="svg",ps="ps",postscript="ps",x11="x11",xlib="x11",
 					  win="win",win32="win",window="win",windows="win",w32="win")
 
-Cairo <- function(width=640, height=480, file="", type="png", pointsize=14, bg="white", units="px", dpi="auto", ...) {
+Cairo <- function(width=640, height=480, file="", type="png", pointsize=14, canvas="white", bg="transparent", units="px", dpi="auto", ...) {
 	ctype <- tolower(type)
 	if (!ctype %in% names(.supported.types))
 		stop("Unknown output type `",type,"'.")
@@ -28,10 +28,10 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=14, bg="
 	if (any(dpi=="auto" || dpi=="")) dpi <- 0
 	if (length(dpi)!=1 || !is.numeric(dpi) || dpi<0)
 		stop("invalid dpi specification (must be 'auto' or a positive number)")
-	dpi <- as.integer(dpi)
-	## unit multiplier: >0 mpl the get inches, <0 mpl to get device pixels
+	dpi <- as.double(dpi)
+	## unit multiplier: >0 mpl to get inches, <0 mpl to get device pixels
 	umpl <- as.double(c(-1, 1/72, 1, 1/2.54, 1/25.4)[units==c("px","pt","in","cm","mm")])
-	gdn<-.External("cairo_create_new_device", as.character(ctype), file, width, height, pointsize, bg, umpl, dpi, ..., PACKAGE="Cairo")
+	gdn<-.External("cairo_create_new_device", as.character(ctype), file, width, height, pointsize, bg, canvas, umpl, dpi, ..., PACKAGE="Cairo")
 	par(bg=bg)
 	invisible(structure(gdn,class=c("Cairo",paste("Cairo",toupper(ctype),sep=''))))
 }

@@ -7,6 +7,6 @@
 #include <cairo-xlib.h>
 #endif
 
-Rcairo_backend *Rcairo_new_xlib_backend(char *display, int width, int height);
+Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, char *display, double width, double height, double umpl);
 
 #endif
