@@ -15,7 +15,18 @@
 
 #define fake_bg_color (0xfffefefe)
 
+/* known cairo back-ends (as of cairographics 1.4.2) */
+#define BET_IMAGE   1
+#define BET_PDF     2
+#define BET_PS      3
+#define BET_SVG     4
+#define BET_XLIB    5
+#define BET_W32     6
+#define BET_QUARTZ  7
+#define BET_USER   64
+
 typedef struct st_Rcairo_backend {
+  int backend_type;      /* see BET_xxx constants */
   /*----- instance variables -----*/
   void *backendSpecific; /* private data for backend use */
   cairo_t          *cc;  /* cairo context */

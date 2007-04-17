@@ -231,6 +231,7 @@ Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, char *display, doubl
 		return NULL;
 	}
 
+	be->backend_type = BET_XLIB;
 	be->backendSpecific = xd;
 	xd->be = be;
 	be->destroy_backend = xlib_backend_destroy;

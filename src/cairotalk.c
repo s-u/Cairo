@@ -500,25 +500,19 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 	xd->cb->dpiy = xd->dpiy;	
 
 	/* Select Cairo backend */
-
-	/* Currently, libcairo supports writing png's as 24 bit RGB, 24 bit RGB with 8 bit alpha,
-	 * and 8 bit grayscale. We'll create 24 bit RGB when extension is "png" and 24 bit RGB with
-	 * 8 bit alpha when extension is "png24".  We could go ahead and add 8 bit grayscale, but
-	 * who really uses that, and what would the extension be?
-	 * 
-	 * libcairo has palette-based png's (png8) and jpeg format in the works, so 
-	 * we'll add those when available.
-	 */
 	/* Cairo 1.2-0: jpeg and tiff are created via external libraries (libjpeg/libtiff) by our code */
 	if (!strcmp(type,"png") || !strcmp(type,"png24")  || !strcmp(type,"jpeg") || !strcmp(type,"jpg") ||
 		!strcmp(type,"tif")  || !strcmp(type,"tiff")) {
+		int alpha_plane = 0;
 		int quality = 0; /* find out if we have quality setting */
+		if (R_ALPHA(xd->bg) < 255) alpha_plane=1;
 		if (!strcmp(type,"jpeg") || !strcmp(type,"jpg")) {
 			SEXP arg = findArg("quality", aux);
 			if (arg && arg!=R_NilValue)
 				quality = asInteger(arg);
 			if (quality<0) quality=0;
 			if (quality>100) quality=100;
+			alpha_plane=0;
 		}
 		if (!strcmp(type,"tif")  || !strcmp(type,"tiff")) {
 			SEXP arg = findArg("compression", aux);
@@ -540,7 +534,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 			}
 		}
 		xd->cb->width = w; xd->cb->height = h;
-		xd->cb = Rcairo_new_image_backend(xd->cb, conn, file, type, (int)(w+0.5), (int)(h+0.5), quality);
+		xd->cb = Rcairo_new_image_backend(xd->cb, conn, file, type, (int)(w+0.5), (int)(h+0.5), quality, alpha_plane);
 	}
 	else if (!strcmp(type,"pdf") || !strcmp(type,"ps") || !strcmp(type,"postscript") || !strcmp(type,"svg")) {
 		/* devices using native units, covert those to points */

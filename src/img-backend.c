@@ -120,10 +120,9 @@ static void image_send_page(Rcairo_backend* be, int pageno){
 #endif
 
 Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, char *filename, char *type,
-										 int width, int height, int quality)
+										 int width, int height, int quality, int alpha_plane)
 {
 	Rcairo_image_backend *image;
-	int alpha_plane = 0;
 
 	if ( ! (image = (Rcairo_image_backend *)calloc(1,sizeof(Rcairo_image_backend)))){
 		free(be); return NULL;
@@ -145,33 +144,28 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, char *fil
 #endif
 	}
 
+	be->backend_type = BET_IMAGE;
 	be->destroy_backend = image_backend_destroy;
 	be->backendSpecific = (void *)image;
 	be->truncate_rect = 1;
 	be->width = width;
 	be->height = height;
 
-	if (!strcmp(type,"png24")){
-		int stride = 4 * width;
-
-		if ( ! (image->buf = calloc (stride * height, 1))){
-			free(be); free(image->filename); free(image);
-			return NULL;
+	if (!strcmp(type,"png") ||!strcmp(type,"png24") ||!strcmp(type,"png32")) {
+		if (alpha_plane) {
+			int stride = 4 * width;
+			if ( ! (image->buf = calloc (stride * height, 1))){
+				free(be); free(image->filename); free(image);
+				return NULL;
+			}
+			be->cs = cairo_image_surface_create_for_data (image->buf,
+														  CAIRO_FORMAT_ARGB32,
+														  width, height, stride);
+		} else {
+			be->cs = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
+			be->flags|=CDF_FAKE_BG;
 		}
-
-		/* initialize image (default is 0/0/0/0 due to calloc) 
-		   memset(image->buf, 255, stride * height); */
-
-		be->cs = cairo_image_surface_create_for_data (image->buf,
-				CAIRO_FORMAT_ARGB32,
-				width, height, stride);
-		alpha_plane = 1;
 		if (!be->save_page) be->save_page = image_save_page_png;
-	} else if (!strcmp(type,"png")){
-		be->cs = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
-		if (!be->save_page) be->save_page = image_save_page_png;
-		be->flags|=CDF_FAKE_BG;
-
 	} else if (!strcmp(type,"jpg") || !strcmp(type,"jpeg")) {
 #ifdef SUPPORTS_JPEG
 		image->quality = quality;
@@ -183,18 +177,20 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, char *fil
 #endif
 	} else if (!strcmp(type,"tif") || !strcmp(type,"tiff")) {
 #ifdef SUPPORTS_TIFF
-		int stride = 4 * width;
-		image->quality = quality;
-		if ( ! (image->buf = calloc (stride * height, 1))){
-			free(be); free(image->filename); free(image);
-			return NULL;
+		if (alpha_plane) {
+			int stride = 4 * width;
+			image->quality = quality;
+			if ( ! (image->buf = calloc (stride * height, 1))){
+				free(be); free(image->filename); free(image);
+				return NULL;
+			}
+			be->cs = cairo_image_surface_create_for_data (image->buf,
+														  CAIRO_FORMAT_ARGB32,
+														  width, height, stride);
+		} else {
+			be->cs = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
+			be->flags|=CDF_OPAQUE;
 		}
-
-		be->cs = cairo_image_surface_create_for_data (image->buf,
-				CAIRO_FORMAT_ARGB32,
-				width, height, stride);
-		alpha_plane = 1;
-		/* be->cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height); */
 		be->save_page = image_save_page_tiff;
 #else
 		error("Sorry, this Cairo was compiled without tiff support.");
@@ -220,4 +216,3 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, char *fil
 	if (cairo_op != -1) cairo_set_operator(be->cc,cairo_op);
 	return be;
 }
-

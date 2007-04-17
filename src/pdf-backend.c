@@ -41,6 +41,7 @@ static void pdf_backend_destroy(Rcairo_backend* be)
 
 Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, char *filename, double width, double height)
 {
+	be->backend_type = BET_PDF;
 	be->destroy_backend = pdf_backend_destroy;
 	be->save_page = pdf_save_page;
 	if (filename){

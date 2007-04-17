@@ -62,6 +62,9 @@ Rboolean Rcairo_new_device_driver(DevDesc *dd_arg, char *type, int conn, char *f
     if (!(xd = (CairoGDDesc*)calloc(1, sizeof(CairoGDDesc))))
 		return FALSE;
 	
+#ifdef USE_MAGIC
+	xd->magic = CAIROGD_MAGIC
+#endif
     xd->fontface = -1;
     xd->fontsize = -1;
     xd->basefontface = 1;
@@ -244,9 +247,20 @@ SEXP cairo_create_new_device(SEXP args)
 #ifdef JGD_DEBUG
 	Rprintf("CairoGD> devNum=%d, dd=%x\n", devNumber((DevDesc*) dd), dd);
 #endif
-    
 	PROTECT(v = allocVector(INTSXP, 1));
-	INTEGER(v)[0] = 1 + devNumber((DevDesc*) dd);
+	INTEGER(v)[0] = 0;
+	/* for some reason both devNumber and deviceNumber return 0, so we have
+	   to find the dev # the hard way */
+	{
+		int nd = NumDevices();
+		int i = 0;
+		while (i<nd) {
+			if (GetDevice(i)==dd) {
+				INTEGER(v)[0] = 1 + i; break;
+			}
+   			i++;
+		}
+	}
 	UNPROTECT(1);
     return v;
 }
@@ -401,3 +415,85 @@ SEXP cairo_font_set(SEXP args){
 #endif
 	return R_NilValue;
 }
+
+/* experimental */
+SEXP get_img_backplane(SEXP dev) {
+	int devNr = asInteger(dev)-1;
+	GEDevDesc *gd = (GEDevDesc*) GetDevice(devNr);
+	if (gd) {
+		NewDevDesc *dd=gd->dev;
+		if (dd) {
+			CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
+#ifdef USE_MAGIC
+			if (xd->magic != CAIROGD_MAGIC)
+				error("Not a Cairo device");
+#endif
+			if(xd && xd->cb) {
+				int bet = xd->cb->backend_type;
+				switch (bet) {
+				case BET_IMAGE:
+					{
+						SEXP l = allocVector(VECSXP, 2);
+						unsigned char *data = cairo_image_surface_get_data(xd->cb->cs);
+						cairo_format_t dformat = cairo_image_surface_get_format(xd->cb->cs);
+						int width = cairo_image_surface_get_width(xd->cb->cs);
+						int height = cairo_image_surface_get_height(xd->cb->cs);
+						PROTECT(l);
+						{
+							SEXP info = allocVector(INTSXP, 3);
+							int *iv = INTEGER(info);
+							iv[0] = width;
+							iv[1] = height;
+							iv[2] = dformat;
+							SET_VECTOR_ELT(l, 1, info);
+						}
+						{
+							SEXP ref = R_MakeExternalPtr(data, R_NilValue, R_NilValue);
+							SET_VECTOR_ELT(l, 0, ref);
+						}
+						UNPROTECT(1);
+						return l;
+					}
+				}
+				error("unsupported backend");
+			}
+		}
+	}
+	error("invalid device number");
+	return R_NilValue;
+}
+
+SEXP ptr_to_raw(SEXP ptr, SEXP off, SEXP len) {
+	int o = asInteger(off);
+	int l = asInteger(len);
+	if (TYPEOF(ptr) != EXTPTRSXP)
+		error("ptr argument must be an external pointer");
+	{
+		unsigned char *data = (unsigned char*) EXTPTR_PTR(ptr);
+		if (data) {
+			SEXP v = allocVector(RAWSXP, l);
+			Rbyte *rc = RAW(v);
+			memcpy(rc, data+o, l);
+			return v;
+		}
+	}
+	return R_NilValue;
+}
+
+SEXP raw_to_ptr(SEXP ptr, SEXP woff, SEXP raw, SEXP roff, SEXP len) {
+	int o1 = asInteger(woff);
+	int o2 = asInteger(roff);
+	int l = asInteger(len);
+	if (TYPEOF(ptr) != EXTPTRSXP)
+		error("ptr argument must be an external pointer");
+	if (TYPEOF(raw) != RAWSXP)
+		error("raw argument must be a raw vector");
+	{
+		unsigned char *data = (unsigned char*) EXTPTR_PTR(ptr);
+		Rbyte *rc = RAW(raw);
+		memcpy(data+o1, rc+o2, l);
+		return ptr;
+	}
+	return R_NilValue;
+}
+

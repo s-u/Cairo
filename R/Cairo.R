@@ -2,7 +2,8 @@
 ### License: GPL v2
 
 ### mapping of supported type names to canonical type names
-.supported.types <- c(png="png",png24="png24",jpeg="jpeg",jpg="jpeg",tiff="tiff",tif="tiff",
+### as of 1.3-2 png/png24/png32 are the same (we don't support png8 anyway)
+.supported.types <- c(png="png",png24="png",png32="png",jpeg="jpeg",jpg="jpeg",tiff="tiff",tif="tiff",
 					  pdf="pdf",svg="svg",ps="ps",postscript="ps",x11="x11",xlib="x11",
 					  win="win",win32="win",window="win",windows="win",w32="win")
 
@@ -13,11 +14,6 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 	ctype <- .supported.types[ctype==names(.supported.types)]
 	if (is.null(file) || !nchar(file))
 		file <- if (ctype != 'x11') paste("plot.",ctype,sep='') else Sys.getenv("DISPLAY")
-
-	if (ctype=="png" && canvas=="transparent"){
-	#	warning("Type png does not support transparency. Changing type to png24")
-	#	ctype <- type <- "png24"      
-	}
 
 	if (typeof(file) == "character" && length(file) != 1)
 		stop("file must be a character vector of length 1 or a connection")
@@ -33,7 +29,7 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 	umpl <- as.double(c(-1, 1/72, 1, 1/2.54, 1/25.4)[units==c("px","pt","in","cm","mm")])
 	gdn<-.External("cairo_create_new_device", as.character(ctype), file, width, height, pointsize, bg, canvas, umpl, dpi, ..., PACKAGE="Cairo")
 	par(bg=bg)
-	invisible(structure(gdn,class=c("Cairo",paste("Cairo",toupper(ctype),sep=''))))
+	invisible(structure(gdn,class=c("Cairo",paste("Cairo",toupper(ctype),sep='')),type=as.character(ctype),file=file))
 }
 
 

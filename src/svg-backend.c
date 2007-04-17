@@ -41,6 +41,7 @@ static void svg_backend_destroy(Rcairo_backend* be)
 
 Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, char *filename, double width, double height)
 {
+	be->backend_type = BET_SVG;
 	be->destroy_backend = svg_backend_destroy;
 	be->save_page = svg_save_page;
 	if (filename){

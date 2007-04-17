@@ -1,7 +1,7 @@
 #ifndef _DEV_GD_H
 #define _DEV_GD_H
 
-#define CAIROGD_VER 0x010301 /* Cairo v1.3-1 */
+#define CAIROGD_VER 0x010302 /* Cairo v1.3-2 */
 
 /* cairo R package config */
 #include "cconfig.h"
@@ -30,7 +30,12 @@
 #define CONVERT_COLOR(C) (C)
 #endif
 
+#define CAIROGD_MAGIC (0x43614744)
+
 typedef struct {
+#ifdef USE_MAGIC
+    int magic; /* magic number such that we recognize Cairo */
+#endif
     double cex;				/* Character expansion */
     int lty;				/* Line type */
     double lwd;

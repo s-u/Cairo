@@ -319,6 +319,7 @@ Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, char *display, double
 		return NULL;
 	}
 
+	be->backend_type = BET_W32;
 	be->backendSpecific = xd;
 	xd->be = be;
 	be->destroy_backend = w32_backend_destroy;
