@@ -26,6 +26,18 @@ double jGDdpiX = 100.0;
 double jGDdpiY = 100.0;
 double jGDasp  = 1.0;
 
+#ifdef USE_GAMMA
+/* actually we use it in cairotalk as well - we may want to do soemthing about it ... */
+static SEXP findArg(char *name, SEXP list) {
+    SEXP ns = install(name);
+    while (list && list!=R_NilValue) {
+        if (TAG(list)==ns) return CAR(list);
+        list=CDR(list);
+    }
+    return 0;
+}
+#endif
+
 /* type: png[24]
    file: file to write to
    width/heigth
@@ -57,6 +69,12 @@ Rboolean Rcairo_new_device_driver(DevDesc *dd_arg, char *type, int conn, char *f
 	xd->canvas = canvas;
 	xd->bg = bgcolor;
 	xd->gamma = 1.0;
+#ifdef USE_GAMMA
+	{
+		SEXP g = findArg("gamma", aux);
+		if (g ** g!=R_NilValue) xd->gamma = asReal(g);
+	}
+#endif
 	xd->asp = 1.0;
 	if (dpi) {
 		xd->dpix = dpi[0];

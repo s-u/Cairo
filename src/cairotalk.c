@@ -8,6 +8,7 @@
 #include "ps-backend.h"
 #include "xlib-backend.h"
 #include "w32-backend.h"
+#include "img-tiff.h" /* for TIFF_COMPR_LZW */
 #include <Rversion.h>
 
 /* Device Driver Actions */
@@ -451,12 +452,19 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 
 	{
 		cairo_operator_t oop = cairo_get_operator(cc);
-		Rcairo_set_color(cc, xd->canvas);
-#ifdef JGD_DEBUG
-		Rprintf("Cairo.NewPage, clearing with canvas = %08x\n", xd->canvas);
-#endif
 		cairo_set_operator(cc, CAIRO_OPERATOR_SOURCE);
 
+		Rcairo_set_color(cc, xd->bg);
+		if (xd->cb->flags & CDF_OPAQUE) {
+			/* Opaque devices use canvas if bg is transparent */
+			if (R_TRANSPARENT(xd->bg))
+				Rcairo_set_color(cc, xd->canvas);
+		} else {
+			if (xd->cb->flags & CDF_FAKE_BG) {
+				if (R_TRANSPARENT(xd->bg))
+					Rcairo_set_color(cc, fake_bg_color);
+			}
+		}
 		cairo_reset_clip(cc);
 		cairo_new_path(cc);
 		cairo_paint(cc);
@@ -512,6 +520,13 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 			if (quality<0) quality=0;
 			if (quality>100) quality=100;
 		}
+		if (!strcmp(type,"tif")  || !strcmp(type,"tiff")) {
+			SEXP arg = findArg("compression", aux);
+			if (arg && arg!=R_NilValue)
+				quality = asInteger(arg);
+			else
+				quality = TIFF_COMPR_LZW; /* default */
+		}
 		if (umpl>=0) {
 			if (xd->dpix <= 0)
 				error("images cannot be created with other units than 'px' if dpi is not specified");
@@ -555,6 +570,8 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 			umpl = -1;
 		} /* otherwise device's dpi will be used */
 		xd->cb->width = w; xd->cb->height = h;
+		/* also following devices are opaque UI-devices */
+		xd->cb->flags |= CDF_HAS_UI|CDF_OPAQUE;
 		if (!strcmp(type,"x11") || !strcmp(type,"X11") || !strcmp(type,"xlib"))
 			xd->cb = Rcairo_new_xlib_backend(xd->cb, file, w, h, umpl);
 		else if (!strncmp(type,"win",3))

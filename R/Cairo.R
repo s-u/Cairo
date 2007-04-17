@@ -6,7 +6,7 @@
 					  pdf="pdf",svg="svg",ps="ps",postscript="ps",x11="x11",xlib="x11",
 					  win="win",win32="win",window="win",windows="win",w32="win")
 
-Cairo <- function(width=640, height=480, file="", type="png", pointsize=14, canvas="white", bg="transparent", units="px", dpi="auto", ...) {
+Cairo <- function(width=640, height=480, file="", type="png", pointsize=14, bg="transparent", canvas="white", units="px", dpi="auto", ...) {
 	ctype <- tolower(type)
 	if (!ctype %in% names(.supported.types))
 		stop("Unknown output type `",type,"'.")
@@ -72,22 +72,22 @@ CairoFonts <- function(regular="Helvetica:style=Regular",bold="Helvetica:style=B
 CairoX11 <- function(display=Sys.getenv("DISPLAY"), width = 7, height = 7, pointsize = 12,
 					 gamma = getOption("gamma"), bg = "transparent", canvas = "white",
 					 xpos = NA, ypos = NA) {
-	Cairo(width, height, file=display, type='x11', pointsize=pointsize, bg=bg, units="in")
+	Cairo(width, height, file=display, type='x11', pointsize=pointsize, bg=bg, units="in", dpi=72)
 }
 
 CairoPNG <- function(filename = "Rplot%03d.png", width = 480, height = 480,
 					 pointsize = 12, bg = "white",  res = NA, ...) {
-	Cairo(width, height, type='png', file=filename, pointsize=pointsize, bg=bg)
+	Cairo(width, height, type='png', file=filename, pointsize=pointsize, bg=bg, ...)
 }
 
 CairoTIFF <- function(filename = "Rplot%03d.tiff", width = 480, height = 480,
 					  pointsize = 12, bg = "white",  res = NA, ...) {
-	Cairo(width, height, type='tiff', file=filename, pointsize=pointsize, bg=bg)
+	Cairo(width, height, type='tiff', file=filename, pointsize=pointsize, bg=bg, ...)
 }
 
 CairoJPEG <- function(filename = "Rplot%03d.jpeg", width = 480, height = 480,
 					  pointsize = 12, quality = 75, bg = "white", res = NA, ...) {
-	Cairo(width, height, type='jpeg', file=filename, pointsize=pointsize, bg=bg, quality=quality)
+	Cairo(width, height, type='jpeg', file=filename, pointsize=pointsize, bg=bg, quality=quality, ...)
 }
 
 CairoPDF <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),

@@ -10,6 +10,10 @@
 #include <R_ext/GraphicsDevice.h>
 
 #define CDF_HAS_UI    0x0001  /* backend has UI (e.g. window) */
+#define CDF_FAKE_BG   0x0002  /* fake transparent background */
+#define CDF_OPAQUE    0x0004  /* device doesn't support any kind of alpha, not even fake */
+
+#define fake_bg_color (0xfffefefe)
 
 typedef struct st_Rcairo_backend {
   /*----- instance variables -----*/

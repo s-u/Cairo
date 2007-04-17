@@ -21,9 +21,9 @@
 #include "img-jpeg.h"
 #include "img-tiff.h"
 
-#define default_jpeg_quality 60
+#define default_jpeg_quality 75
 
-static int cairo_op = CAIRO_OPERATOR_OVER;
+static int cairo_op = -1;
 SEXP Rcso(SEXP v) {
 	cairo_op = asInteger(v);
 	return v;
@@ -69,7 +69,8 @@ static void image_save_page_jpg(Rcairo_backend* be, int pageno){
 	int width = cairo_image_surface_get_width(be->cs);
 	int height = cairo_image_surface_get_height(be->cs);
 	unsigned char *buf = cairo_image_surface_get_data (be->cs);
-	int res = save_jpeg_file(buf, width, height, fn, image->quality?image->quality:default_jpeg_quality);
+	/* although we don't use alpha, cairo still aligns on 4 so we have to set channels=4 */
+	int res = save_jpeg_file(buf, width, height, fn, image->quality?image->quality:default_jpeg_quality, 4);
 	free(fn);
 	if (res == -2)
 		error("Sorry, this Cario was compiled without jpeg support.");
@@ -78,13 +79,13 @@ static void image_save_page_jpg(Rcairo_backend* be, int pageno){
 }
 
 static void image_save_page_tiff(Rcairo_backend* be, int pageno){
-	/* Rcairo_image_backend *image = (Rcairo_image_backend *)be->backendSpecific; */
+	Rcairo_image_backend *image = (Rcairo_image_backend *)be->backendSpecific;
 	char *fn = image_filename(be, pageno);
 	int width = cairo_image_surface_get_width(be->cs);
 	int height = cairo_image_surface_get_height(be->cs);
 	int stride = cairo_image_surface_get_stride(be->cs);
 	unsigned char *buf = cairo_image_surface_get_data (be->cs);
-	int res = save_tiff_file(buf, width, height, fn, stride/width);
+	int res = save_tiff_file(buf, width, height, fn, stride/width, image->quality);
 	free(fn);
 	if (res == -2)
 		error("Sorry, this Cario was compiled without tiff support.");
@@ -166,23 +167,34 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, char *fil
 				width, height, stride);
 		alpha_plane = 1;
 		if (!be->save_page) be->save_page = image_save_page_png;
-
 	} else if (!strcmp(type,"png")){
-
 		be->cs = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
 		if (!be->save_page) be->save_page = image_save_page_png;
+		be->flags|=CDF_FAKE_BG;
 
 	} else if (!strcmp(type,"jpg") || !strcmp(type,"jpeg")) {
 #ifdef SUPPORTS_JPEG
 		image->quality = quality;
 		be->cs = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
 		be->save_page = image_save_page_jpg;
+		be->flags|=CDF_OPAQUE; /* no transparency at all */
 #else
 		error("Sorry, this Cairo was compiled without jpeg support.");
 #endif
 	} else if (!strcmp(type,"tif") || !strcmp(type,"tiff")) {
 #ifdef SUPPORTS_TIFF
-		be->cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+		int stride = 4 * width;
+		image->quality = quality;
+		if ( ! (image->buf = calloc (stride * height, 1))){
+			free(be); free(image->filename); free(image);
+			return NULL;
+		}
+
+		be->cs = cairo_image_surface_create_for_data (image->buf,
+				CAIRO_FORMAT_ARGB32,
+				width, height, stride);
+		alpha_plane = 1;
+		/* be->cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height); */
 		be->save_page = image_save_page_tiff;
 #else
 		error("Sorry, this Cairo was compiled without tiff support.");
@@ -204,8 +216,8 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, char *fil
 	/* Note: back-ends with alpha-plane don't work with ATOP, because cairo doesn't increase
 	   the opacity and thus the resulting picture will be fully transparent. */
 	cairo_set_operator(be->cc,alpha_plane?CAIRO_OPERATOR_OVER:CAIRO_OPERATOR_ATOP);
-	/* debug
-	   cairo_set_operator(be->cc,cairo_op); */
+	/* debug */
+	if (cairo_op != -1) cairo_set_operator(be->cc,cairo_op);
 	return be;
 }
 

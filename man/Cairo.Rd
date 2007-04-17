@@ -14,25 +14,25 @@
 \description{
   \code{Cairo} initializes a new graphics device that uses the Cairo
   graphics library for rendering. The current implementation produces
-  high-quality PNG, Jpeg, TIFF bitmap files, high resolution PDF files
-  with embedded fonts, SVG graphics, PostScript files. It also provides
-  X11 and Windows interactive graphics devices. Unlike other devices it
-  supports all graphics features including alpha blending, anti-aliasing
-  etc.
+  high-quality PNG, JPEG, TIFF bitmap files, high resolution PDF files
+  with embedded fonts, SVG graphics and PostScript files. It also
+  provides X11 and Windows interactive graphics devices. Unlike other
+  devices it supports all graphics features including alpha blending,
+  anti-aliasing etc.
 
   \code{CairoX11}, \code{CairoPNG}, \code{CairoPDF}, \code{CairoPS} and
   \code{CairoSVG} are convenience wrappers of \code{Cairo} that take the
-  same arguments as the corresponding devices it replaces such as
+  same arguments as the corresponding device it replaces such as
   \code{X11}, \code{png}, \code{pdf}, etc.
 }
 \usage{
-Cairo(width = 640, height = 480, file="", type="png", pointsize=14, 
-      canvas = "white", bg = "transparent", units = "px", dpi = "auto",
+Cairo(width = 640, height = 480, file="", type="png", pointsize=12, 
+      bg = "transparent", canvas = "white", units = "px", dpi = "auto",
       ...)
 
-CairoX11(display=Sys.getenv("DISPLAY"), width = 7, height = 7, pointsize = 12,
-         gamma = getOption("gamma"), bg = "transparent", canvas = "white",
-         xpos = NA, ypos = NA)
+CairoX11(display=Sys.getenv("DISPLAY"), width = 7, height = 7,
+         pointsize = 12, gamma = getOption("gamma"), bg = "transparent",
+         canvas = "white", xpos = NA, ypos = NA)
 CairoPNG(filename = "Rplot\%03d.png", width = 480, height = 480,
          pointsize = 12, bg = "white",  res = NA, ...)
 CairoJPEG(filename = "Rplot\%03d.jpeg", width = 480, height = 480,
@@ -43,10 +43,11 @@ CairoPDF(file = ifelse(onefile, "Rplots.pdf","Rplot\%03d.pdf"),
          width = 6, height = 6, onefile = TRUE, family = "Helvetica",
          title = "R Graphics Output", fonts = NULL, version = "1.1",
          paper = "special", encoding, bg, fg, pointsize, pagecentre)
-CairoWin(width = 7, height = 7, pointsize = 12, record = getOption("graphics.record"),
-         rescale = c("R", "fit", "fixed"), xpinch, ypinch, bg = "transparent",
-         canvas = "white", gamma = getOption("gamma"), xpos = NA,
-         ypos = NA, buffered = getOption("windowsBuffered"),
+CairoWin(width = 7, height = 7, pointsize = 12,
+         record = getOption("graphics.record"),
+         rescale = c("R", "fit", "fixed"), xpinch, ypinch, bg =
+         "transparent", canvas = "white", gamma = getOption("gamma"),
+         xpos = NA, ypos = NA, buffered = getOption("windowsBuffered"),
          restoreConsole = FALSE)
 CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
         onefile = TRUE, family, title = "R Graphics Output", fonts = NULL,
@@ -64,13 +65,15 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
          \code{DISPLAY} environment variable for X11.}
   \item{type}{output type. This version of Cario supports "png", a 24 
     bit RGB image, and "png24", 24 bit RGB with 8 bit Alpha channel,
-    "jpeg", "tiff" 24-bit bitmaps, "pdf" PDF-file with embedded fonts, "svg" SVG-file,
-    "ps" PostScript-file, "x11" X11 interactive window and "win" Windows
-    graphics. Depending on the support of various
+    "jpeg", "tiff" 24-bit bitmaps, "pdf" PDF-file with embedded fonts,
+    "svg" SVG-file, "ps" PostScript-file, "x11" X11 interactive window
+    and "win" Windows graphics. Depending on the support of various
     backends in cairographics some of the options may not be
     available for your system.}
   \item{pointsize}{initial text size (in points).}
-  \item{canvas}{canvas color (can include alpha-component).}
+  \item{canvas}{canvas color (must be opaque). The canvas is only used
+    by devices that display graphics on a screen and the canvas is only
+    visible only if bg is transparent.}
   \item{bg}{plot background color (can include alpha-component).}
   \item{units}{units for of the \code{width} and \code{height}
          specifications. In can be any of \code{"px"} (pixels),
@@ -86,7 +89,6 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
          corresponding to the device that is being replaced.}
        \item{display}{X11 display, see \code{\link{X11}}}
        \item{gamma}{gamma correction}
-       \item{canvas}{canvas color}
        \item{xpos}{see \code{\link{X11}}}
        \item{ypos}{see \code{\link{X11}}}
        \item{filename}{same as \code{file} in \code{Cairo}}
@@ -137,8 +139,8 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
 }
 \section{Known issues}{
   \itemize{
-    \item X11 backend is very slow. The reason is the cairographics
-         implementation of the back-end, so we can't do much about
+    \item The X11 backend is quite slow. The reason is the cairographics
+         implementation of the backend, so we can't do much about
          it. It should be possible to drop cairographics' Xlib
          backend entirely and use image backend copied into an X11
          window instead. We may try that in future releases.
@@ -146,7 +148,7 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
 	against a cairo graphics library configured with FreeType and
          Fontconfig support. Therefore make sure have a cairo grpahics
          library with all bell and whistles to get a good result.
-   \item R math symbols are supported,but require a TrueType "Symbol" font accessible
+   \item R math symbols are supported, but require a TrueType "Symbol" font accessible
 	to Cairo under that name.
   }
 } 
@@ -154,8 +156,7 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   \code{\link{CairoFonts}}
 }
 \examples{
-library(Cairo)
-Cairo(800,600,file="plot.png",type="png")
+Cairo(800, 600, file="plot.png", type="png")
 plot(rnorm(100),rnorm(100),col=2)
 dev.off() # creates a file "plot.png" with the above plot
 }
