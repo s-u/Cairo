@@ -1,6 +1,13 @@
 NEWS/Changelog
 
-1.2-1	(under development)
+1.3-0	(under development)
+    o	add support for canvas and dpi specification
+
+    o	allow backends to detect native resolution
+
+    o	add support for custom parameters (e.g. quality for jpeg)
+
+1.2-1
     o	improve rendering on bitmap devices by aligning straight lines
 	to the pixel grid and adding bleed to such fills.
 

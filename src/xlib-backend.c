@@ -58,12 +58,14 @@ static void xlib_save_page(Rcairo_backend* be, int pageno){
 }
 
 /*---- resize ----*/
-static void xlib_resize(Rcairo_backend* be, int width, int height){
+static void xlib_resize(Rcairo_backend* be, double width, double height){
 	Rcairo_xlib_data *xd = (Rcairo_xlib_data *) be->backendSpecific;
 	if (xd) {
 		xd->width=width;
 		xd->height=height;
 	}
+	be->width=width;
+	be->height=height;
 	if (be->cs) cairo_xlib_surface_set_size(be->cs, width, height);
 	Rcairo_backend_repaint(be);
 	if (xd->display) XSync(xd->display, 0);
@@ -274,14 +276,16 @@ Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, char *display, doubl
 
 		xd->screen = DefaultScreen(xd->display);
 		{ /* adjust width and height to be in pixels */
-			int dwp = DisplayWidth(xd->display,xd->screen);
-			int dwr = DisplayWidthMM(xd->display,xd->screen);
-			int dhp = DisplayHeight(xd->display,xd->screen);
-			int dhr = DisplayHeightMM(xd->display,xd->screen);
-			if (dwp && dwr && dhp && dhr) {
-				be->dpix = ((double)dwp)/((double)dwr)/0.0254;
-				be->dpiy = ((double)dhp)/((double)dhr)/0.0254;
-			} 
+			if (be->dpix<=0) { /* is DPI set to auto? then find it out */
+				int dwp = DisplayWidth(xd->display,xd->screen);
+				int dwr = DisplayWidthMM(xd->display,xd->screen);
+				int dhp = DisplayHeight(xd->display,xd->screen);
+				int dhr = DisplayHeightMM(xd->display,xd->screen);
+				if (dwp && dwr && dhp && dhr) {
+					be->dpix = ((double)dwp)/((double)dwr)/0.0254;
+					be->dpiy = ((double)dhp)/((double)dhr)/0.0254;
+				}
+			}
 			if (umpl>0 && be->dpix<=0) {
 				warning("cannot determine DPI from the screen, assuming 72dpi");
 				be->dpix = 72; be->dpiy = 72;
@@ -321,8 +325,9 @@ Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, char *display, doubl
 		hint = XAllocSizeHints();
 		hint->x = 10;
 		hint->y = 10;
-		xd->width = hint->width = width;
-		xd->height = hint->height= height;
+		
+		xd->width = hint->width = be->width = width;
+		xd->height = hint->height = be->height = height;
 		hint->flags  = PPosition | PSize;
 	
 		xd->window = XCreateSimpleWindow(xd->display,

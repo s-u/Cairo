@@ -61,7 +61,7 @@ static void w32_save_page(Rcairo_backend* be, int pageno){
 }
 
 /*---- resize ----*/
-static void w32_resize(Rcairo_backend* be, int width, int height){
+static void w32_resize(Rcairo_backend* be, double width, double height){
 	Rcairo_w32_data *xd = (Rcairo_w32_data *) be->backendSpecific;
 	RECT r;
 	HBITMAP ob;
@@ -77,8 +77,8 @@ static void w32_resize(Rcairo_backend* be, int width, int height){
 		cairo_surface_destroy(be->cs); be->cs=0;
 	}
 
-	xd->width=width;
-	xd->height=height;
+	be->width=xd->width=width;
+	be->height=xd->height=height;
 
 	/* first re-paint the window */
 	if (!xd->hdc)
@@ -328,7 +328,7 @@ Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, char *display, double
 	be->locator = w32_locator;
 	be->truncate_rect = 1;
 
-	{ /* try to find out the DPI setting */
+	if (be->dpix<=0) { /* try to find out the DPI setting */
 		HWND dw = GetDesktopWindow();
 		if (dw) {
 			HDC  dc = GetDC(dw);
@@ -356,6 +356,9 @@ Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, char *display, double
 		width *= (-umpl);
 		height *= (-umpl);
 	}
+
+	be->width = width;
+	be->height = height;
 
 #ifdef NATIVE_UI
 	if (!inited_w32) {

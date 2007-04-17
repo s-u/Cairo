@@ -9,7 +9,7 @@
 #include <Rinternals.h>
 #include <R_ext/GraphicsDevice.h>
 
-#define CDF_HAS_UI  0x0001  /* backend has UI (e.g. window) */
+#define CDF_HAS_UI    0x0001  /* backend has UI (e.g. window) */
 
 typedef struct st_Rcairo_backend {
   /*----- instance variables -----*/
@@ -17,6 +17,7 @@ typedef struct st_Rcairo_backend {
   cairo_t          *cc;  /* cairo context */
   cairo_surface_t  *cs;  /* cairo surface */
   NewDevDesc       *dd;  /* device descriptor */
+  double width, height;  /* size in native units (pixels or pts) */
   int               in_replay; /* set to 1 if it is known where the painting stops
 				  and thus the backend doesn't need to perform
 				  any synchronization until we're done.
@@ -39,11 +40,11 @@ typedef struct st_Rcairo_backend {
   int  (*locator)(struct st_Rcairo_backend *be, double *x, double *y);
   void (*activation)(struct st_Rcairo_backend *be, int activate);  /* maps both Activate/Deactivate */
   void (*mode)(struct st_Rcairo_backend *be, int mode); /* in addition it is called after internal replay with mode -1 */
-  void (*resize)(struct st_Rcairo_backend *be, int width, int height);
+  void (*resize)(struct st_Rcairo_backend *be, double width, double height);
 } Rcairo_backend;
 
 /* implemented in cairotalk but can be used by any back-end to talk to the GD system */
-void Rcairo_backend_resize(Rcairo_backend *be, int width, int height); /* won't do anything if resize is not implemented in the back-end */
+void Rcairo_backend_resize(Rcairo_backend *be, double width, double height); /* won't do anything if resize is not implemented in the back-end */
 void Rcairo_backend_repaint(Rcairo_backend *be); /* re-plays the display list */
 void Rcairo_backend_kill(Rcairo_backend *be); /* kills the devide */
 void Rcairo_backend_init_surface(Rcairo_backend *be); /* initialize a new surface */

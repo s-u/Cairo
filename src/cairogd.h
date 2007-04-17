@@ -42,10 +42,6 @@ typedef struct {
     int basefontface;	    /* Typeface */
     int basefontsize;		/* Size in points */
 
-    int windowWidth;		/* Window width (pixels) */
-    int windowHeight;		/* Window height (pixels) */
-    int resize;				/* Window resized */
-
   /* --- custom fields --- */
   Rcairo_backend   *cb; /* cairo backend */
 
@@ -53,9 +49,7 @@ typedef struct {
      any number of initial parameters without modifying the code */
   int bg;  /* bg */
   double gamma; /* gamma */
-  double dpix, dpiy, asp; /* DPI and aspect ratio. These have a dual role:
-			     to initliaze devices that need it and to 
-			     provide feedback from devices that set it */
+  double dpix, dpiy, asp;
 
   int gd_fill, gd_draw; /* current GD colors */
   double gd_ftsize, gd_ftm_ascent, gd_ftm_descent, gd_ftm_width;

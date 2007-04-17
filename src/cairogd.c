@@ -70,7 +70,7 @@ Rboolean Rcairo_new_device_driver(DevDesc *dd_arg, char *type, int conn, char *f
     dd->newDevStruct = 1;
 
     /*	Set up Data Structures. */
-    setupCairoGDfunctions(dd);
+    Rcairo_setup_gd_functions(dd);
 
     dd->left = dd->clipLeft = 0;			/* left */
     dd->top = dd->clipTop = 0;			/* top */
@@ -103,25 +103,37 @@ Rboolean Rcairo_new_device_driver(DevDesc *dd_arg, char *type, int conn, char *f
 
     dd->deviceSpecific = (void *) xd;
 
+#ifdef JGD_DEBUG
+	Rprintf("Cairo-Open, dimensions: %f x %f, umul=%f, dpi=%f/%f\n", width, height, umul, xd->dpix, xd->dpiy);
+#endif
 	/* open the device */
-    if (!CairoGD_Open(dd, xd, type, conn, file, width, height, umul, aux)) {
+    if (!CairoGD_Open(dd, xd, type, conn, file, width, height, umul, aux) || !xd->cb) {
 		free(xd);
 		dd->deviceSpecific = 0;
 		return FALSE;
 	}
 
+	if (!xd->cb->resize)
+		dd->canResizePlot = FALSE;
+
 	/* those were deferred, because they depend on xd and Open may have modified them */
-    dd->right = dd->clipRight = xd->windowWidth;	/* right */
-    dd->bottom = dd->clipBottom = xd->windowHeight;	/* bottom */
+    dd->right   = dd->clipRight = xd->cb->width;	/* right */
+    dd->bottom  = dd->clipBottom = xd->cb->height;	/* bottom */
     dd->startps    = xd->basefontsize; /* = initps */
     dd->startcol   = xd->col;
     dd->startfill  = xd->fill;
     dd->startgamma = xd->gamma;
 
     /* Inches per raster unit */
-   	dd->ipr[0] = (xd->dpix>0)?1/xd->dpix:(1/72);
-   	dd->ipr[1] = (xd->dpiy>0)?1/xd->dpiy:(1/72);
-    dd->asp = (xd->asp>0)?xd->asp:1.0;
+	if (xd->dpix > 0 && xd->dpiy <= 0) xd->dpiy = xd->dpix;
+   	dd->ipr[0] = (xd->dpix > 0)?(1/xd->dpix):(1.0/72.0);
+   	dd->ipr[1] = (xd->dpiy > 0)?(1/xd->dpiy):(1.0/72.0);
+    dd->asp = (xd->asp > 0)?xd->asp:1.0;
+
+#ifdef JGD_DEBUG
+	Rprintf("Cairo-Open, returned: %f x %f, dpi=%f/%f\n", xd->cb->width, xd->cb->height, xd->dpix, xd->dpiy);
+	Rprintf("  ipr=%f/%f (1/ipr)=%f/%f\n", dd->ipr[0], dd->ipr[1], 1/dd->ipr[0], 1/dd->ipr[1]);
+#endif
 
     dd->displayListOn = TRUE;
 
@@ -368,6 +380,6 @@ SEXP cairo_font_set(SEXP args){
 	}
 #else
 	warning("the R Cairo package was not installed with fontconfig. Please consider installing the cairo graphics engine (www.cairographics.org) with freetype and fontconfig support");
-	return R_NilValue;
 #endif
+	return R_NilValue;
 }

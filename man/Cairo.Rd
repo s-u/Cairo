@@ -27,7 +27,8 @@
 }
 \usage{
 Cairo(width = 640, height = 480, file="", type="png", pointsize=14, 
-      bg = "white", units = "px", dpi = "auto", ...)
+      canvas = "white", bg = "transparent", units = "px", dpi = "auto",
+      ...)
 
 CairoX11(display=Sys.getenv("DISPLAY"), width = 7, height = 7, pointsize = 12,
          gamma = getOption("gamma"), bg = "transparent", canvas = "white",
@@ -69,14 +70,15 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
     backends in cairographics some of the options may not be
     available for your system.}
   \item{pointsize}{initial text size (in points).}
+  \item{canvas}{canvas color (can include alpha-component).}
   \item{bg}{plot background color (can include alpha-component).}
   \item{units}{units for of the \code{width} and \code{height}
          specifications. In can be any of \code{"px"} (pixels),
          \code{"in"} (inches), \code{"pt"} (points), \code{"cm"}
          (centimeters) or \code{"mm"} (millimeters).}
   \item{dpi}{DPI used for the conversion of units to pixels. If set to
-    \code{"auto"} the correct DPI rate will be determined by the
-    back-end (recommended).}
+    \code{"auto"} the DPI resolution will be determined by the
+    back-end.}
   \item{...}{additional backend specific parameters. All parameters
          listed below are defined by the other devices are are used by
          the wrappers to make it easier replace other devices by

@@ -14,9 +14,9 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=14, canv
 	if (is.null(file) || !nchar(file))
 		file <- if (ctype != 'x11') paste("plot.",ctype,sep='') else Sys.getenv("DISPLAY")
 
-	if (ctype=="png" && bg=="transparent"){
-		warning("Type png does not support transparency. Changing type to png24")
-		ctype <- type <- "png24"      
+	if (ctype=="png" && canvas=="transparent"){
+	#	warning("Type png does not support transparency. Changing type to png24")
+	#	ctype <- type <- "png24"      
 	}
 
 	if (typeof(file) == "character" && length(file) != 1)

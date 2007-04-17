@@ -23,6 +23,12 @@
 
 #define default_jpeg_quality 60
 
+static int cairo_op = CAIRO_OPERATOR_OVER;
+SEXP Rcso(SEXP v) {
+	cairo_op = asInteger(v);
+	return v;
+}
+
 typedef struct st_Rcairo_image_backend {
 	void *buf;
 	char *filename;
@@ -72,7 +78,7 @@ static void image_save_page_jpg(Rcairo_backend* be, int pageno){
 }
 
 static void image_save_page_tiff(Rcairo_backend* be, int pageno){
-	Rcairo_image_backend *image = (Rcairo_image_backend *)be->backendSpecific;
+	/* Rcairo_image_backend *image = (Rcairo_image_backend *)be->backendSpecific; */
 	char *fn = image_filename(be, pageno);
 	int width = cairo_image_surface_get_width(be->cs);
 	int height = cairo_image_surface_get_height(be->cs);
@@ -87,9 +93,8 @@ static void image_save_page_tiff(Rcairo_backend* be, int pageno){
 }
 
 static void image_save_page_png(Rcairo_backend* be, int pageno){
-	Rcairo_image_backend *image = (Rcairo_image_backend *)be->backendSpecific;
+	/* Rcairo_image_backend *image = (Rcairo_image_backend *)be->backendSpecific; */
 	char *fn;
-	int   nl;
 
 	fn=image_filename(be, pageno);
 	cairo_surface_write_to_png(be->cs, fn);
@@ -142,6 +147,8 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, char *fil
 	be->destroy_backend = image_backend_destroy;
 	be->backendSpecific = (void *)image;
 	be->truncate_rect = 1;
+	be->width = width;
+	be->height = height;
 
 	if (!strcmp(type,"png24")){
 		int stride = 4 * width;
@@ -195,10 +202,10 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, char *fil
 	}
 
 	/* Note: back-ends with alpha-plane don't work with ATOP, because cairo doesn't increase
-	   the opacity and thus the resulting picture will be fully transparent. OVER doesn't
-	   blend alpha, so the result is not as expected, but at least in works on transparent
-	   backgrounds. */
+	   the opacity and thus the resulting picture will be fully transparent. */
 	cairo_set_operator(be->cc,alpha_plane?CAIRO_OPERATOR_OVER:CAIRO_OPERATOR_ATOP);
+	/* debug
+	   cairo_set_operator(be->cc,cairo_op); */
 	return be;
 }
 

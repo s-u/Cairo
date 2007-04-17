@@ -63,8 +63,8 @@ static void CairoGD_Text(double x, double y, char *str,
 
 
 #ifdef JGD_DEBUG
-#define Rcairo_set_source_rgb(C,R,G,B) { printf("S:RGB> %f %f %f\n", R, G, B); cairo_set_source_rgb(C,R,G,B); }
-#define Rcairo_set_source_rgba(C,R,G,B,A) { printf("S:RGBA> %f %f %f (%f)\n", R, G, B, A); cairo_set_source_rgba(C,R,G,B,A); }
+#define Rcairo_set_source_rgb(C,R,G,B) { Rprintf("S:RGB> %f %f %f\n", R, G, B); cairo_set_source_rgb(C,R,G,B); }
+#define Rcairo_set_source_rgba(C,R,G,B,A) { Rprintf("S:RGBA> %f %f %f (%f)\n", R, G, B, A); cairo_set_source_rgba(C,R,G,B,A); }
 #define Rcairo_set_color(cc, col) { if (CALPHA(col)==255) { Rcairo_set_source_rgb (cc, ((double)CREDC(col))/255., ((double)CGREENC(col))/255., ((double)CBLUEC(col))/255.); } else { Rcairo_set_source_rgba (cc, ((double)CREDC(col))/255., ((double)CGREENC(col))/255., ((double)CBLUEC(col))/255., ((double)CALPHA(col))/255.); }; }
 #else
 #define Rcairo_set_color(cc, col) { if (CALPHA(col)==255) { cairo_set_source_rgb (cc, ((double)CREDC(col))/255., ((double)CGREENC(col))/255., ((double)CBLUEC(col))/255.); } else { cairo_set_source_rgba (cc, ((double)CREDC(col))/255., ((double)CGREENC(col))/255., ((double)CBLUEC(col))/255., ((double)CALPHA(col))/255.); }; }
@@ -208,7 +208,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 		cairo_set_font_face(cc,Rcairo_fonts[i].face);
 		Rcairo_fonts[i].updated = 0;
 #ifdef JGD_DEBUG
-		  printf("  font face changed to \"%d\" %fpt\n", gc->fontface, gc->cex*gc->ps + 0.5);
+		  Rprintf("  font face changed to \"%d\" %fpt\n", gc->fontface, gc->cex*gc->ps + 0.5);
 #endif
 	} 
 
@@ -226,7 +226,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
   cairo_select_font_face (cc, Cfontface, slant, wght);
 
 #ifdef JGD_DEBUG
-  printf("  font \"%s\" %fpt (slant:%d, weight:%d)\n", Cfontface, gc->cex*gc->ps + 0.5, slant, wght);
+  Rprintf("  font \"%s\" %fpt (slant:%d, weight:%d)\n", Cfontface, gc->cex*gc->ps + 0.5, slant, wght);
 #endif
 #endif
 
@@ -290,7 +290,7 @@ static void CairoGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  Ne
 		cairo_t *cc = xd->cb->cc;
 
 #ifdef JGD_DEBUG
-		printf("circle %x %f/%f %f [%08x/%08x]\n",cc, x, y, r, gc->col, gc->fill);
+		Rprintf("circle %x %f/%f %f [%08x/%08x]\n",cc, x, y, r, gc->col, gc->fill);
 #endif
 
 		cairo_new_path(cc);
@@ -323,7 +323,7 @@ static void CairoGD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc
     cairo_clip(cc);
 
 #ifdef JGD_DEBUG
-    printf("clipping %f/%f %f/%f\n", x0, y0, x1, y1);
+    Rprintf("clipping %f/%f %f/%f\n", x0, y0, x1, y1);
 #endif
 }
 
@@ -366,7 +366,7 @@ static void CairoGD_Line(double x1, double y1, double x2, double y2,  R_GE_gcont
     if(!xd || !xd->cb) return;
     
 #ifdef JGD_DEBUG
-    printf("line %f/%f %f/%f [%08x/%08x]\n", x1, y1, x2, y2, gc->col, gc->fill);
+    Rprintf("line %f/%f %f/%f [%08x/%08x]\n", x1, y1, x2, y2, gc->col, gc->fill);
 #endif
 
     if (CALPHA(gc->col) && gc->lty!=-1) {
@@ -391,7 +391,7 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
 	cairo_text_extents_t te = {0, 0, 0, 0, 0, 0};
-	char str[3], utf8[8] = {0};
+	char str[3], utf8[8];
 
 	if(!xd || !xd->cb) return;
 
@@ -411,7 +411,7 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 	cairo_text_extents(cc, utf8, &te);
 
 #ifdef JGD_DEBUG
-	printf("metric %x [%c]: bearing %f:%f, size %f:%f, advance %f:%f\n",c, (char)c, te.x_bearing, te.y_bearing,
+	Rprintf("metric %x [%c]: bearing %f:%f, size %f:%f, advance %f:%f\n",c, (char)c, te.x_bearing, te.y_bearing,
 			te.width, te.height, te.x_advance, te.y_advance);
 #endif
 
@@ -421,7 +421,7 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 	*width = te.x_advance;
 
 #ifdef JGD_DEBUG
-	printf("FM> ascent=%f, descent=%f, width=%f\n", *ascent, *descent, *width);
+	Rprintf("FM> ascent=%f, descent=%f, width=%f\n", *ascent, *descent, *width);
 #endif
 }
 
@@ -449,12 +449,19 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	 * is fill really the desired background ?
 	 xd->gd_bgcolor = gc->fill; */
 
-	Rcairo_set_color(cc, xd->canvas);
-	/* cairo_set_operator(cc, CAIRO_OPERATOR_SOURCE); */ 
+	{
+		cairo_operator_t oop = cairo_get_operator(cc);
+		Rcairo_set_color(cc, xd->canvas);
+#ifdef JGD_DEBUG
+		Rprintf("Cairo.NewPage, clearing with canvas = %08x\n", xd->canvas);
+#endif
+		cairo_set_operator(cc, CAIRO_OPERATOR_SOURCE);
 
-	cairo_reset_clip(cc);
-	cairo_new_path(cc);
-	cairo_paint(cc);
+		cairo_reset_clip(cc);
+		cairo_new_path(cc);
+		cairo_paint(cc);
+		cairo_set_operator(cc, oop);
+	}
 }
 
 static SEXP findArg(char *name, SEXP list) {
@@ -475,9 +482,6 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 
 	xd->fill   = 0xffffffff; /* transparent, was R_RGB(255, 255, 255); */
 	xd->col    = R_RGB(0, 0, 0);
-	xd->canvas = R_RGB(255, 255, 255);
-	xd->windowWidth  = w;
-	xd->windowHeight = h;
 
 	xd->npages=-1;	
 	xd->cb = (Rcairo_backend*) calloc(1,sizeof(Rcairo_backend));
@@ -500,7 +504,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 	/* Cairo 1.2-0: jpeg and tiff are created via external libraries (libjpeg/libtiff) by our code */
 	if (!strcmp(type,"png") || !strcmp(type,"png24")  || !strcmp(type,"jpeg") || !strcmp(type,"jpg") ||
 		!strcmp(type,"tif")  || !strcmp(type,"tiff")) {
-		int quality = 0; /* fid otu if we have quality setting */
+		int quality = 0; /* find out if we have quality setting */
 		if (!strcmp(type,"jpeg") || !strcmp(type,"jpg")) {
 			SEXP arg = findArg("quality", aux);
 			if (arg && arg!=R_NilValue)
@@ -520,6 +524,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 				h = (-umpl)*h;
 			}
 		}
+		xd->cb->width = w; xd->cb->height = h;
 		xd->cb = Rcairo_new_image_backend(xd->cb, conn, file, type, (int)(w+0.5), (int)(h+0.5), quality);
 	}
 	else if (!strcmp(type,"pdf") || !strcmp(type,"ps") || !strcmp(type,"postscript") || !strcmp(type,"svg")) {
@@ -534,6 +539,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 		}
 		w = w * umpl * 72; /* inches * 72 = pt */
 		h = h * umpl * 72;
+		xd->cb->width = w; xd->cb->height = h;
 		if (!strcmp(type,"pdf"))
 			xd->cb = Rcairo_new_pdf_backend(xd->cb, conn, file, w, h);
 		else if (!strcmp(type,"ps") || !strcmp(type,"postscript"))
@@ -548,6 +554,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 			h = h * umpl * xd->dpiy;
 			umpl = -1;
 		} /* otherwise device's dpi will be used */
+		xd->cb->width = w; xd->cb->height = h;
 		if (!strcmp(type,"x11") || !strcmp(type,"X11") || !strcmp(type,"xlib"))
 			xd->cb = Rcairo_new_xlib_backend(xd->cb, file, w, h, umpl);
 		else if (!strncmp(type,"win",3))
@@ -563,7 +570,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 	}
 
 	cc = xd->cb->cc;
-	
+
 	/* get modified dpi in case the backend has set it */
 	xd->dpix = xd->cb->dpix;
 	xd->dpiy = xd->cb->dpiy;
@@ -573,7 +580,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 	/* cairo_save(cc); */
 
 #ifdef JGD_DEBUG
-	printf("open [type='%s'] %d x %d\n", type, (int)w, (int)h);
+	Rprintf("open [type='%s'] %d x %d\n", type, (int)w, (int)h);
 #endif
 
 	return TRUE;
@@ -590,7 +597,7 @@ static void CairoGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  Ne
 		Rcairo_set_line(xd, gc);
 
 #ifdef JGD_DEBUG
-		printf("polygon %d points [%08x/%08x]\n", n, gc->col, gc->fill);
+		Rprintf("polygon %d points [%08x/%08x]\n", n, gc->col, gc->fill);
 #endif
 		cairo_new_path(cc);
 		cairo_move_to(cc, x[0], y[0]);
@@ -616,7 +623,7 @@ static void CairoGD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  N
 		cairo_t *cc = xd->cb->cc;
 
 #ifdef JGD_DEBUG
-		printf("poly-line %d points [%08x]\n", n, gc->col);
+		Rprintf("poly-line %d points [%08x]\n", n, gc->col);
 #endif
 		if (CALPHA(gc->col) && gc->lty!=-1) {
 			cairo_new_path(cc);
@@ -643,7 +650,7 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 		Rcairo_set_line(xd, gc);
 
 #ifdef JGD_DEBUG
-		printf("rect: %x %f/%f %f/%f [%08x/%08x]\n", cc, x0, y0, x1, y1, gc->col, gc->fill);
+		Rprintf("rect: %x %f/%f %f/%f [%08x/%08x]\n", cc, x0, y0, x1, y1, gc->col, gc->fill);
 #endif
 
 		/* Snap to grid so that image() plots and rectangles look nicer, but only if the backend wishes so */
@@ -681,8 +688,8 @@ static void CairoGD_Size(double *left, double *right,  double *bottom, double *t
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb) return;	
 	*left=*top=0.0;
-	*right=xd->windowWidth;
-	*bottom=xd->windowHeight;
+	*right=xd->cb->width;
+	*bottom=xd->cb->height;
 }
 
 static double CairoGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
@@ -724,7 +731,7 @@ static void CairoGD_Text(double x, double y, char *str,  double rot, double hadj
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
 	char buf[32];
-	char *utf8;
+	char *utf8 = buf;
 	int len = strlen(str);
 
 	if(!xd || !xd->cb) return;
@@ -734,11 +741,8 @@ static void CairoGD_Text(double x, double y, char *str,  double rot, double hadj
 	/* Only convert to utf8 when Symbol font is in use. */
 	/* Also try not to call calloc for short strings. */
 	if (gc->fontface == 5){
-		if (len > 16){
+		if (len > 16)
 			utf8 = calloc(len * 2 + 1, sizeof(char));
-		} else {
-			utf8 = buf;
-		}
 		ascii2utf8(str,utf8);
 		str = utf8;
 	}
@@ -746,8 +750,7 @@ static void CairoGD_Text(double x, double y, char *str,  double rot, double hadj
 	Rcairo_setup_font(xd,gc);
 
 #ifdef JGD_DEBUG
-	printf("text \"%s\" face %d  %f:%f rot=%f hadj=%f [%08x:%08x]\n", str, gc->fontface, x, y, rot, hadj, gc->col, gc->fill);
-	printf(" length %d\n",len);
+	Rprintf("text \"%s\" (%d) face %d  %f:%f rot=%f hadj=%f [%08x:%08x]\n", str, len, gc->fontface, x, y, rot, hadj, gc->col, gc->fill);
 #endif
 
 	cairo_save(cc);
@@ -783,13 +786,12 @@ static void CairoGD_Text(double x, double y, char *str,  double rot, double hadj
 	}
 #endif
 
-	/* Remember len is strlen(str), need to free when len > 16 */
-	if (gc->fontface == 5 && len > 16) free(utf8);
+	if (utf8 != buf) free(utf8);
 	cairo_restore(cc);
 }
 
 /** fill the R device structure with callback functions */
-void setupCairoGDfunctions(NewDevDesc *dd) {
+void Rcairo_setup_gd_functions(NewDevDesc *dd) {
     dd->open = CairoGD_Open;
     dd->close = CairoGD_Close;
     dd->activate = CairoGD_Activate;
@@ -810,15 +812,15 @@ void setupCairoGDfunctions(NewDevDesc *dd) {
     dd->metricInfo = CairoGD_MetricInfo;
 }
 
-void Rcairo_backend_resize(Rcairo_backend *be, int width, int height) {
+void Rcairo_backend_resize(Rcairo_backend *be, double width, double height) {
 	if (!be || !be->dd) return;
 	if (be->resize) {
 		CairoGDDesc *xd = (CairoGDDesc *) be->dd->deviceSpecific;
 		if(!xd) return;
-		/* printf("cairotalk.resize(%d,%d) %d:%d %dx%d\n", width, height, be->dd->top, be->dd->left, be->dd->right, be->dd->bottom); */
+		/* Rprintf("cairotalk.resize(%d,%d) %d:%d %dx%d\n", width, height, be->dd->top, be->dd->left, be->dd->right, be->dd->bottom); */
 		
-		xd->windowWidth=width;
-		xd->windowHeight=height;
+		be->width=width;
+		be->height=height;
 		be->dd->size(&(be->dd->left), &(be->dd->right), &(be->dd->bottom), &(be->dd->top), be->dd);
 		be->resize(be, width, height);
 	}
@@ -846,11 +848,8 @@ static int has_initd_fc = 0;
 
 void Rcairo_backend_init_surface(Rcairo_backend *be) {
 	cairo_t *cc = be->cc;
-	/*
-	CairoGDDesc *cd = (CairoGDDesc *) be->dd->deviceSpecific;
-
-	Rcairo_set_color(cc, cd->bgcolor);
-	cairo_paint(cc); */
+	/* clearing of the surface is done directly in NewPage */
+	/* CairoGDDesc *cd = (CairoGDDesc *) be->dd->deviceSpecific; */
 
 	cairo_reset_clip(cc);
 
