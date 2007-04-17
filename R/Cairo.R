@@ -6,7 +6,7 @@
 					  pdf="pdf",svg="svg",ps="ps",postscript="ps",x11="x11",xlib="x11",
 					  win="win",win32="win",window="win",windows="win",w32="win")
 
-Cairo <- function(width=640, height=480, file="", type="png", pointsize=14, bg="transparent", canvas="white", units="px", dpi="auto", ...) {
+Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="transparent", canvas="white", units="px", dpi="auto", ...) {
 	ctype <- tolower(type)
 	if (!ctype %in% names(.supported.types))
 		stop("Unknown output type `",type,"'.")
