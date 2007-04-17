@@ -336,14 +336,13 @@ Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, char *display, double
 				int dpix = GetDeviceCaps(dc, LOGPIXELSX);
 				int dpiy = GetDeviceCaps(dc, LOGPIXELSY);
 				ReleaseDC(dw, dc);
-				Rprintf("DPI: %d x %d\n");
 				if (dpix>0) be->dpix=(double)dpix;
 				if (dpiy>0) be->dpiy=(double)dpiy;
 			}
 		}
 	}
 	/* adjust width and height to be in pixels */
-	if (umpl>0 && bd->dpix<=0) {
+	if (umpl>0 && be->dpix<=0) {
 		be->dpix = 96; be->dpiy = 96;
 	}
 	if (be->dpiy==0 && be->dpix>0) be->dpiy=be->dpix;
