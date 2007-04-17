@@ -255,7 +255,7 @@ SEXP cairo_create_new_device(SEXP args)
 		int nd = NumDevices();
 		int i = 0;
 		while (i<nd) {
-			if (GetDevice(i)==dd) {
+			if ((void*)GetDevice(i)==(void*)dd) {
 				INTEGER(v)[0] = 1 + i; break;
 			}
    			i++;

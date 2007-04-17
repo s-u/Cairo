@@ -83,9 +83,9 @@ static void image_save_page_tiff(Rcairo_backend* be, int pageno){
 	char *fn = image_filename(be, pageno);
 	int width = cairo_image_surface_get_width(be->cs);
 	int height = cairo_image_surface_get_height(be->cs);
-	int stride = cairo_image_surface_get_stride(be->cs);
 	unsigned char *buf = cairo_image_surface_get_data (be->cs);
-	int res = save_tiff_file(buf, width, height, fn, stride/width, image->quality);
+	cairo_format_t cf = cairo_image_surface_get_format(be->cs);
+	int res = save_tiff_file(buf, width, height, fn, (cf==CAIRO_FORMAT_RGB24)?3:4, image->quality);
 	free(fn);
 	if (res == -2)
 		error("Sorry, this Cario was compiled without tiff support.");
@@ -177,9 +177,9 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, char *fil
 #endif
 	} else if (!strcmp(type,"tif") || !strcmp(type,"tiff")) {
 #ifdef SUPPORTS_TIFF
+		image->quality = quality;
 		if (alpha_plane) {
 			int stride = 4 * width;
-			image->quality = quality;
 			if ( ! (image->buf = calloc (stride * height, 1))){
 				free(be); free(image->filename); free(image);
 				return NULL;

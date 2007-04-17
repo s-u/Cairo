@@ -29,7 +29,7 @@ int save_tiff_file(void *buf, int w, int h, char *fn, int channels, int compress
 		TIFFSetField(out, TIFFTAG_EXTRASAMPLES, (unsigned short) 1, extra);
 	if (compression) TIFFSetField(out, TIFFTAG_COMPRESSION, compression);
 
-	/* printf(" %d x %d, %d chs, scanls=%d, strips=%d\n", w, h, channels, TIFFScanlineSize(out), TIFFDefaultStripSize(out, w * channels)); */
+	/* Rprintf(" %d x %d, %d chs, scanls=%d, strips=%d, compr=%d\n", w, h, channels, TIFFScanlineSize(out), TIFFDefaultStripSize(out, w * channels), compression); */
 
 	if (TIFFScanlineSize(out) < linebytes)
 		tbuf = (unsigned char *)_TIFFmalloc(linebytes);
@@ -38,7 +38,7 @@ int save_tiff_file(void *buf, int w, int h, char *fn, int channels, int compress
 
 	TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, TIFFDefaultStripSize(out, w * channels));
 	while (row < h)	{
-		unsigned int *src = (unsigned int*)(&((unsigned char*)buf)[row*linebytes]);
+		unsigned int *src = (unsigned int*)(&((unsigned char*)buf)[row*w*4]);
 		unsigned char *dst = tbuf;
 		int x = 0;
 		while (x < w) {
