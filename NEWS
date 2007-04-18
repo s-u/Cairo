@@ -1,6 +1,9 @@
 NEWS/Changelog
 
-1.3-2	(under development)
+1.3-3	(under development)
+    o	make sure cairo graphics 1.2 functions are available
+
+1.3-2	2007-04-18
     o	added format autodetection for tiff and png. The 32-bit
 	version of either format is used if the background
 	is not opaque.
@@ -13,7 +16,7 @@ NEWS/Changelog
 	modification of image content in Cairo (.image, .ptr.to.raw
 	and .raw.to.ptr)
 
-1.3-1	(under development)
+1.3-1
     o	change semantics of canvas and bg to match other devices:
 	canvas is used by devices that don't support any kind
 	of transparency in case bg is translucent

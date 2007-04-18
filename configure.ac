@@ -119,10 +119,11 @@ int main(void) {
   cairo_surface_t *cs = 0;
   cairo_t *cr;
   cr = cairo_create(cs);
+  cairo_pop_group(cr);
   return 0;
 }
 ],[AC_MSG_RESULT(yes)],
-	[AC_MSG_ERROR([Cannot compile a simple Cairo program. See config.log for details.])])
+	[AC_MSG_ERROR([Cannot compile a simple Cairo program. Make sure you have cario graphics version 1.2 or higher. See config.log for details.])])
 
 # --- check for JPEG support ---
 AC_MSG_CHECKING([wheter libjpeg works])
