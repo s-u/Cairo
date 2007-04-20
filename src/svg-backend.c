@@ -89,7 +89,7 @@ Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, char *filen
 #else
 Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, char *filename, double width, double height)
 {
-	error("cairo library was compiled without SVG support.")
+	error("cairo library was compiled without SVG support.");
 	return NULL;
 }
 #endif
