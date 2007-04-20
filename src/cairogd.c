@@ -21,6 +21,7 @@
 #define R_CairoGD 1
 #include "cairogd.h"
 #include "cairotalk.h"
+#include "img-backend.h"
 
 double jGDdpiX = 100.0;
 double jGDdpiY = 100.0;
@@ -433,9 +434,10 @@ SEXP get_img_backplane(SEXP dev) {
 				switch (bet) {
 				case BET_IMAGE:
 					{
+						Rcairo_image_backend *image = (Rcairo_image_backend*) xd->cb->backendSpecific;
 						SEXP l = allocVector(VECSXP, 2);
-						unsigned char *data = cairo_image_surface_get_data(xd->cb->cs);
-						cairo_format_t dformat = cairo_image_surface_get_format(xd->cb->cs);
+						unsigned char *data = image->buf;
+						cairo_format_t dformat = image->format;
 						int width = cairo_image_surface_get_width(xd->cb->cs);
 						int height = cairo_image_surface_get_height(xd->cb->cs);
 						PROTECT(l);
