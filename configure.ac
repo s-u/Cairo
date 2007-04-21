@@ -12,6 +12,7 @@ fi
 RBIN="${R_HOME}/bin/R"
 CC=`"${RBIN}" CMD config CC`;
 CFLAGS=`"${RBIN}" CMD config CFLAGS`
+CPP=`"${RBIN}" CMD config CPP`;
 AC_SUBST(R_HOME)
 
 # platform check
@@ -143,6 +144,13 @@ int main(void) {
 }
 ],[AC_MSG_RESULT(yes)],[AC_MSG_ERROR([Cannot compile a simple Cairo program. See config.log for details.])])
 
+
+dnl AC_CHECK_LIB(cairo, cairo_image_surface_get_format)
+dnl if test "$ac_cv_lib_cairo_cairo_image_surface_get_format" != "yes"; then
+dnl   AC_MSG_ERROR([Cairo is too old: >= 1.2 is needed.])
+dnl fi
+AC_CHECK_DECLS([cairo_image_surface_get_format], [#include <cairo.h>])
+
 has_cairo_ft=no
 AC_MSG_CHECKING([for FreeType support in cairo])
 AC_COMPILE_IFELSE([
@@ -170,11 +178,11 @@ fi
 if test "${need_xtra_ft_flags}" = yes; then
  if test -n "${PKGCONF}"; then
    AC_MSG_CHECKING([whether pkg-config knows about fontconfig or freetype2])
-   ftmods=''
+   ftmod=''
    for module in fontconfig freetype2; do
       if "${PKGCONF}" --exists ${module}; then ftmod="${ftmod} ${module}"; fi
    done
-   if test -n "${ftmods}"; then
+   if test -n "${ftmod}"; then
       AC_MSG_RESULT(yes)
       FT_CPPFLAGS=`"${PKGCONF}" --cflags ${ftmod}`
       FT_LIBS=`"${PKGCONF}" --libs ${ftmod}`
@@ -190,7 +198,7 @@ if test "${need_xtra_ft_flags}" = yes; then
         FCI="${pre}/include"
 	FCL="-L${pre}/lib"
      fi
-     if test -z "{FTI}" -a -e "${pre}/include/freetype2/freetype/freeype.h"; then
+     if test -z "{FTI}" -a -e "${pre}/include/freetype2/freetype/freetype.h"; then
         FTI="${pre}/include/freetype2"
 	FTL="-L${pre}/lib"
      fi

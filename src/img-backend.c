@@ -65,7 +65,7 @@ static void image_save_page_jpg(Rcairo_backend* be, int pageno){
 	int res = save_jpeg_file(image->buf, width, height, fn, image->quality?image->quality:default_jpeg_quality, 4);
 	free(fn);
 	if (res == -2)
-		error("Sorry, this Cario was compiled without jpeg support.");
+		error("Sorry, this Cairo was compiled without jpeg support.");
 	if (res)
 		error("Unable to write jpeg file.");
 }
@@ -75,11 +75,11 @@ static void image_save_page_tiff(Rcairo_backend* be, int pageno){
 	char *fn = image_filename(be, pageno);
 	int width = cairo_image_surface_get_width(be->cs);
 	int height = cairo_image_surface_get_height(be->cs);
-	cairo_format_t cf = cairo_image_surface_get_format(be->cs);
+	cairo_format_t cf = image->format;
 	int res = save_tiff_file(image->buf, width, height, fn, (cf==CAIRO_FORMAT_RGB24)?3:4, image->quality);
 	free(fn);
 	if (res == -2)
-		error("Sorry, this Cario was compiled without tiff support.");
+		error("Sorry, this Cairo was compiled without tiff support.");
 	if (res)
 		error("Unable to write tiff file.");
 }
