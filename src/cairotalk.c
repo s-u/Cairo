@@ -441,9 +441,9 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 
 	cc = xd->cb->cc;
 
-	if (xd->npages!=-1)  /* first request is not saved as this is part of the init */
-		xd->cb->save_page(xd->cb,xd->npages);
 	xd->npages++;
+	if (xd->npages > 0)  /* first request is not saved as this is part of the init */
+		xd->cb->save_page(xd->cb,xd->npages);
 
 	/* Set new parameters from graphical context.
 	 * do we need more than fill color for background?

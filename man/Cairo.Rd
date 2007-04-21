@@ -60,29 +60,34 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   \item{file}{name of the file to be created or connection to write
          to. Only PDF, PS and PNG types support connections. For X11
 	 type \code{file} specifies the display name. If \code{NULL} or
-	 \code{""} a reasonable default will be chose which is
+	 \code{""} a reasonable default will be chosen which is
          \code{"plot.type"} for file-oriented types and value of the
-         \code{DISPLAY} environment variable for X11.}
-  \item{type}{output type. This version of Cario supports "png", a 24 
-    bit RGB image, and "png24", 24 bit RGB with 8 bit Alpha channel,
-    "jpeg", "tiff" 24-bit bitmaps, "pdf" PDF-file with embedded fonts,
-    "svg" SVG-file, "ps" PostScript-file, "x11" X11 interactive window
-    and "win" Windows graphics. Depending on the support of various
-    backends in cairographics some of the options may not be
-    available for your system.}
+         \code{DISPLAY} environment variable for X11. For image types
+	 the file name can containd printf-style formatting expecting
+	 one integer parageter which is the page number (e.g.
+	 \code{"Rplot%03d.png"}). The page numbers start at 1.}
+  \item{type}{output type. This version of Cario supports "png", "jpeg"
+  and "tiff" bitmaps (png/tiff with transparent background), "pdf"
+  PDF-file with embedded fonts, "svg" SVG-file, "ps" PostScript-file,
+  "x11" X11 interactive window and "win" Windows graphics.
+  Depending on the support of various backends in cairo graphics some
+  of the options may not be available for your system.}
   \item{pointsize}{initial text size (in points).}
   \item{canvas}{canvas color (must be opaque). The canvas is only used
     by devices that display graphics on a screen and the canvas is only
     visible only if bg is transparent.}
-  \item{bg}{plot background color (can include alpha-component).}
+  \item{bg}{plot background color (can include alpha-component or be
+  transparent alltogether).}
   \item{units}{units for of the \code{width} and \code{height}
-         specifications. In can be any of \code{"px"} (pixels),
+         specifications. It can be any of \code{"px"} (pixels),
          \code{"in"} (inches), \code{"pt"} (points), \code{"cm"}
          (centimeters) or \code{"mm"} (millimeters).}
   \item{dpi}{DPI used for the conversion of units to pixels. If set to
     \code{"auto"} the DPI resolution will be determined by the
     back-end.}
-  \item{...}{additional backend specific parameters. All parameters
+  \item{...}{additional backend specific parameters.
+
+    All parameters
          listed below are defined by the other devices are are used by
          the wrappers to make it easier replace other devices by
          \code{Cairo}. They are described in detail in the documentation
