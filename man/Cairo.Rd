@@ -116,7 +116,7 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
          uses device dimensions and thus it is irrelevant)}
 #ifdef windows
        \item{record}{see \code{\link{windows}} (ignored)}
-       \item{rescale}{see \code{\link{widnows}} (ignored)}
+       \item{rescale}{see \code{\link{windows}} (ignored)}
        \item{xpinch}{see \code{\link{windows}} (ignored)}
        \item{ypinch}{see \code{\link{windows}} (ignored)}
        \item{buffered}{see \code{\link{windows}} (ignored, \code{Cairo}
