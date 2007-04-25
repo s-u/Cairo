@@ -64,8 +64,8 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
          \code{"plot.type"} for file-oriented types and value of the
          \code{DISPLAY} environment variable for X11. For image types
 	 the file name can containd printf-style formatting expecting
-	 one integer parageter which is the page number (e.g.
-	 \code{"Rplot%03d.png"}). The page numbers start at 1.}
+	 one integer parageter which is the page number, such as
+	 \code{"Rplot\%03d.png"}. The page numbers start at one.}
   \item{type}{output type. This version of Cario supports "png", "jpeg"
   and "tiff" bitmaps (png/tiff with transparent background), "pdf"
   PDF-file with embedded fonts, "svg" SVG-file, "ps" PostScript-file,
