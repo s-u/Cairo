@@ -1,6 +1,9 @@
 NEWS/Changelog
 
-1.3-3	(under development)
+1.3-4	(under development)
+    o	more fixes in flag-guessing
+
+1.3-3	2007-04-25
     o	improve detection of cairo and its dependencies
 
     o	work around missing API such that cairo 1.0 can be used.
