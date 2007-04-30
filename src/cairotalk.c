@@ -450,7 +450,9 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	 * is fill really the desired background ?
 	 xd->gd_bgcolor = gc->fill; */
 
-	{
+	cairo_reset_clip(cc);
+	/* we don't need to fill if the back-end sets nozero and bg is transparent */
+	if (!(R_TRANSPARENT(xd->bg) && (xd->cb->flags & CDF_NOZERO))) {
 		cairo_operator_t oop = cairo_get_operator(cc);
 		cairo_set_operator(cc, CAIRO_OPERATOR_SOURCE);
 
@@ -465,7 +467,6 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 					Rcairo_set_color(cc, fake_bg_color);
 			}
 		}
-		cairo_reset_clip(cc);
 		cairo_new_path(cc);
 		cairo_paint(cc);
 		cairo_set_operator(cc, oop);
@@ -549,6 +550,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 		w = w * umpl * 72; /* inches * 72 = pt */
 		h = h * umpl * 72;
 		xd->cb->width = w; xd->cb->height = h;
+		xd->cb->flags|=CDF_NOZERO;
 		if (!strcmp(type,"pdf"))
 			xd->cb = Rcairo_new_pdf_backend(xd->cb, conn, file, w, h);
 		else if (!strcmp(type,"ps") || !strcmp(type,"postscript"))
@@ -591,7 +593,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, ch
 	/* cairo_save(cc); */
 
 #ifdef JGD_DEBUG
-	Rprintf("open [type='%s'] %d x %d\n", type, (int)w, (int)h);
+	Rprintf("open [type='%s'] %d x %d (flags %04x)\n", type, (int)w, (int)h, xd->cb->flags);
 #endif
 
 	return TRUE;

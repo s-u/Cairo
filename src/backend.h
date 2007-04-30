@@ -12,6 +12,7 @@
 #define CDF_HAS_UI    0x0001  /* backend has UI (e.g. window) */
 #define CDF_FAKE_BG   0x0002  /* fake transparent background */
 #define CDF_OPAQUE    0x0004  /* device doesn't support any kind of alpha, not even fake */
+#define CDF_NOZERO    0x0008  /* if set pages don't need to be zeroed */
 
 #define fake_bg_color (0xfffefefe)
 

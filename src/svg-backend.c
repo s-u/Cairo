@@ -82,7 +82,7 @@ Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, char *filen
 		return NULL;
 	}
 
-	cairo_set_operator(be->cc,CAIRO_OPERATOR_ATOP);
+	cairo_set_operator(be->cc,CAIRO_OPERATOR_OVER);
 
 	return be;
 }
