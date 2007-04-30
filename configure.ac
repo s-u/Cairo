@@ -195,15 +195,15 @@ if test "${need_xtra_ft_flags}" = yes; then
    FCI=''; FTI=''; FCL=''; FTL=''
    for pre in /usr /usr/X11 /usr/X11R6 /usr/local /opt /sw; do
      if test -z "${FCI}" -a -e "${pre}/include/fontconfig/fontconfig.h"; then
-        FCI="${pre}/include"
+        FCI="-I${pre}/include"
 	FCL="-L${pre}/lib"
      fi
      if test -z "{FTI}" -a -e "${pre}/include/freetype2/freetype/freetype.h"; then
-        FTI="${pre}/include/freetype2"
+        FTI="-I${pre}/include/freetype2"
 	FTL="-L${pre}/lib"
      fi
    done
-   if test "${FCI}" = /usr/include; then FCI=''; fi
+   if test "${FCI}" = -I/usr/include; then FCI=''; fi
    if test "${FCL}" = "-L/usr/lib"; then FCL=''; fi
    if test "${FTL}" = "-L/usr/lib"; then FTL=''; fi
    if test "${FTL}" = "${FCL}"; then FTL=''; fi
