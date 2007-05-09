@@ -454,7 +454,6 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	/* we don't need to fill if the back-end sets nozero and bg is transparent */
 	if (!(R_TRANSPARENT(xd->bg) && (xd->cb->flags & CDF_NOZERO))) {
 		cairo_operator_t oop = cairo_get_operator(cc);
-		cairo_set_operator(cc, CAIRO_OPERATOR_SOURCE);
 
 		Rcairo_set_color(cc, xd->bg);
 		if (xd->cb->flags & CDF_OPAQUE) {
