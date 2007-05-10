@@ -43,6 +43,9 @@ CairoPDF(file = ifelse(onefile, "Rplots.pdf","Rplot\%03d.pdf"),
          width = 6, height = 6, onefile = TRUE, family = "Helvetica",
          title = "R Graphics Output", fonts = NULL, version = "1.1",
          paper = "special", encoding, bg, fg, pointsize, pagecentre)
+CairoSVG(file = ifelse(onefile, "Rplots.svg", "Rplot%03d.svg"),
+         width = 6, height = 6, onefile = TRUE, bg = "transparent",
+         pointsize = 12, ...)
 CairoWin(width = 7, height = 7, pointsize = 12,
          record = getOption("graphics.record"),
          rescale = c("R", "fit", "fixed"), xpinch, ypinch, bg =
@@ -161,8 +164,23 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   \code{\link{CairoFonts}}
 }
 \examples{
-Cairo(800, 600, file="plot.png", type="png")
-plot(rnorm(100),rnorm(100),col=2)
+# very simple KDE
+Cairo(600, 600, file="plot.png", type="png", bg="white")
+plot(rnorm(4000),rnorm(4000),col="#ff000018",pch=19,cex=2) # semi-transparent red
 dev.off() # creates a file "plot.png" with the above plot
+
+# you can use any Cairo backend and get the same result
+# vector, bitmap or on-screen
+CairoPDF("plot.pdf", 6, 6, bg="transparent")
+data(iris)
+attach(iris)
+plot(Petal.Length, rep(-0.03,length(Species)), xlim=c(1,7),
+     ylim=c(0,1.7), xlab="Petal.Length", ylab="Density",
+     pch=21, cex=1.5, col="#00000001", main = "Iris (yet again)",
+     bg=c("#ff000020","#00ff0020","#0000ff20")[unclass(Species)])
+for (i in 1:3)
+  polygon(density(Petal.Length[unclass(Species)==i],bw=0.2),
+    col=c("#ff000040","#00ff0040","#0000ff40")[i])
+dev.off()
 }
 \keyword{device}

@@ -8,6 +8,8 @@ NEWS/Changelog
 
     o	address expose issues with some X11 servers
 
+    o	add CairoSVG wrapper
+
 1.3-3	2007-04-25
     o	improve detection of cairo and its dependencies
 
