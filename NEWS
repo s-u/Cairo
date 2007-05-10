@@ -6,6 +6,8 @@ NEWS/Changelog
     o	some vector backends (e.g. PDF, SVG) were falling back to
 	bitamp rasterization, we try to prevent this 
 
+    o	address expose issues with some X11 servers
+
 1.3-3	2007-04-25
     o	improve detection of cairo and its dependencies
 
