@@ -445,16 +445,14 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	if (xd->npages > 0)  /* first request is not saved as this is part of the init */
 		xd->cb->save_page(xd->cb,xd->npages);
 
-	/* Set new parameters from graphical context.
-	 * do we need more than fill color for background?
-	 * is fill really the desired background ?
-	 xd->gd_bgcolor = gc->fill; */
-
 	cairo_reset_clip(cc);
 	/* we don't need to fill if the back-end sets nozero and bg is transparent */
-	if (!(R_TRANSPARENT(xd->bg) && (xd->cb->flags & CDF_NOZERO))) {
-		cairo_operator_t oop = cairo_get_operator(cc);
-
+	if (! (R_TRANSPARENT(xd->bg) && (xd->cb->flags & CDF_NOZERO)) ) {
+		/* we are assuming that the operator is reasonable enough
+		   to clear the page. Setting CAIRO_OPERATOR_SOURCE seemed
+		   to trigger rasterization for PDF and SVG backends, so we
+		   leave the operator alone. Make sure the back-end sets
+		   an operator that is optimal for the back-end */
 		Rcairo_set_color(cc, xd->bg);
 		if (xd->cb->flags & CDF_OPAQUE) {
 			/* Opaque devices use canvas if bg is transparent */
@@ -468,7 +466,6 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 		}
 		cairo_new_path(cc);
 		cairo_paint(cc);
-		cairo_set_operator(cc, oop);
 	}
 }
 
