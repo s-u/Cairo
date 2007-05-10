@@ -14,6 +14,16 @@
 
 #if CAIRO_HAS_PDF_SURFACE
 
+static char *types_list[] = { "pdf", 0 };
+static Rcairo_backend_def RcairoBackendDef_ = {
+  BET_PDF,
+  types_list,
+  "PDF",
+  CBDF_FILE|CBDF_CONN|CBDF_MULTIPAGE,
+  0
+};
+Rcairo_backend_def *RcairoBackendDef_pdf = &RcairoBackendDef_;
+
 static void pdf_save_page(Rcairo_backend* be, int pageno){
 	cairo_show_page(be->cc);
 }
@@ -87,6 +97,8 @@ Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, char *filen
 	return be;
 }
 #else
+Rcairo_backend_def *RcairoBackendDef_pdf = 0;
+
 Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, char *filename, double width, double height)
 {
 	error("cairo library was compiled without PDF back-end.");

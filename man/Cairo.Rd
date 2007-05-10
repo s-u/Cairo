@@ -43,7 +43,7 @@ CairoPDF(file = ifelse(onefile, "Rplots.pdf","Rplot\%03d.pdf"),
          width = 6, height = 6, onefile = TRUE, family = "Helvetica",
          title = "R Graphics Output", fonts = NULL, version = "1.1",
          paper = "special", encoding, bg, fg, pointsize, pagecentre)
-CairoSVG(file = ifelse(onefile, "Rplots.svg", "Rplot%03d.svg"),
+CairoSVG(file = ifelse(onefile, "Rplots.svg", "Rplot\%03d.svg"),
          width = 6, height = 6, onefile = TRUE, bg = "transparent",
          pointsize = 12, ...)
 CairoWin(width = 7, height = 7, pointsize = 12,

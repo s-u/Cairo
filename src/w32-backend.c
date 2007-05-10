@@ -18,6 +18,16 @@
 
 #if CAIRO_HAS_WIN32_SURFACE
 
+static const char *types_list[] = { "win", 0 };
+static Rcairo_backend_def RcairoBackendDef_ = {
+    BET_W32,
+    types_list,
+	"Windows",
+    CBDF_VISUAL,
+    0
+};
+Rcairo_backend_def *RcairoBackendDef_w32 = &RcairoBackendDef_;
+
 #include <R.h>
 #include <R_ext/eventloop.h>
 #include <Rdevices.h>
@@ -465,6 +475,8 @@ Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, char *display, double
 	return be;
 }
 #else
+Rcairo_backend_def *RcairoBackendDef_w32 = 0;
+
 Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, char *display, double width, double height, double umpl)
 {
 	error("cairo library was compiled without win32 back-end.");

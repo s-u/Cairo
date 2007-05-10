@@ -3,6 +3,8 @@
 
 #include "backend.h"
 
+extern Rcairo_backend_def *RcairoBackendDef_pdf;
+
 #if CAIRO_HAS_PDF_SURFACE
 #include <cairo-pdf.h>
 #endif

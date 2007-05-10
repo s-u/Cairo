@@ -32,6 +32,12 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 	invisible(structure(gdn,class=c("Cairo",paste("Cairo",toupper(ctype),sep='')),type=as.character(ctype),file=file))
 }
 
+Cairo.capabilities <- function() {
+    ust <- unique(.supported.types)
+    cap <- !is.na(match(ust, .Call("Rcairo_supported_types", PACKAGE="Cairo")))
+    names(cap) <- ust
+    cap
+}
 
 ###-------------- supporting functions -----------------
 

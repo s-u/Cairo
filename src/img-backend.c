@@ -23,6 +23,26 @@
 
 #define default_jpeg_quality 75
 
+static char* img_types[] = {
+	"png",
+#ifdef SUPPORTS_JPEG
+	"jpeg",
+#endif
+#ifdef SUPPORTS_TIFF
+	"tiff",
+#endif
+	0 };
+
+static Rcairo_backend_def RcairoBackendDef_image_ = {
+	BET_IMAGE,
+	img_types,
+	"image",
+	CBDF_FILE|CBDF_CONN,
+	0
+};
+
+Rcairo_backend_def *RcairoBackendDef_image = &RcairoBackendDef_image_;
+
 static int cairo_op = -1;
 SEXP Rcso(SEXP v) {
 	cairo_op = asInteger(v);

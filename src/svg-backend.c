@@ -14,6 +14,16 @@
 
 #if CAIRO_HAS_SVG_SURFACE
 
+static char *types_list[] = { "svg", 0 };
+static Rcairo_backend_def RcairoBackendDef_ = {
+  BET_SVG,
+  types_list,
+  "SVG",
+  CBDF_FILE|CBDF_CONN|CBDF_MULTIPAGE, /* we can't really do multi-page, but we can't do multifiles, either */
+  0
+};
+Rcairo_backend_def *RcairoBackendDef_svg = &RcairoBackendDef_;
+
 static void svg_save_page(Rcairo_backend* be, int pageno){
 	cairo_show_page(be->cc);
 }
@@ -87,6 +97,8 @@ Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, char *filen
 	return be;
 }
 #else
+Rcairo_backend_def *RcairoBackendDef_svg = 0;
+
 Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, char *filename, double width, double height)
 {
 	error("cairo library was compiled without SVG support.");

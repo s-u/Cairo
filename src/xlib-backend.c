@@ -14,6 +14,16 @@
 
 #if CAIRO_HAS_XLIB_SURFACE
 
+static char *types_list[] = { "x11", 0 };
+static Rcairo_backend_def RcairoBackendDef_ = {
+	BET_XLIB,
+	types_list,
+	"X11",
+	CBDF_VISUAL,
+	0
+};
+Rcairo_backend_def *RcairoBackendDef_xlib = &RcairoBackendDef_;
+
 #include <R.h>
 #include <R_ext/eventloop.h>
 #include <Rdevices.h>
@@ -387,6 +397,8 @@ Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, char *display, doubl
 	return be;
 }
 #else
+Rcairo_backend_def *RcairoBackendDef_xlib = 0;
+
 Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, char *display, double width, double height, double umpl)
 {
 	error("cairo library was compiled without XLIB back-end.");

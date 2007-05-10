@@ -7,6 +7,8 @@
 #include <cairo-svg.h>
 #endif
 
+extern Rcairo_backend_def *RcairoBackendDef_svg;
+
 Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, char *filename, double width, double height);
 
 #endif

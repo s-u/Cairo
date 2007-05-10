@@ -1,7 +1,8 @@
 /* -*- mode: C; tab-width: 4; c-basic-offset: 4 -*- */
+#include "backend.h"
 #include "cairogd.h"
 #include "cairotalk.h"
-#include "backend.h"
+#include "cairobem.h"
 #include "img-backend.h"
 #include "pdf-backend.h"
 #include "svg-backend.h"
@@ -884,5 +885,21 @@ void Rcairo_backend_init_surface(Rcairo_backend *be) {
 			CAIRO_FONT_WEIGHT_NORMAL);
 	cairo_set_font_size (cc, 14);
 #endif
+}
+
+/* add any new back-ends to this list */
+void Rcairo_register_builtin_backends() {
+	if (RcairoBackendDef_image) Rcairo_register_backend(RcairoBackendDef_image);
+	if (RcairoBackendDef_pdf) Rcairo_register_backend(RcairoBackendDef_pdf);
+	if (RcairoBackendDef_ps) Rcairo_register_backend(RcairoBackendDef_ps);
+	if (RcairoBackendDef_svg) Rcairo_register_backend(RcairoBackendDef_svg);
+	if (RcairoBackendDef_xlib) Rcairo_register_backend(RcairoBackendDef_xlib);
+	if (RcairoBackendDef_w32) Rcairo_register_backend(RcairoBackendDef_w32);
+}
+
+/* called on load */
+SEXP Rcairo_initialize() {
+	Rcairo_register_builtin_backends();
+	return R_NilValue;
 }
 

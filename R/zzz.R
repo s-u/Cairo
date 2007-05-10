@@ -7,6 +7,7 @@
         if (! lp %in% cp) .setenv(PATH=paste(lp,Sys.getenv("PATH"),sep=";"))
     }
     library.dynam("Cairo", pkgname, libname)
+    .Call("Rcairo_initialize", PACKAGE="Cairo")
 }
 
 ### in case we decide to keep the namespace ...

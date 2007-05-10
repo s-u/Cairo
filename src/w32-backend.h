@@ -7,6 +7,8 @@
 #include <cairo-win32.h>
 #endif
 
+extern Rcairo_backend_def *RcairoBackendDef_w32;
+
 Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, char *display, double width, double height, double umpl);
 
 #endif

@@ -14,6 +14,16 @@
 
 #if CAIRO_HAS_PDF_SURFACE
 
+static char *types_list[] = { "ps", 0 };
+static Rcairo_backend_def RcairoBackendDef_ = {
+  BET_PS,
+  types_list,
+  "PostScript",
+  CBDF_FILE|CBDF_CONN|CBDF_MULTIPAGE,
+  0
+};
+Rcairo_backend_def *RcairoBackendDef_ps = &RcairoBackendDef_;
+
 static void ps_save_page(Rcairo_backend* be, int pageno){
 	cairo_show_page(be->cc);
 }
@@ -87,6 +97,8 @@ Rcairo_backend *Rcairo_new_ps_backend(Rcairo_backend *be, int conn, char *filena
 	return be;
 }
 #else
+Rcairo_backend_def *RcairoBackendDef_ps = 0;
+
 Rcairo_backend *Rcairo_new_ps_backend(Rcairo_backend *be, int conn, char *filename, double width, double height)
 {
         error("cairo library was compiled without PostScript back-end.");

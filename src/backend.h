@@ -14,6 +14,11 @@
 #define CDF_OPAQUE    0x0004  /* device doesn't support any kind of alpha, not even fake */
 #define CDF_NOZERO    0x0008  /* if set pages don't need to be zeroed */
 
+#define CBDF_FILE      0x0001  /* can output to file(s) */
+#define CBDF_CONN      0x0002  /* can output to a connection */
+#define CBDF_VISUAL    0x0004  /* can produce visual output (window/screen) */
+#define CBDF_MULTIPAGE 0x0008  /* supports multiple pages in one document (relevant to file/conn only) */
+
 #define fake_bg_color (0xfffefefe)
 
 /* known cairo back-ends (as of cairographics 1.4.2) */
@@ -25,6 +30,15 @@
 #define BET_W32     6
 #define BET_QUARTZ  7
 #define BET_USER   64
+
+typedef struct st_Rcairo_backend_def {
+  int backend_type;      /* see BET_xxx constants */
+  char **types;          /* supported types (0-terminated list) */
+  char *name;            /* human-readable back-end name */
+  int  flags;            /* see CBDF_xxx constants */
+  /*----- creation call-back -----*/
+  void *create;          /* not used yet, should be set to 0 */
+} Rcairo_backend_def;
 
 typedef struct st_Rcairo_backend {
   int backend_type;      /* see BET_xxx constants */
