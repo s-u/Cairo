@@ -9,6 +9,6 @@
 
 extern Rcairo_backend_def *RcairoBackendDef_ps;
 
-Rcairo_backend *Rcairo_new_ps_backend(Rcairo_backend *be, int conn, char *filename, double width, double height);
+Rcairo_backend *Rcairo_new_ps_backend(Rcairo_backend *be, int conn, const char *filename, double width, double height);
 
 #endif

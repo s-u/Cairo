@@ -88,7 +88,7 @@ Rcairo_font_face Rcairo_fonts[5] = {
 	{ NULL, 0 }
 };
 
-cairo_font_face_t *Rcairo_set_font_face(int i, char *file){
+cairo_font_face_t *Rcairo_set_font_face(int i, const char *file){
 	FT_Face face;
 	FT_Error er;
 	FT_CharMap found = 0; 
@@ -127,7 +127,7 @@ cairo_font_face_t *Rcairo_set_font_face(int i, char *file){
 	return cairo_ft_font_face_create_for_ft_face(face,FT_LOAD_DEFAULT);
 }
 
-void Rcairo_set_font(int i, char *fcname){
+void Rcairo_set_font(int i, const char *fcname){
 	FcFontSet	*fs;
 	FcPattern   *pat, *match;
 	FcResult	result;
@@ -165,7 +165,7 @@ void Rcairo_set_font(int i, char *fcname){
 
 			/* Need to make sure a real font file exists */
 			if (FcPatternGetString (fs->fonts[j], FC_FILE, 0, &file) == FcResultMatch){
-				Rcairo_fonts[i].face = Rcairo_set_font_face(i,(char *)file);
+				Rcairo_fonts[i].face = Rcairo_set_font_face(i,(const char *)file);
 				break;
 			}
 		}
@@ -470,7 +470,7 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	}
 }
 
-static SEXP findArg(char *name, SEXP list) {
+static SEXP findArg(const char *name, SEXP list) {
 	SEXP ns = install(name);
 	while (list && list!=R_NilValue) {
 		if (TAG(list)==ns) return CAR(list);
@@ -479,7 +479,7 @@ static SEXP findArg(char *name, SEXP list) {
 	return 0;
 }
 
-Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, char *file, double w, double h,
+Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int conn, const char *file, double w, double h,
 					  double umpl, SEXP aux)
 {
 	cairo_t *cc;

@@ -1,5 +1,8 @@
 NEWS/Changelog
 
+1.3-5	(under development)
+    o	adapt to const char* CHARs in R-devel
+
 1.3-4	2007-05-10
     o	more fixes in flag-guessing
 

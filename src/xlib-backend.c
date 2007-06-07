@@ -227,7 +227,7 @@ static void ProcessX11Events(void *foo)
 	}
 }
 
-Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, char *display, double width, double height, double umpl)
+Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, const char *display, double width, double height, double umpl)
 {
 	Rcairo_xlib_data *xd;
 
@@ -399,7 +399,7 @@ Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, char *display, doubl
 #else
 Rcairo_backend_def *RcairoBackendDef_xlib = 0;
 
-Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, char *display, double width, double height, double umpl)
+Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, const char *display, double width, double height, double umpl)
 {
 	error("cairo library was compiled without XLIB back-end.");
 	return NULL;

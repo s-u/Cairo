@@ -317,7 +317,7 @@ static void HelpResize(window w, rect r)
 
 #endif
 
-Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, char *display, double width, double height, double umpl)
+Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, const char *display, double width, double height, double umpl)
 {
 	Rcairo_w32_data *xd;
 #ifdef NATIVE_UI
@@ -477,7 +477,7 @@ Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, char *display, double
 #else
 Rcairo_backend_def *RcairoBackendDef_w32 = 0;
 
-Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, char *display, double width, double height, double umpl)
+Rcairo_backend *Rcairo_new_w32_backend(Rcairo_backend *be, const char *display, double width, double height, double umpl)
 {
 	error("cairo library was compiled without win32 back-end.");
 	return NULL;

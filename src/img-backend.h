@@ -17,7 +17,7 @@ typedef struct st_Rcairo_image_backend {
 
 extern Rcairo_backend_def *RcairoBackendDef_image;
 
-Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, char *filename, char *type,
+Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const char *filename, const char *type,
 					 int width, int height, int quality, int alpha_plane);
 
 #endif

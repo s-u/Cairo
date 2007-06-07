@@ -8,11 +8,11 @@
 #include "cairo.h"
 
 void Rcairo_setup_gd_functions(NewDevDesc *dd);
-Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  char *type, int conn, char *file,
+Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd, const char *type, int conn, const char *file,
 		      double w, double h, double umpl, SEXP aux);
 
 #ifdef CAIRO_HAS_FT_FONT
-void Rcairo_set_font(int i, char *fcname);
+void Rcairo_set_font(int i, const char *fcname);
 #endif
 
 #endif

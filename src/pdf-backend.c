@@ -49,7 +49,7 @@ static void pdf_backend_destroy(Rcairo_backend* be)
 	free(be);
 }
 
-Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, char *filename, double width, double height)
+Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, const char *filename, double width, double height)
 {
 	be->backend_type = BET_PDF;
 	be->destroy_backend = pdf_backend_destroy;
@@ -99,7 +99,7 @@ Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, char *filen
 #else
 Rcairo_backend_def *RcairoBackendDef_pdf = 0;
 
-Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, char *filename, double width, double height)
+Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, const char *filename, double width, double height)
 {
 	error("cairo library was compiled without PDF back-end.");
 	return NULL;

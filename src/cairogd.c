@@ -47,7 +47,7 @@ static SEXP findArg(char *name, SEXP list) {
    -
    gamma: 0.6
 */
-Rboolean Rcairo_new_device_driver(DevDesc *dd_arg, char *type, int conn, char *file,
+Rboolean Rcairo_new_device_driver(DevDesc *dd_arg, const char *type, int conn, const char *file,
 								  double width, double height, double initps,
 								  int bgcolor, int canvas, double umul, double *dpi, SEXP aux)
 {
@@ -167,8 +167,8 @@ SEXP cairo_create_new_device(SEXP args)
     NewDevDesc *dev = NULL;
     GEDevDesc *dd;
     
-    char *devname="Cairo";
-	char *type, *file = NULL;
+    const char *devname="Cairo";
+	const char *type, *file = NULL;
 	double width, height, initps, umul, dpi[2];
 	int bgcolor = -1, canvas = -1;
 	int conn = -1;
@@ -285,7 +285,7 @@ void gdd_get_version(int *ver) {
 SEXP cairo_font_match(SEXP args){
 #if CAIRO_HAS_FT_FONT
 	SEXP v;
-	char *fcname;
+	const char *fcname;
 	int sort;
 	int verbose;
 
@@ -399,7 +399,7 @@ SEXP cairo_font_set(SEXP args){
 #if CAIRO_HAS_FT_FONT
 	SEXP v;
 	int i;
-	char *font;
+	const char *font;
 
 	args = CDR(args);
 

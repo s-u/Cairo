@@ -49,7 +49,7 @@ static void svg_backend_destroy(Rcairo_backend* be)
 	free(be);
 }
 
-Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, char *filename, double width, double height)
+Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, const char *filename, double width, double height)
 {
 	be->backend_type = BET_SVG;
 	be->destroy_backend = svg_backend_destroy;
@@ -99,7 +99,7 @@ Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, char *filen
 #else
 Rcairo_backend_def *RcairoBackendDef_svg = 0;
 
-Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, char *filename, double width, double height)
+Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, const char *filename, double width, double height)
 {
 	error("cairo library was compiled without SVG support.");
 	return NULL;

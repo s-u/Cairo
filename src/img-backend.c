@@ -130,7 +130,7 @@ static void image_send_page(Rcairo_backend* be, int pageno){
 }
 #endif
 
-Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, char *filename, char *type,
+Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const char *filename, const char *type,
 										 int width, int height, int quality, int alpha_plane)
 {
 	Rcairo_image_backend *image;
