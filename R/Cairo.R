@@ -106,7 +106,7 @@ CairoSVG <- function(file = ifelse(onefile, "Rplots.svg", "Rplot%03d.svg"),
                      width = 6, height = 6, onefile = TRUE, bg = "transparent",
                      pointsize = 12, ...) {
     if (!onefile) stop("Sorry, SVG backend of Cairo supports onefile=TRUE only")
-    Cairo(width, height, type='svg', file=filename, pointsize=pointsize, bg=bg, units='in', ...)
+    Cairo(width, height, type='svg', file=file, pointsize=pointsize, bg=bg, units='in', ...)
 }
 
 CairoPS <- function(file = ifelse(onefile, "Rplots.ps", "Rplot%03d.ps"),
