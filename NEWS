@@ -3,6 +3,11 @@ NEWS/Changelog
 1.3-5	(under development)
     o	adapt to const char* CHARs in R-devel
 
+    o	fix a bug in CairoSVG (wrong argument name)
+
+    o	fix a bug in CairoPS (units were not set to "in" and
+	width/height had no defaults)
+
 1.3-4	2007-05-10
     o	more fixes in flag-guessing
 
