@@ -1,5 +1,5 @@
 ifdef DEBUG
-  PKG_CFLAGS+=-DJGD_DEBUG
+  XTRA_PKG_CPPFLAGS=-DJGD_DEBUG
 endif
-PKG_CPPFLAGS+=-I. -Iwindows
-PKG_LIBS+=-Lwindows -lcairo -lgdi32
+PKG_CPPFLAGS=-I. -Iwindows $(XTRA_PKG_CPPFLAGS)
+PKG_LIBS=-Lwindows -lcairo -lgdi32 $(GRAPHAPP_LIB)
