@@ -59,7 +59,7 @@ Rcairo_backend *Rcairo_new_ps_backend(Rcairo_backend *be, int conn, const char *
 		int len = strlen(filename);
 
 		/* Add .ps extension if necessary */
-		if (len>3 && strcmp(filename+len-4,".ps")){
+		if (len>3 && strcmp(filename+len-3,".ps")){
 			fn = malloc(len + 5);
 			if (!fn) { free(be); return NULL; }
 			strcpy(fn,filename);
