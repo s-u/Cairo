@@ -8,6 +8,8 @@ NEWS/Changelog
     o	fix a bug in CairoPS (units were not set to "in" and
 	width/height had no defaults)
 
+    o	fix unintentional doubling of the .ps suffix
+
 1.3-4	2007-05-10
     o	more fixes in flag-guessing
 

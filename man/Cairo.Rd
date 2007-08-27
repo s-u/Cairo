@@ -12,7 +12,7 @@
   Create a new Cairo-based graphics device
 }
 \description{
-  \code{Cairo} initializes a new graphics device that uses the Cairo
+  \code{Cairo} initializes a new graphics device that uses the cairo
   graphics library for rendering. The current implementation produces
   high-quality PNG, JPEG, TIFF bitmap files, high resolution PDF files
   with embedded fonts, SVG graphics and PostScript files. It also
@@ -23,7 +23,8 @@
   \code{CairoX11}, \code{CairoPNG}, \code{CairoPDF}, \code{CairoPS} and
   \code{CairoSVG} are convenience wrappers of \code{Cairo} that take the
   same arguments as the corresponding device it replaces such as
-  \code{X11}, \code{png}, \code{pdf}, etc.
+  \code{X11}, \code{png}, \code{pdf}, etc. Use of the \code{Cairo}
+  function is encouraged as it is more flexible than the wrappers.
 }
 \usage{
 Cairo(width = 640, height = 480, file="", type="png", pointsize=12, 
@@ -66,15 +67,16 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
 	 \code{""} a reasonable default will be chosen which is
          \code{"plot.type"} for file-oriented types and value of the
          \code{DISPLAY} environment variable for X11. For image types
-	 the file name can containd printf-style formatting expecting
-	 one integer parageter which is the page number, such as
+	 the file name can contain printf-style formatting expecting
+	 one integer parameter which is the page number, such as
 	 \code{"Rplot\%03d.png"}. The page numbers start at one.}
   \item{type}{output type. This version of Cario supports "png", "jpeg"
   and "tiff" bitmaps (png/tiff with transparent background), "pdf"
   PDF-file with embedded fonts, "svg" SVG-file, "ps" PostScript-file,
   "x11" X11 interactive window and "win" Windows graphics.
   Depending on the support of various backends in cairo graphics some
-  of the options may not be available for your system.}
+  of the options may not be available for your system. See
+  \code{\link{Cairo.capabilities}} function.}
   \item{pointsize}{initial text size (in points).}
   \item{canvas}{canvas color (must be opaque). The canvas is only used
     by devices that display graphics on a screen and the canvas is only
@@ -88,7 +90,9 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   \item{dpi}{DPI used for the conversion of units to pixels. If set to
     \code{"auto"} the DPI resolution will be determined by the
     back-end.}
-  \item{...}{additional backend specific parameters.
+  \item{...}{additional backend specific parameters (e.g. \code{quality}
+         setting for JPEG (0..100) and \code{compression} for TIFF
+         (0,1=none, 5=LZW (default), 7=JPEG, 8=Adobe Deflate))	 
 
     All parameters
          listed below are defined by the other devices are are used by
