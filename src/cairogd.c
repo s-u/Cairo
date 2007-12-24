@@ -99,8 +99,8 @@ Rboolean Rcairo_new_device_driver(DevDesc *dd_arg, const char *type, int conn, c
 
     /* Nominal Character Sizes in Pixels */
 
-    dd->cra[0] = 9;
-    dd->cra[1] = 14;
+    dd->cra[0] = 0.9 * initps; /* FIXME: we should use font metric for this */
+    dd->cra[1] = 1.2 * initps;
 
     /* Character Addressing Offsets */
     /* These are used to plot a single plotting character */
