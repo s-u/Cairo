@@ -288,13 +288,13 @@ Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, const char *display,
 				int dhp = DisplayHeight(xd->display,xd->screen);
 				int dhr = DisplayHeightMM(xd->display,xd->screen);
 				if (dwp && dwr && dhp && dhr) {
-					be->dpix = ((double)dwp)/((double)dwr)/0.0254;
-					be->dpiy = ((double)dhp)/((double)dhr)/0.0254;
+					be->dpix = ((double)dwp)/((double)dwr)*25.4;
+					be->dpiy = ((double)dhp)/((double)dhr)*25.4;
 				}
 			}
 			if (umpl>0 && be->dpix<=0) {
-				warning("cannot determine DPI from the screen, assuming 72dpi");
-				be->dpix = 72; be->dpiy = 72;
+				warning("cannot determine DPI from the screen, assuming 90dpi");
+				be->dpix = 90; be->dpiy = 90;
 			}
 			if (be->dpiy==0 && be->dpix>0) be->dpiy=be->dpix;
 			if (umpl>0) {
