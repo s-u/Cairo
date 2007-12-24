@@ -33,7 +33,7 @@ Cairo(width = 640, height = 480, file="", type="png", pointsize=12,
 
 CairoX11(display=Sys.getenv("DISPLAY"), width = 7, height = 7,
          pointsize = 12, gamma = getOption("gamma"), bg = "transparent",
-         canvas = "white", xpos = NA, ypos = NA)
+         canvas = "white", xpos = NA, ypos = NA, ...)
 CairoPNG(filename = "Rplot\%03d.png", width = 480, height = 480,
          pointsize = 12, bg = "white",  res = NA, ...)
 CairoJPEG(filename = "Rplot\%03d.jpeg", width = 480, height = 480,
@@ -52,7 +52,7 @@ CairoWin(width = 7, height = 7, pointsize = 12,
          rescale = c("R", "fit", "fixed"), xpinch, ypinch, bg =
          "transparent", canvas = "white", gamma = getOption("gamma"),
          xpos = NA, ypos = NA, buffered = getOption("windowsBuffered"),
-         restoreConsole = FALSE)
+         restoreConsole = FALSE, ...)
 CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
         onefile = TRUE, family, title = "R Graphics Output", fonts = NULL,
         encoding, bg, fg, width, height, horizontal, pointsize, paper,
