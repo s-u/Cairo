@@ -31,7 +31,6 @@ static void CairoGD_Clip(double x0, double x1, double y0, double y1,
 			NewDevDesc *dd);
 static void CairoGD_Close(NewDevDesc *dd);
 static void CairoGD_Deactivate(NewDevDesc *dd);
-static void CairoGD_Hold(NewDevDesc *dd);
 static Rboolean CairoGD_Locator(double *x, double *y, NewDevDesc *dd);
 static void CairoGD_Line(double x1, double y1, double x2, double y2,
 			R_GE_gcontext *gc,
@@ -178,22 +177,6 @@ void Rcairo_set_font(int i, const char *fcname){
 }
 #endif
 
-/* ret must be large enough to hold strlen(ascii)*2 + 1 bytes */
-static char *ascii2utf8(char *ascii, char *ret){
-	char *aux = ret;
-
-	while (*ascii) {
-		unsigned char ch = *ascii++;
-		if (ch < 0x80) {
-			*aux++ = ch;
-		} else {
-			*aux++ = 0xc0 | (ch >> 6 & 0x1f);
-			*aux++ = 0x80 | (ch & 0x3f);
-		}
-	}
-	*aux = 0;
-	return ret;
-}
 
 static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	cairo_t *cc = xd->cb->cc;
@@ -348,12 +331,6 @@ static void CairoGD_Deactivate(NewDevDesc *dd)
 	if (xd->cb->activation) xd->cb->activation(xd->cb, 0);
 }
 
-static void CairoGD_Hold(NewDevDesc *dd)
-{
-    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
-    if(!xd || !xd->cb) return;
-}
-
 static Rboolean CairoGD_Locator(double *x, double *y, NewDevDesc *dd)
 {
     CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
@@ -393,9 +370,11 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
 	cairo_text_extents_t te = {0, 0, 0, 0, 0, 0};
-	char str[3], utf8[8];
+	char str[16];
+	int Unicode = mbcslocale;
 
 	if(!xd || !xd->cb) return;
+	if(c < 0) {c = -c; Unicode = 1;}
 
 	cc = xd->cb->cc;
 
@@ -404,13 +383,14 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 	if (!c) { 
 		str[0]='M'; str[1]='g'; str[2]=0;
 		/* this should give us a reasonably decent (g) and almost max width (M) */
+	} else if(Unicode) {
+		Rf_ucstoutf8(str, (unsigned int) c);
 	} else {
-		str[0]=(char)c; str[1]=0;
+		str[0] = c; str[1] = 0;
 		/* Here, we assume that c < 256 */
 	}
-	ascii2utf8(str,utf8);
 
-	cairo_text_extents(cc, utf8, &te);
+	cairo_text_extents(cc, str, &te);
 
 #ifdef JGD_DEBUG
 	Rprintf("metric %x [%c]: bearing %f:%f, size %f:%f, advance %f:%f\n",c, (char)c, te.x_bearing, te.y_bearing,
@@ -714,22 +694,7 @@ static double CairoGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
 	{
 		cairo_t *cc = xd->cb->cc;
 		cairo_text_extents_t te;
-#ifdef CAIRO_HAS_FT_FONT
-		char buf[32];
-
-		/* Minimize memory allocation calls */
-		char *utf8 = (slen > 16)? calloc(1,strlen(str)*2 + 1) : buf;
-		if (utf8){
-			ascii2utf8(str,utf8);
-			cairo_text_extents(cc, utf8, &te);
-			if (slen > 16) free(utf8);
-		} else {
-			warning("No memory from CairoGD_StrWidth");
-			return slen*8;
-		}
-#else
 		cairo_text_extents(cc, str, &te);
-#endif
 		/* Cairo doesn't take into account whitespace char widths, 
 		 * but the x_advance does */
 		return te.x_advance;
@@ -740,23 +705,11 @@ static void CairoGD_Text(double x, double y, char *str,  double rot, double hadj
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
-	char buf[32];
-	char *utf8 = buf;
-	int len = strlen(str);
 
 	if(!xd || !xd->cb) return;
 
 	cc = xd->cb->cc;
 		
-	/* Only convert to utf8 when Symbol font is in use. */
-	/* Also try not to call calloc for short strings. */
-	if (gc->fontface == 5){
-		if (len > 16)
-			utf8 = calloc(len * 2 + 1, sizeof(char));
-		ascii2utf8(str,utf8);
-		str = utf8;
-	}
-
 	Rcairo_setup_font(xd,gc);
 
 #ifdef JGD_DEBUG
@@ -796,13 +749,11 @@ static void CairoGD_Text(double x, double y, char *str,  double rot, double hadj
 	}
 #endif
 
-	if (utf8 != buf) free(utf8);
 	cairo_restore(cc);
 }
 
 /** fill the R device structure with callback functions */
 void Rcairo_setup_gd_functions(NewDevDesc *dd) {
-    dd->open = CairoGD_Open;
     dd->close = CairoGD_Close;
     dd->activate = CairoGD_Activate;
     dd->deactivate = CairoGD_Deactivate;
@@ -818,8 +769,11 @@ void Rcairo_setup_gd_functions(NewDevDesc *dd) {
     dd->polygon = CairoGD_Polygon;
     dd->locator = CairoGD_Locator;
     dd->mode = CairoGD_Mode;
-    dd->hold = CairoGD_Hold;
     dd->metricInfo = CairoGD_MetricInfo;
+	dd->hasTextUTF8 = TRUE;
+    dd->strWidthUTF8 = CairoGD_StrWidth;
+    dd->textUTF8 = CairoGD_Text;
+	dd->wantSymbolUTF8 = TRUE;
 }
 
 void Rcairo_backend_resize(Rcairo_backend *be, double width, double height) {
@@ -839,10 +793,10 @@ void Rcairo_backend_resize(Rcairo_backend *be, double width, double height) {
 void Rcairo_backend_repaint(Rcairo_backend *be) {
 	if (!be || !be->dd) return;
 	{
-		int devNum = devNumber((DevDesc*) be->dd);
+		int devNum = ndevNumber(be->dd);
 		if (devNum > 0) {
 			be->in_replay = 1;
-			GEplayDisplayList((GEDevDesc*) GetDevice(devNum));
+			GEplayDisplayList(GEGetDevice(devNum));
 			be->in_replay = 0;
 			if (be->mode) be->mode(be, -1);
 		}
@@ -851,7 +805,7 @@ void Rcairo_backend_repaint(Rcairo_backend *be) {
 
 void Rcairo_backend_kill(Rcairo_backend *be) {
 	if (!be || !be->dd) return;
-	KillDevice((DevDesc*) GetDevice(devNumber((DevDesc*) be->dd)));
+	GEkillDevice(desc2GEDesc(be->dd));
 }
 
 static int has_initd_fc = 0;

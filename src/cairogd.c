@@ -47,12 +47,11 @@ static SEXP findArg(char *name, SEXP list) {
    -
    gamma: 0.6
 */
-Rboolean Rcairo_new_device_driver(DevDesc *dd_arg, const char *type, int conn, const char *file,
+Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, const char *file,
 								  double width, double height, double initps,
 								  int bgcolor, int canvas, double umul, double *dpi, SEXP aux)
 {
 	CairoGDDesc *xd;
-	NewDevDesc *dd = (NewDevDesc *) dd_arg;
 	
 #ifdef JGD_DEBUG
 	Rprintf("Rcairo_new_device_driver(\"%s\", \"%s\", %f, %f, %f)\n",type,file,width,height,initps);
@@ -89,7 +88,6 @@ Rboolean Rcairo_new_device_driver(DevDesc *dd_arg, const char *type, int conn, c
 	}
 
 	/* ---- fill dd ----- */
-    dd->newDevStruct = 1;
 
     /*	Set up Data Structures. */
     Rcairo_setup_gd_functions(dd);
@@ -225,16 +223,15 @@ SEXP cairo_create_new_device(SEXP args)
 #endif
 	
     R_CheckDeviceAvailable();
-
+    BEGIN_SUSPEND_INTERRUPTS {
 	if (!(dev = (NewDevDesc*)calloc(1, sizeof(NewDevDesc))))
 	    return R_NilValue;
 
-	dev->newDevStruct = 1;
 	dev->displayList = R_NilValue;
 
 	dev->savedSnapshot = R_NilValue;
 
-	if (!Rcairo_new_device_driver((DevDesc*)(dev), type, conn, file, width, height, initps,
+	if (!Rcairo_new_device_driver(dev, type, conn, file, width, height, initps,
 								 bgcolor, canvas, umul, dpi, args))
 	{
 	    free(dev);
@@ -243,26 +240,13 @@ SEXP cairo_create_new_device(SEXP args)
 	
 	gsetVar(install(".Device"), mkString(devname), R_NilValue);
 	dd = GEcreateDevDesc(dev);
-	addDevice((DevDesc*) dd);
+	GEaddDevice(dd);
 	GEinitDisplayList(dd);
+    } END_SUSPEND_INTERRUPTS;
 #ifdef JGD_DEBUG
-	Rprintf("CairoGD> devNum=%d, dd=%x\n", devNumber((DevDesc*) dd), dd);
+	Rprintf("CairoGD> devNum=%d, dd=%x\n", 1 + GEdeviceNumber(dd), dd);
 #endif
-	PROTECT(v = allocVector(INTSXP, 1));
-	INTEGER(v)[0] = 0;
-	/* for some reason both devNumber and deviceNumber return 0, so we have
-	   to find the dev # the hard way */
-	{
-		int nd = NumDevices();
-		int i = 0;
-		while (i<nd) {
-			if ((void*)GetDevice(i)==(void*)dd) {
-				INTEGER(v)[0] = 1 + i; break;
-			}
-   			i++;
-		}
-	}
-	UNPROTECT(1);
+	v = ScalarInteger(1 + GEdeviceNumber(dd));
     return v;
 }
 
@@ -420,7 +404,7 @@ SEXP cairo_font_set(SEXP args){
 /* experimental */
 SEXP get_img_backplane(SEXP dev) {
 	int devNr = asInteger(dev)-1;
-	GEDevDesc *gd = (GEDevDesc*) GetDevice(devNr);
+	GEDevDesc *gd = GEGetDevice(devNr);
 	if (gd) {
 		NewDevDesc *dd=gd->dev;
 		if (dd) {

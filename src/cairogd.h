@@ -1,7 +1,7 @@
 #ifndef _DEV_GD_H
 #define _DEV_GD_H
 
-#define CAIROGD_VER 0x010305 /* Cairo v1.3-5 */
+#define CAIROGD_VER 0x010401 /* Cairo v1.4-1 */
 
 /* cairo R package config */
 #include "cconfig.h"
@@ -11,8 +11,6 @@
 #include <R_ext/GraphicsDevice.h>
 #include <R_ext/GraphicsEngine.h>
 #include <R_ext/Print.h>
-#include <Rgraphics.h>
-#include <Rdevices.h>
 
 #include "backend.h"
 

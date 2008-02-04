@@ -26,7 +26,6 @@ Rcairo_backend_def *RcairoBackendDef_xlib = &RcairoBackendDef_;
 
 #include <R.h>
 #include <R_ext/eventloop.h>
-#include <Rdevices.h>
 #include <R_ext/GraphicsEngine.h>
 
 #include <X11/X.h>
