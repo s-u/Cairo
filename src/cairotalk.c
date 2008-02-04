@@ -383,6 +383,10 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 	if (!c) { 
 		str[0]='M'; str[1]='g'; str[2]=0;
 		/* this should give us a reasonably decent (g) and almost max width (M) */
+	} else if (gc->fontface == 5) {
+		char s[2];
+		s[0] = c; s[1] = '\0';
+		AdobeSymbol2utf8(str, s, 16);		
 	} else if(Unicode) {
 		Rf_ucstoutf8(str, (unsigned int) c);
 	} else {
