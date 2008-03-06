@@ -227,6 +227,9 @@ SEXP cairo_create_new_device(SEXP args)
 	if (!(dev = (NewDevDesc*)calloc(1, sizeof(NewDevDesc))))
 	    return R_NilValue;
 
+#if R_GE_version < 4
+	dev->newDevStruct = 1;
+#endif
 	dev->displayList = R_NilValue;
 
 	dev->savedSnapshot = R_NilValue;
@@ -404,7 +407,7 @@ SEXP cairo_font_set(SEXP args){
 /* experimental */
 SEXP get_img_backplane(SEXP dev) {
 	int devNr = asInteger(dev)-1;
-	GEDevDesc *gd = GEGetDevice(devNr);
+	GEDevDesc *gd = GEgetDevice(devNr);
 	if (gd) {
 		NewDevDesc *dd=gd->dev;
 		if (dd) {

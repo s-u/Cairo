@@ -11,6 +11,12 @@
 #include <R_ext/GraphicsDevice.h>
 #include <R_ext/GraphicsEngine.h>
 #include <R_ext/Print.h>
+#if R_GE_version < 4
+#include <Rgraphics.h>
+#include <Rdevices.h>
+#define BEGIN_SUSPEND_INTERRUPTS
+#define END_SUSPEND_INTERRUPTS
+#endif
 
 #include "backend.h"
 
@@ -29,6 +35,16 @@
 #endif
 
 #define CAIROGD_MAGIC (0x43614744)
+
+/* for compatibility with older R versions */
+#if R_GE_version < 4
+#define GEaddDevice(X) addDevice((DevDesc*)(X))
+#define GEdeviceNumber(X) devNumber((DevDesc*)(X))
+#define GEgetDevice(X) ((GEDevDesc*) GetDevice(X))
+#define ndevNumber(X) devNumber((DevDesc*)(X))
+#define GEkillDevice(X) KillDevice(X)
+#define desc2GEDesc(X) ((DevDesc*) GetDevice(devNumber((DevDesc*) (X))))
+#endif
 
 typedef struct {
 #ifdef USE_MAGIC

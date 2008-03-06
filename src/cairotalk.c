@@ -61,7 +61,12 @@ static void CairoGD_Text(double x, double y, char *str,
 			 R_GE_gcontext *gc,
 			 NewDevDesc *dd);
 
-
+/* fake mbcs support for old R versions */
+#if R_GE_version < 4
+#define mbcslocale 0
+#define Rf_ucstoutf8(X,Y)
+#define AdobeSymbol2utf8(A,B,W) { A[0]=s[0]; A[1]=0; }
+#endif
 
 #ifdef JGD_DEBUG
 #define Rcairo_set_source_rgb(C,R,G,B) { Rprintf("S:RGB> %f %f %f\n", R, G, B); cairo_set_source_rgb(C,R,G,B); }
@@ -774,10 +779,12 @@ void Rcairo_setup_gd_functions(NewDevDesc *dd) {
     dd->locator = CairoGD_Locator;
     dd->mode = CairoGD_Mode;
     dd->metricInfo = CairoGD_MetricInfo;
+#if R_GE_version >= 4
 	dd->hasTextUTF8 = TRUE;
     dd->strWidthUTF8 = CairoGD_StrWidth;
     dd->textUTF8 = CairoGD_Text;
 	dd->wantSymbolUTF8 = TRUE;
+#endif
 }
 
 void Rcairo_backend_resize(Rcairo_backend *be, double width, double height) {
@@ -800,7 +807,7 @@ void Rcairo_backend_repaint(Rcairo_backend *be) {
 		int devNum = ndevNumber(be->dd);
 		if (devNum > 0) {
 			be->in_replay = 1;
-			GEplayDisplayList(GEGetDevice(devNum));
+			GEplayDisplayList(GEgetDevice(devNum));
 			be->in_replay = 0;
 			if (be->mode) be->mode(be, -1);
 		}
