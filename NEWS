@@ -1,6 +1,9 @@
 NEWS/Changelog
 
-1.3-6	(under development)
+1.4-1	(2008-03-14)
+    o	adapt to R 2.7 changes
+
+1.4-0
     o	fix DPI detection in X11 back-end and use 90dpi as a fallback
 
     o	fix cra settings to be closer to what other devices use
