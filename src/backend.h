@@ -7,6 +7,7 @@
 #include <cairo.h>
 #include <R.h>
 #include <Rinternals.h>
+#include <R_ext/GraphicsEngine.h>
 #include <R_ext/GraphicsDevice.h>
 
 #define CDF_HAS_UI    0x0001  /* backend has UI (e.g. window) */

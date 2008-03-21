@@ -110,10 +110,12 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
 
     /* Device capabilities */
 
+#if R_GE_version < 4
     dd->canResizePlot = TRUE; /* opt */
     dd->canChangeFont = TRUE;
     dd->canRotateText = TRUE;
     dd->canResizeText = TRUE;
+#endif
     dd->canClip = TRUE;
     dd->canHAdj = 2;
     dd->canChangeGamma = FALSE;
@@ -133,8 +135,10 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
 		return FALSE;
 	}
 
+#if R_GE_version < 5
 	if (!xd->cb->resize)
 		dd->canResizePlot = FALSE;
+#endif
 
 	/* those were deferred, because they depend on xd and Open may have modified them */
     dd->right   = dd->clipRight = xd->cb->width;	/* right */
@@ -148,7 +152,10 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
 	if (xd->dpix > 0 && xd->dpiy <= 0) xd->dpiy = xd->dpix;
    	dd->ipr[0] = (xd->dpix > 0)?(1/xd->dpix):(1.0/72.0);
    	dd->ipr[1] = (xd->dpiy > 0)?(1/xd->dpiy):(1.0/72.0);
+
+#if R_GE_version < 4
     dd->asp = (xd->asp > 0)?xd->asp:1.0;
+#endif
 
 #ifdef JGD_DEBUG
 	Rprintf("Cairo-Open, returned: %f x %f, dpi=%f/%f\n", xd->cb->width, xd->cb->height, xd->dpix, xd->dpiy);
@@ -230,9 +237,10 @@ SEXP cairo_create_new_device(SEXP args)
 #if R_GE_version < 4
 	dev->newDevStruct = 1;
 #endif
+#if R_GE_version < 5
 	dev->displayList = R_NilValue;
-
 	dev->savedSnapshot = R_NilValue;
+#endif
 
 	if (!Rcairo_new_device_driver(dev, type, conn, file, width, height, initps,
 								 bgcolor, canvas, umul, dpi, args))
