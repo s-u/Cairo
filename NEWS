@@ -1,5 +1,8 @@
 NEWS/Changelog
 
+1.4-2	(2008-04-03)
+    o	adapt to even more changes in R 2.7
+
 1.4-1	(2008-03-14)
     o	adapt to R 2.7 changes
 
