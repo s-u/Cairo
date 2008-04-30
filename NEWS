@@ -1,5 +1,8 @@
 NEWS/Changelog
 
+1.4-3	(under development)
+    o	make the use of an invalid font non-fatal
+
 1.4-2	(2008-04-03)
     o	adapt to even more changes in R 2.7
 

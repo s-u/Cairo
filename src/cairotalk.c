@@ -189,10 +189,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 #ifdef CAIRO_HAS_FT_FONT
 	int i = gc->fontface - 1;
 
-	if (i < 0 || i >= 5){
-		error("font %d not recognized in Rcairo_setup_font\n",i);
-		return;
-	}
+	if (i < 0 || i >= 5) i = 0;
 
 	if (Rcairo_fonts[i].updated || (xd->fontface != gc->fontface)){
 		cairo_set_font_face(cc,Rcairo_fonts[i].face);
