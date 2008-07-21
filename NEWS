@@ -1,7 +1,12 @@
 NEWS/Changelog
 
-1.4-3	(under development)
+1.4-3	(2008-07-21)
     o	make the use of an invalid font non-fatal
+
+    o	allow Cairo to compile on some older systems that don't have
+	trunc()
+
+    o	updated libcairo binary for Windows to 1.6.4 (from GTK+)
 
 1.4-2	(2008-04-03)
     o	adapt to even more changes in R 2.7
