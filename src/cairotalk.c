@@ -262,6 +262,8 @@ static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
 
 /*------- the R callbacks begin here ... ------------------------*/
 
+#define c_trunc(X) ((double)((int)(X)))  /* some Suns don't have trunc(), so we use the cast-way to truncate */
+
 static void CairoGD_Activate(NewDevDesc *dd)
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
@@ -356,8 +358,8 @@ static void CairoGD_Line(double x1, double y1, double x2, double y2,  R_GE_gcont
 	  if ((x1==x2 || y1==y2) &&xd->cb->truncate_rect) {
 		  /* if we are snapping rectangles to grid, we also need to snap straight
 			 lines to make sure they match - e.g. tickmarks, baselines etc. */
-		  x1=trunc(x1)+0.5; x2=trunc(x2)+0.5;
-		  y1=trunc(y1)+0.5; y2=trunc(y2)+0.5;
+		  x1=c_trunc(x1)+0.5; x2=c_trunc(x2)+0.5;
+		  y1=c_trunc(y1)+0.5; y2=c_trunc(y2)+0.5;
 	  }
       cairo_move_to(cc, x1, y1);
       cairo_line_to(cc, x2, y2);
