@@ -23,6 +23,12 @@
 #define CBLUEC(C) ((((unsigned int)(C))&0xff0000)>>16)
 #define CALPHA(C) ((((unsigned int)(C))&0xff000000)>>24)
 
+#if R_VERSION < R_Version(2,7,0)
+#define constxt
+#else
+#define constxt const
+#endif
+
 static void CairoGD_Activate(NewDevDesc *dd);
 static void CairoGD_Circle(double x, double y, double r,
 			  R_GE_gcontext *gc,
@@ -53,10 +59,10 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,
 static void CairoGD_Size(double *left, double *right,
 			 double *bottom, double *top,
 			 NewDevDesc *dd);
-static double CairoGD_StrWidth(char *str, 
+static double CairoGD_StrWidth(constxt char *str, 
 			       R_GE_gcontext *gc,
 			       NewDevDesc *dd);
-static void CairoGD_Text(double x, double y, char *str,
+static void CairoGD_Text(double x, double y, constxt char *str,
 			 double rot, double hadj,
 			 R_GE_gcontext *gc,
 			 NewDevDesc *dd);
@@ -690,7 +696,7 @@ static void CairoGD_Size(double *left, double *right,  double *bottom, double *t
 	*bottom=xd->cb->height;
 }
 
-static double CairoGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static double CairoGD_StrWidth(constxt char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	int slen = strlen(str);
@@ -709,7 +715,7 @@ static double CairoGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
 	}
 }
 
-static void CairoGD_Text(double x, double y, char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void CairoGD_Text(double x, double y, constxt char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	cairo_t *cc;

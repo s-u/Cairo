@@ -28,9 +28,6 @@ static Rcairo_backend_def RcairoBackendDef_ = {
 };
 Rcairo_backend_def *RcairoBackendDef_w32 = &RcairoBackendDef_;
 
-#include <R.h>
-#include <R_ext/GraphicsEngine.h>
-
 /* --- GraphApp support --- we use GA from R headers --- */
 #ifndef NATIVE_UI
 #include <ga.h>

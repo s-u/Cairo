@@ -1,5 +1,8 @@
 NEWS/Changelog
 
+1.4-4	(2008-10-17)
+    o	adapt to changes in R-devel (2.9.0-to-be), clean up warnings
+
 1.4-3	(2008-07-21)
     o	make the use of an invalid font non-fatal
 

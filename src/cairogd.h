@@ -1,15 +1,12 @@
 #ifndef _DEV_GD_H
 #define _DEV_GD_H
 
-#define CAIROGD_VER 0x010403 /* Cairo v1.4-3 */
+#define CAIROGD_VER 0x010404 /* Cairo v1.4-4 */
 
 /* cairo R package config */
 #include "cconfig.h"
 
-#include <R.h>
-#include <Rinternals.h>
-#include <R_ext/GraphicsEngine.h>
-#include <R_ext/GraphicsDevice.h>
+#include "backend.h"
 #include <R_ext/Print.h>
 #if R_GE_version < 4
 #include <Rgraphics.h>
@@ -17,8 +14,6 @@
 #define BEGIN_SUSPEND_INTERRUPTS
 #define END_SUSPEND_INTERRUPTS
 #endif
-
-#include "backend.h"
 
 #include <cairo.h>
 #if CAIRO_HAS_FT_FONT

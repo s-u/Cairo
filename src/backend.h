@@ -6,9 +6,16 @@
 
 #include <cairo.h>
 #include <R.h>
+#include <Rversion.h>
 #include <Rinternals.h>
 #include <R_ext/GraphicsEngine.h>
 #include <R_ext/GraphicsDevice.h>
+
+#if R_VERSION >= R_Version(2,8,0)
+#ifndef NewDevDesc
+#define NewDevDesc DevDesc
+#endif
+#endif
 
 #define CDF_HAS_UI    0x0001  /* backend has UI (e.g. window) */
 #define CDF_FAKE_BG   0x0002  /* fake transparent background */
