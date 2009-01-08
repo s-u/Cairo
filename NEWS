@@ -1,5 +1,8 @@
 NEWS/Changelog
 
+1.4-5	(under development)
+    o	minor Windows configuration change
+
 1.4-4	(2008-10-17)
     o	adapt to changes in R-devel (2.9.0-to-be), clean up warnings
 

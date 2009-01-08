@@ -8,7 +8,7 @@ if [ ! -e src/windows/libcairo.dll.a ]; then
 	echo "  cannot find current cairograhics files"
 	echo "  attempting to download them"
 	mkdir -p src/windows 2> /dev/null
-	echo 'download.file("http://www.rforge.net/Cairo/files/cairo-current-w32.tar.gz","src/windows/cairo-current-w32.tar.gz",mode="wb")'|${RHOME}/bin/R --vanilla --slave
+	echo 'download.file("http://www.rforge.net/Cairo/files/cairo-current-w32.tar.gz","src/windows/cairo-current-w32.tar.gz",mode="wb")'|${R_HOME}/bin/R --vanilla --slave
     fi
     if [ ! -e src/windows/cairo-current-w32.tar.gz ]; then
 	allok=no
