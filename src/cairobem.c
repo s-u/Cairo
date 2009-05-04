@@ -52,7 +52,7 @@ SEXP Rcairo_supported_types() {
   PROTECT(res=allocVector(STRSXP, i));
   i = 0; c = types;
   while (*c) {
-    SET_VECTOR_ELT(res, i, mkChar(*c));
+    SET_STRING_ELT(res, i, mkChar(*c));
     c++; i++;
   }
   UNPROTECT(1);
