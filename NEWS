@@ -1,6 +1,6 @@
 NEWS/Changelog
 
-1.4-5	(under development)
+1.4-5	(2009-07-16)
     o	minor Windows configuration change
 
     o	fix SET_VECTOR_ELT issue for R 2.9.0+
