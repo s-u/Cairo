@@ -1,7 +1,3 @@
-# we need to add JNI specific stuff here
-ifdef DEBUG
-  PKG_CFLAGS+=-DJGD_DEBUG
-endif
-PKG_CFLAGS+=@CFLAGS@
-PKG_CPPFLAGS+=@CPPFLAGS@ -I. -Iinclude
-PKG_LIBS+=@LDFLAGS@ @LIBS@
+PKG_CFLAGS=@CFLAGS@
+PKG_CPPFLAGS=@CPPFLAGS@ -I. -Iinclude
+PKG_LIBS=@LDFLAGS@ @LIBS@
