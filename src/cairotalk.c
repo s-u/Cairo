@@ -66,6 +66,10 @@ static void CairoGD_Text(double x, double y, constxt char *str,
 			 double rot, double hadj,
 			 R_GE_gcontext *gc,
 			 NewDevDesc *dd);
+static void CairoGD_Raster(unsigned int *raster, int w, int h,
+                       double x, double y, double width, double height,
+                       double rot, Rboolean interpolate,
+                       R_GE_gcontext *gc, NewDevDesc *dd);
 
 /* fake mbcs support for old R versions */
 #if R_GE_version < 4
@@ -687,6 +691,70 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 	}
 }
 
+static void CairoGD_Raster(unsigned int *raster, int w, int h,
+                       double x, double y, double width, double height,
+                       double rot, Rboolean interpolate,
+                       R_GE_gcontext *gc, NewDevDesc *dd)
+{
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
+	if(!xd || !xd->cb) return;
+	{   /* the code in this block has been adapted from R 2.12.1, src/modules/X11/cairoX11.c
+		   (c) 2010 R Development Core Team under GPL 2+ */
+		cairo_t *cc = xd->cb->cc;
+		cairo_surface_t *image;
+		unsigned char *imageData;
+		int i;
+
+		cairo_translate(cc, x, y);
+		if (rot != 0.0)
+			cairo_rotate(cc, -rot * M_PI/180);
+		if (w != width || h != height)
+			cairo_scale(cc, width / w, height / h);
+		
+		/* Flip vertical first */
+		cairo_translate(cc, 0, h / 2.0);
+		cairo_scale(cc, 1, -1);
+		cairo_translate(cc, 0, -h / 2.0);
+
+
+		/* allocate data and transform to pre-mpl alpha */
+		imageData = (unsigned char *) malloc(4*w*h);
+		for (i = 0; i < w * h; i++) {
+			int alpha = R_ALPHA(raster[i]);
+			imageData[i*4 + 3] = alpha;
+			if (alpha < 255) {
+				imageData[i*4 + 2] = R_RED(raster[i]) * alpha / 255;
+				imageData[i*4 + 1] = R_GREEN(raster[i]) * alpha / 255;
+				imageData[i*4 + 0] = R_BLUE(raster[i]) * alpha / 255;
+			} else {
+				imageData[i*4 + 2] = R_RED(raster[i]);
+				imageData[i*4 + 1] = R_GREEN(raster[i]);
+				imageData[i*4 + 0] = R_BLUE(raster[i]);
+			}
+		}
+		
+		image = cairo_image_surface_create_for_data(imageData, 
+													CAIRO_FORMAT_ARGB32,
+													w, h, 4 * w);
+		
+		cairo_set_source_surface(cc, image, 0, 0);
+		if (interpolate) {
+            cairo_pattern_set_filter(cairo_get_source(cc), CAIRO_FILTER_BILINEAR);
+            cairo_pattern_set_extend(cairo_get_source(cc), CAIRO_EXTEND_PAD);
+		} else
+			cairo_pattern_set_filter(cairo_get_source(cc), CAIRO_FILTER_NEAREST);
+
+		cairo_new_path(cc);
+		cairo_rectangle(cc, 0, 0, w, h);
+		cairo_clip(cc);
+		cairo_paint(cc); 
+		
+		cairo_restore(cc);
+		cairo_surface_destroy(image);
+		free(imageData);
+	}
+}
+
 static void CairoGD_Size(double *left, double *right,  double *bottom, double *top,  NewDevDesc *dd)
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
@@ -789,6 +857,9 @@ void Rcairo_setup_gd_functions(NewDevDesc *dd) {
     dd->strWidthUTF8 = CairoGD_StrWidth;
     dd->textUTF8 = CairoGD_Text;
 	dd->wantSymbolUTF8 = TRUE;
+#if R_GE_version >= 6
+	dd->raster = CairoGD_Raster;
+#endif
 #endif
 }
 
