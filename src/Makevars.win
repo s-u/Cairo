@@ -1,5 +1,12 @@
 ifdef DEBUG
   XTRA_PKG_CPPFLAGS=-DJGD_DEBUG
 endif
-PKG_CPPFLAGS=-I. -Iwindows $(XTRA_PKG_CPPFLAGS)
-PKG_LIBS=-Lwindows -lcairo -lgdi32 $(GRAPHAPP_LIB)
+
+ifeq ($(strip $(shell $(R_HOME)/bin/R --slave -e 'cat(.Machine$$sizeof.pointer)')),8)
+BITS=64
+else
+BITS=32
+endif
+
+PKG_CPPFLAGS=-I. -Iwin$(BITS) $(XTRA_PKG_CPPFLAGS)
+PKG_LIBS=-Lwin$(BITS) -lcairo -lpixman-1 -lpng -lz -lgdi32 -lmsimg32 $(GRAPHAPP_LIB)

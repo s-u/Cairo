@@ -1,5 +1,9 @@
 NEWS/Changelog
 
+1.4-6	(under development)
+    o	update Windows libcairo binary to cairo 1.10.2, use static
+	build to avoid DLL issues and add 64-bit binary
+
 1.4-5	(2009-07-16)
     o	minor Windows configuration change
 

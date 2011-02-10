@@ -3,37 +3,40 @@
 echo "  checking cairo headers and libraries"
 allok=yes
 
-if [ ! -e src/windows/libcairo.dll.a ]; then
-    if [ ! -e src/windows/cairo-current-w32.tar.gz ]; then
+if [ ! -e src/win64/libcairo.a ]; then
+    if [ ! -e src/cairo-current-win.tar.gz ]; then
 	echo "  cannot find current cairograhics files"
 	echo "  attempting to download them"
-	mkdir -p src/windows 2> /dev/null
-	echo 'download.file("http://www.rforge.net/Cairo/files/cairo-current-w32.tar.gz","src/windows/cairo-current-w32.tar.gz",mode="wb")'|${R_HOME}/bin/R --vanilla --slave
+	echo 'download.file("http://www.rforge.net/Cairo/files/cairo-current-win.tar.gz","src/cairo-current-win.tar.gz",mode="wb")'|${R_HOME}/bin/R --vanilla --slave
     fi
-    if [ ! -e src/windows/cairo-current-w32.tar.gz ]; then
+    if [ ! -e src/cairo-current-win.tar.gz ]; then
 	allok=no
     else
 	echo "  unpacking current cairo"
-	tar fxz src/windows/cairo-current-w32.tar.gz
-	if [ ! -e src/windows/libcairo.dll.a ]; then
+	tar fxz src/cairo-current-win.tar.gz
+	if [ ! -e src/win64/libcairo.a ]; then
 	    allok=no
 	fi
     fi
 fi
 
-if [ ! -e src/windows/libcairo.dll.a ]; then
+if [ ! -e src/win64/libcairo.a ]; then
     allok=no
 fi
-if [ ! -e inst/libs ]; then
-    allok=no
+
+if [ ! -e src/win64/cconfig.h ]; then
+    echo '/* no extra features */' > src/win64/cconfig.h
+fi
+if [ ! -e src/win32/cconfig.h ]; then
+    echo '/* no extra features */' > src/win32/cconfig.h
 fi
 
 if [ ${allok} != yes ]; then
     echo ""
     echo " *** ERROR: unable to find cairographics files"
     echo ""
-    echo " They must be either in src/windows or in a tar-ball"
-    echo " src/windows/cairo-current-w32.tar.gz"
+    echo " They must be either in src/win32 and src/win64 or in a tar-ball"
+    echo " src/cairo-current-win.tar.gz"
     echo ""
     echo " You can get the latest binary ball from"
     echo " http://www.rforge.net/Cairo/files/"
