@@ -1,7 +1,7 @@
 NEWS/Changelog
 
-1.4-6	(under development)
-    o	raster image support has been added (courtesy of R core)
+1.4-6	(2011-02-10)
+    o	adds raster image support (courtesy of R core)
 
     o	update Windows libcairo binary to cairo 1.10.2, use static
 	build to avoid DLL issues and add 64-bit binary
