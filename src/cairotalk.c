@@ -705,6 +705,7 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
 		unsigned char *imageData;
 		int i;
 
+		cairo_save(cc);
 		cairo_translate(cc, x, y);
 		if (rot != 0.0)
 			cairo_rotate(cc, -rot * M_PI/180);
