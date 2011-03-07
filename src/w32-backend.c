@@ -88,7 +88,7 @@ static void w32_resize(Rcairo_backend* be, double width, double height){
 	/* manage HDC -- we have to re-get it after resize due to clipping issues */
 	if (!xd->hdc)
 		xd->hdc = GetDC( xd->wh );
-	else { /
+	else {
 		ReleaseDC(xd->wh, xd->hdc);
 		xd->hdc = GetDC( xd->wh );
 	}
