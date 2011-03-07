@@ -4,6 +4,9 @@ NEWS/Changelog
     o	fix a bug in raster support causing raster to be usable only
 	once
 
+    o	win backend: release and re-get DC on resize -- fixes resizing
+	issues in CairoWin() for some Windows versions
+
 1.4-6	(2011-02-10)
     o	adds raster image support (courtesy of R core)
 

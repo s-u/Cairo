@@ -85,11 +85,17 @@ static void w32_resize(Rcairo_backend* be, double width, double height){
 	be->width=xd->width=width;
 	be->height=xd->height=height;
 
-	/* first re-paint the window */
+	/* manage HDC -- we have to re-get it after resize due to clipping issues */
 	if (!xd->hdc)
 		xd->hdc = GetDC( xd->wh );
+	else { /
+		ReleaseDC(xd->wh, xd->hdc);
+		xd->hdc = GetDC( xd->wh );
+	}
 	hdc=xd->hdc;
+	/* first re-paint the window */
 	GetClientRect( xd->wh, &r );
+	/* Rprintf("w32_resize(%g,%g); rect=(%d,%d)-(%d,%d)\n", width, height, r.left, r.bottom, r.right, r.top); */
 	be->cs = cairo_win32_surface_create( hdc );
 	be->cc = cairo_create( be->cs );
 	Rcairo_backend_repaint(be);
