@@ -1,6 +1,6 @@
 NEWS/Changelog
 
-1.4-7	(under development)
+1.4-7	(2011-03-07)
     o	fix a bug in raster support causing raster to be usable only
 	once
 
