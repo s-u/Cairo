@@ -1,5 +1,9 @@
 NEWS/Changelog
 
+1.4-9	(under development)
+    o	supply Windows libraies inside the package since CRAN had
+	issues when building from external sources
+
 1.4-8	(2011-03-07)
     o	spurious character in the 1.4-7 w32-backed source has made it
 	unusable on Windows. This is a re-packaging of 1.4-7 without
