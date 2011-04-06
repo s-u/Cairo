@@ -1,6 +1,6 @@
 NEWS/Changelog
 
-1.4-9	(under development)
+1.4-9	(2011-04-06)
     o	force static built-in libraries on Windows to prevent Cairo
 	from picking up broken system libraries
 
