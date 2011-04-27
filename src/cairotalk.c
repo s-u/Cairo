@@ -217,8 +217,8 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
   int wght  = CAIRO_FONT_WEIGHT_NORMAL;
   if (gc->fontface==5) Cfontface="Symbol";
   if (gc->fontfamily[0]) Cfontface=gc->fontfamily;
-  if (gc->fontface==2 || gc->fontface==4) slant=CAIRO_FONT_SLANT_ITALIC;
-  if (gc->fontface==3 || gc->fontface==4) wght=CAIRO_FONT_WEIGHT_BOLD;
+  if (gc->fontface==3 || gc->fontface==4) slant=CAIRO_FONT_SLANT_ITALIC;
+  if (gc->fontface==2 || gc->fontface==4) wght=CAIRO_FONT_WEIGHT_BOLD;
   
   cairo_select_font_face (cc, Cfontface, slant, wght);
 
