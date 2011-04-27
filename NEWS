@@ -3,6 +3,9 @@ NEWS/Changelog
 1.4-10	(under development)
     o	fix swapped bold vs italic traits if freetype is not available
 
+    o	use Times font for symbols on Windows because Symbol font
+	doesn't seem to support Unicode
+
 1.4-9	(2011-04-06)
     o	force static built-in libraries on Windows to prevent Cairo
 	from picking up broken system libraries

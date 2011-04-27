@@ -215,7 +215,11 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
   char *Cfontface="Helvetica";
   int slant = CAIRO_FONT_SLANT_NORMAL;
   int wght  = CAIRO_FONT_WEIGHT_NORMAL;
+#ifdef WIN32
+  if (gc->fontface==5) Cfontface="Times";
+#else
   if (gc->fontface==5) Cfontface="Symbol";
+#endif
   if (gc->fontfamily[0]) Cfontface=gc->fontfamily;
   if (gc->fontface==3 || gc->fontface==4) slant=CAIRO_FONT_SLANT_ITALIC;
   if (gc->fontface==2 || gc->fontface==4) wght=CAIRO_FONT_WEIGHT_BOLD;
