@@ -484,8 +484,6 @@ static SEXP findArg(const char *name, SEXP list) {
 Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int conn, const char *file, double w, double h,
 					  double umpl, SEXP aux)
 {
-	cairo_t *cc;
-
 	if (umpl==0) error("unit multiplier cannot be zero");
 
 	xd->fill   = 0xffffffff; /* transparent, was R_RGB(255, 255, 255); */
@@ -581,15 +579,16 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 		return FALSE;
 	}
 
-	cc = xd->cb->cc;
-
 	/* get modified dpi in case the backend has set it */
 	xd->dpix = xd->cb->dpix;
 	xd->dpiy = xd->cb->dpiy;
 	if (xd->dpix>0 && xd->dpiy>0) xd->asp = xd->dpix / xd->dpiy;
 
 	Rcairo_backend_init_surface(xd->cb);
-	/* cairo_save(cc); */
+	/*
+	  cc = xd->cb->cc;
+	  cairo_save(cc);
+	*/
 
 #ifdef JGD_DEBUG
 	Rprintf("open [type='%s'] %d x %d (flags %04x)\n", type, (int)w, (int)h, xd->cb->flags);
