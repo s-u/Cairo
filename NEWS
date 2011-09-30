@@ -1,6 +1,6 @@
 NEWS/Changelog
 
-1.4-10	(under development)
+1.5-0	(2011-09-30)
     o	fix swapped bold vs italic traits if freetype is not available
 
     o	use Times font for symbols on Windows because Symbol font
@@ -17,6 +17,7 @@ NEWS/Changelog
 	plot(1:10, col=2)
 	p = writePNG(dev.capture(native=TRUE), raw())
 	will create a raw vector containg a PNG image.
+
 
 1.4-9	(2011-04-06)
     o	force static built-in libraries on Windows to prevent Cairo
