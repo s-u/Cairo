@@ -8,6 +8,16 @@ NEWS/Changelog
 
     o	add support for poly-paths
 
+    o	add support for dev.capture()/grid.cap()
+
+    o	added new type "raster" that creates an image back-end without
+	any output file. It can be used in conjunction with
+	dev.capture() to create in-memory image representations, e.g.:
+	Cairo(type='raster')
+	plot(1:10, col=2)
+	p = writePNG(dev.capture(native=TRUE), raw())
+	will create a raw vector containg a PNG image.
+
 1.4-9	(2011-04-06)
     o	force static built-in libraries on Windows to prevent Cairo
 	from picking up broken system libraries

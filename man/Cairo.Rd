@@ -74,6 +74,10 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   and "tiff" bitmaps (png/tiff with transparent background), "pdf"
   PDF-file with embedded fonts, "svg" SVG-file, "ps" PostScript-file,
   "x11" X11 interactive window and "win" Windows graphics.
+  A special type "raster" creates an image back-end that produces no
+  actual output file but can be used in conjunction with any of
+  \code{dev.capture()}, \code{grid.cap()} or \code{Cairo:::.image()}
+  to create in-memory images.
   Depending on the support of various backends in cairo graphics some
   of the options may not be available for your system. See
   \code{\link{Cairo.capabilities}} function.}

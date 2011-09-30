@@ -31,6 +31,7 @@ static char* img_types[] = {
 #ifdef SUPPORTS_TIFF
 	"tiff",
 #endif
+	"raster",
 	0 };
 
 static Rcairo_backend_def RcairoBackendDef_image_ = {
@@ -113,6 +114,9 @@ static void image_save_page_png(Rcairo_backend* be, int pageno){
 	free(fn);
 }
 
+static void image_save_page_null(Rcairo_backend* be, int pageno) {
+}
+
 #ifdef HAVE_RCONN_H
 static cairo_status_t send_image_data(void *closure, const unsigned char *data, unsigned int length)
 {
@@ -140,6 +144,9 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const cha
 		free(be); return NULL;
 	}
 
+	/* filename will be irrelevan for raster output */
+	if (type && !strcmp(type, "raster")) filename = 0;
+
 	if (filename){
 		if ( !(image->filename = malloc(strlen(filename)+1))){
 			free(be); free(image); return NULL;
@@ -151,8 +158,7 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const cha
 		image->conn = conn;
 		be->save_page = image_send_page;
 #else
-		free(be); free(image); return NULL;
-		return NULL;
+		be->save_page = image_save_page_null;
 #endif
 	}
 
@@ -184,7 +190,7 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const cha
 	} else if (!strcmp(type,"jpg") || !strcmp(type,"jpeg")) {
 #ifdef SUPPORTS_JPEG
 		image->quality = quality;
-		be->save_page = image_save_page_jpg;
+		if (!be->save_page) be->save_page = image_save_page_jpg;
 		be->flags|=CDF_OPAQUE; /* no transparency at all */
 #else
 		cairo_surface_destroy(be->cs);
@@ -196,7 +202,7 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const cha
 		image->quality = quality;
 		if (!alpha_plane)
 			be->flags|=CDF_OPAQUE;
-		be->save_page = image_save_page_tiff;
+		if (!be->save_page) be->save_page = image_save_page_tiff;
 #else
 		cairo_surface_destroy(be->cs);
 		free(image->buf);

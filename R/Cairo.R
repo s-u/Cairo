@@ -5,7 +5,7 @@
 ### as of 1.3-2 png/png24/png32 are the same (we don't support png8 anyway)
 .supported.types <- c(png="png",png24="png",png32="png",jpeg="jpeg",jpg="jpeg",tiff="tiff",tif="tiff",
 					  pdf="pdf",svg="svg",ps="ps",postscript="ps",x11="x11",xlib="x11",
-					  win="win",win32="win",window="win",windows="win",w32="win")
+					  win="win",win32="win",window="win",windows="win",w32="win",raster="raster")
 
 Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="transparent", canvas="white", units="px", dpi="auto", ...) {
 	ctype <- tolower(type)

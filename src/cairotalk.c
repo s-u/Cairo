@@ -11,6 +11,8 @@
 #include "w32-backend.h"
 #include "img-tiff.h" /* for TIFF_COMPR_LZW */
 #include <Rversion.h>
+#define USE_RINTERNALS 1
+#include <Rinternals.h>
 
 /* Device Driver Actions */
 
@@ -72,6 +74,7 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
                        double x, double y, double width, double height,
                        double rot, Rboolean interpolate,
                        R_GE_gcontext *gc, NewDevDesc *dd);
+static SEXP CairoGD_Cap(NewDevDesc *dd);
 
 /* fake mbcs support for old R versions */
 #if R_GE_version < 4
@@ -285,6 +288,54 @@ static void CairoGD_Activate(NewDevDesc *dd)
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb) return;
 	if (xd->cb->activation) xd->cb->activation(xd->cb, 1);
+}
+
+static SEXP CairoGD_Cap(NewDevDesc *dd)
+{
+	SEXP raster = R_NilValue, dim;	
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
+	cairo_surface_t *s;
+	if(!xd || !xd->cb || !(s = xd->cb->cs)) return raster;
+
+	cairo_surface_flush(s);
+	/* we have defined way of getting the contents only from image back-ends */
+	if (cairo_surface_get_type(s) == CAIRO_SURFACE_TYPE_IMAGE) {
+		int w = cairo_image_surface_get_width(s);
+		int h = cairo_image_surface_get_height(s);
+		unsigned int *dst, size = w * h, i;
+		unsigned int *img = (unsigned int*) cairo_image_surface_get_data(s);
+		cairo_format_t fmt = cairo_image_surface_get_format(s);
+		
+		/* we only support RGB or ARGB */
+		if (fmt != CAIRO_FORMAT_RGB24 && fmt != CAIRO_FORMAT_ARGB32)
+			return raster;
+		
+		raster = PROTECT(allocVector(INTSXP, size));
+		dst = (unsigned int*) INTEGER(raster);
+
+		Rprintf("format = %s (%d x %d)\n", (fmt == CAIRO_FORMAT_ARGB32) ? "ARGB" : "RGB", w, h);
+
+		if (fmt == CAIRO_FORMAT_ARGB32) /* ARGB is the default we use in most cases */
+			/* annoyingly Cairo uses pre-multiplied storage so we have to reverse that */
+			for (i = 0; i < size; i++) {
+				unsigned int v = *(img++), a = v >> 24;
+				dst[i] =
+					(a == 0) ? 0 : /* special cases for alpha = 0.0 and 1.0 */
+					((a == 255) ? R_RGB((v >> 16) & 255, (v >> 8) & 255, v & 255) : 
+					 R_RGBA(((v >> 16) & 255) * 255 / a, ((v >> 8) & 255) * 255 / a, (v & 255) * 255 / a, a));
+			}
+		else
+			for (i = 0; i < size; i++)
+				dst[i] = R_RGB((img[i] >> 16) & 255, (img[i] >> 8) & 255, img[i] & 255);
+		
+		dim = allocVector(INTSXP, 2);
+		INTEGER(dim)[0] = h;
+		INTEGER(dim)[1] = w;
+		setAttrib(raster, R_DimSymbol, dim);
+		
+		UNPROTECT(1);
+	}
+	return raster;
 }
 
 static void CairoGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  NewDevDesc *dd)
@@ -502,7 +553,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 	/* Select Cairo backend */
 	/* Cairo 1.2-0: jpeg and tiff are created via external libraries (libjpeg/libtiff) by our code */
 	if (!strcmp(type,"png") || !strcmp(type,"png24")  || !strcmp(type,"jpeg") || !strcmp(type,"jpg") ||
-		!strcmp(type,"tif")  || !strcmp(type,"tiff")) {
+		!strcmp(type,"tif")  || !strcmp(type,"tiff") || !strcmp(type, "raster")) {
 		int alpha_plane = 0;
 		int quality = 0; /* find out if we have quality setting */
 		if (R_ALPHA(xd->bg) < 255) alpha_plane=1;
@@ -907,6 +958,7 @@ void Rcairo_setup_gd_functions(NewDevDesc *dd) {
 	dd->wantSymbolUTF8 = TRUE;
 #if R_GE_version >= 6
 	dd->raster = CairoGD_Raster;
+	dd->cap = CairoGD_Cap;
 #if R_GE_version >= 8
 	dd->path = CairoGD_Path;
 #endif
