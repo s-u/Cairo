@@ -6,6 +6,8 @@ NEWS/Changelog
     o	use Times font for symbols on Windows because Symbol font
 	doesn't seem to support Unicode
 
+    o	add support for poly-paths
+
 1.4-9	(2011-04-06)
     o	force static built-in libraries on Windows to prevent Cairo
 	from picking up broken system libraries

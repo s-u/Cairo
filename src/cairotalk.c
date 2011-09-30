@@ -47,6 +47,8 @@ static void CairoGD_MetricInfo(int c,
 			      double* width, NewDevDesc *dd);
 static void CairoGD_Mode(int mode, NewDevDesc *dd);
 static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd);
+static void CairoGD_Path(double *x, double *y, int npoly, int *nper, Rboolean winding,
+                       R_GE_gcontext *gc, NewDevDesc *dd);
 static void CairoGD_Polygon(int n, double *x, double *y,
 			   R_GE_gcontext *gc,
 			   NewDevDesc *dd);
@@ -597,6 +599,48 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 	return TRUE;
 }
 
+static void CairoGD_Path(double *x, double *y, int npoly, int *nper, Rboolean winding,
+                       R_GE_gcontext *gc, NewDevDesc *dd)
+{
+	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
+	if(!xd || !xd->cb || !nper || npoly < 1) return;
+	{
+		int i, j, n;
+		cairo_t *cc = xd->cb->cc;
+		
+		Rcairo_set_line(xd, gc);
+
+#ifdef JGD_DEBUG
+		Rprintf("path %d polygons [%08x/%08x]\n", npoly, gc->col, gc->fill);
+#endif
+		
+		cairo_new_path(cc);
+		n = 0;
+		for (i = 0; i < npoly; i++) {
+			cairo_move_to(cc, x[n], y[n]);
+			n++;
+			for(j = 1; j < nper[i]; j++) {
+				cairo_line_to(cc, x[n], y[n]);
+				n++;
+			}
+			cairo_close_path(cc);
+		}
+
+		if (CALPHA(gc->fill)) {
+			if (winding) 
+				cairo_set_fill_rule(cc, CAIRO_FILL_RULE_WINDING);
+			else 
+				cairo_set_fill_rule(cc, CAIRO_FILL_RULE_EVEN_ODD);
+			Rcairo_set_color(cc, gc->fill);
+			cairo_fill_preserve(cc);
+		}
+		if (CALPHA(gc->col) && gc->lty != -1) {
+			Rcairo_set_color(cc, gc->col);
+			cairo_stroke(cc);
+		} else cairo_new_path(cc);
+    }
+}
+
 static void CairoGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
@@ -863,6 +907,9 @@ void Rcairo_setup_gd_functions(NewDevDesc *dd) {
 	dd->wantSymbolUTF8 = TRUE;
 #if R_GE_version >= 6
 	dd->raster = CairoGD_Raster;
+#if R_GE_version >= 8
+	dd->path = CairoGD_Path;
+#endif
 #endif
 #endif
 }
