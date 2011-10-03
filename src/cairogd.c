@@ -123,6 +123,15 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
     dd->startlty   = LTY_SOLID;
     dd->startfont  = 1;
 
+	/* set default behavior - backends should change it where they diverge from the default */
+#if R_GE_version >= 9
+	dd->haveRaster = 2;       /* yes */
+	dd->haveTransparency = 2; /* yes */
+	dd->haveTransparentBg = 3;/* yes, full alpha range */
+	dd->haveCapture = 2;      /* yes */
+	dd->haveLocator = 2;      /* yes */
+#endif
+
     dd->deviceSpecific = (void *) xd;
 
 #ifdef JGD_DEBUG

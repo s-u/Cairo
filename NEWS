@@ -1,5 +1,10 @@
 NEWS/Changelog
 
+1.5-1	(under development)
+    o	add support for dev.hold()/dev.flush()
+
+    o	use new R 2.14.0 device capabilities advertizing feature
+
 1.5-0	(2011-09-30)
     o	fix swapped bold vs italic traits if freetype is not available
 

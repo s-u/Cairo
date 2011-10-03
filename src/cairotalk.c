@@ -75,6 +75,7 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
                        double rot, Rboolean interpolate,
                        R_GE_gcontext *gc, NewDevDesc *dd);
 static SEXP CairoGD_Cap(NewDevDesc *dd);
+static int  CairoGD_HoldFlush(NewDevDesc *dd, int level);
 
 /* fake mbcs support for old R versions */
 #if R_GE_version < 4
@@ -402,6 +403,26 @@ static void CairoGD_Deactivate(NewDevDesc *dd)
 	if (xd->cb->activation) xd->cb->activation(xd->cb, 0);
 }
 
+static int  CairoGD_HoldFlush(NewDevDesc *dd, int level)
+{
+	int ol;
+    CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
+    if (!xd) return 0;
+	ol = xd->holdlevel;
+    xd->holdlevel += level;
+    if (xd->holdlevel < 0)
+		xd->holdlevel = 0;
+    if (xd->holdlevel == 0) { /* flush */
+		if (xd->cb && xd->cb->sync) /* if a back-end provides sync, we just pass on */
+			xd->cb->sync(xd->cb);
+		else /* otherwise just do cairo-side flush */
+			if (xd->cb && xd->cb->cs) cairo_surface_flush(xd->cb->cs);
+	} else if (ol == 0) { /* first hold */
+        /* could display a wait cursor or something ... */
+    }
+    return xd->holdlevel;
+}
+
 static Rboolean CairoGD_Locator(double *x, double *y, NewDevDesc *dd)
 {
     CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
@@ -556,6 +577,9 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 		!strcmp(type,"tif")  || !strcmp(type,"tiff") || !strcmp(type, "raster")) {
 		int alpha_plane = 0;
 		int quality = 0; /* find out if we have quality setting */
+#if R_GE_version >= 9
+		dd->haveLocator = 1; /* no locator on image back-ends */
+#endif
 		if (R_ALPHA(xd->bg) < 255) alpha_plane=1;
 		if (!strcmp(type,"jpeg") || !strcmp(type,"jpg")) {
 			SEXP arg = findArg("quality", aux);
@@ -564,6 +588,10 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 			if (quality<0) quality=0;
 			if (quality>100) quality=100;
 			alpha_plane=0;
+#if R_GE_version >= 9
+			/* JPEG has no tbg */
+			dd->haveTransparentBg = 1;
+#endif
 		}
 		if (!strcmp(type,"tif")  || !strcmp(type,"tiff")) {
 			SEXP arg = findArg("compression", aux);
@@ -588,6 +616,11 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 		xd->cb = Rcairo_new_image_backend(xd->cb, conn, file, type, (int)(w+0.5), (int)(h+0.5), quality, alpha_plane);
 	}
 	else if (!strcmp(type,"pdf") || !strcmp(type,"ps") || !strcmp(type,"postscript") || !strcmp(type,"svg")) {
+#if R_GE_version >= 9
+		/* no locator, no capture */
+		dd->haveLocator = 1;
+		dd->haveCapture = 1;
+#endif
 		/* devices using native units, covert those to points */
 		if (umpl<0) {
 			if (xd->dpix <= 0)
@@ -961,6 +994,9 @@ void Rcairo_setup_gd_functions(NewDevDesc *dd) {
 	dd->cap = CairoGD_Cap;
 #if R_GE_version >= 8
 	dd->path = CairoGD_Path;
+#if R_GE_version >= 9
+	dd->holdflush = CairoGD_HoldFlush;
+#endif
 #endif
 #endif
 #endif

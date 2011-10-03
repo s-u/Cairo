@@ -79,6 +79,7 @@ typedef struct st_Rcairo_backend {
   void (*activation)(struct st_Rcairo_backend *be, int activate);  /* maps both Activate/Deactivate */
   void (*mode)(struct st_Rcairo_backend *be, int mode); /* in addition it is called after internal replay with mode -1 */
   void (*resize)(struct st_Rcairo_backend *be, double width, double height);
+  void (*sync)(struct st_Rcairo_backend *be); /* force sync for devices that do asynchronous drawing */
 } Rcairo_backend;
 
 /* implemented in cairotalk but can be used by any back-end to talk to the GD system */

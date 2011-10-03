@@ -1,7 +1,7 @@
 #ifndef _DEV_GD_H
 #define _DEV_GD_H
 
-#define CAIROGD_VER 0x010500 /* Cairo v1.5-0 */
+#define CAIROGD_VER 0x010501 /* Cairo v1.5-1 */
 
 /* cairo R package config */
 #include "cconfig.h"
@@ -56,20 +56,22 @@ typedef struct {
     int basefontface;	    /* Typeface */
     int basefontsize;		/* Size in points */
 
-  /* --- custom fields --- */
-  Rcairo_backend   *cb; /* cairo backend */
+    /* --- custom fields --- */
+    Rcairo_backend   *cb; /* cairo backend */
 
-  /* those are set before Open is invoked such that we can pass
-     any number of initial parameters without modifying the code */
-  int bg;  /* bg */
-  double gamma; /* gamma */
-  double dpix, dpiy, asp;
-
-  int gd_fill, gd_draw; /* current GD colors */
-  double gd_ftsize, gd_ftm_ascent, gd_ftm_descent, gd_ftm_width;
-  int gd_ftm_char; /*gd_ftm_xxx are font-metric cached values - char specifying the last query */
-	
-  int npages; /* sequence # in case multiple pages are requested */
+    /* those are set before Open is invoked such that we can pass
+       any number of initial parameters without modifying the code */
+    int bg;  /* bg */
+    double gamma; /* gamma */
+    double dpix, dpiy, asp;
+    
+    int gd_fill, gd_draw; /* current GD colors */
+    double gd_ftsize, gd_ftm_ascent, gd_ftm_descent, gd_ftm_width;
+    int gd_ftm_char; /*gd_ftm_xxx are font-metric cached values - char specifying the last query */
+    
+    int npages; /* sequence # in case multiple pages are requested */
+    
+    int holdlevel;
 } CairoGDDesc;
 
 #endif
