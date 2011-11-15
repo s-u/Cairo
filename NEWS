@@ -5,6 +5,8 @@ NEWS/Changelog
 
     o	use new R 2.14.0 device capabilities advertizing feature
 
+    o	fix memory leak when setting fonts via CairoFonts()
+
 1.5-0	(2011-09-30)
     o	fix swapped bold vs italic traits if freetype is not available
 

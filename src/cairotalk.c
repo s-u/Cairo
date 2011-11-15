@@ -108,7 +108,11 @@ Rcairo_font_face Rcairo_fonts[5] = {
 	{ NULL, 0 }
 };
 
+static const cairo_user_data_key_t key;
+
 cairo_font_face_t *Rcairo_set_font_face(int i, const char *file){
+	cairo_font_face_t *c_face;
+	cairo_status_t status;
 	FT_Face face;
 	FT_Error er;
 	FT_CharMap found = 0; 
@@ -144,7 +148,15 @@ cairo_font_face_t *Rcairo_set_font_face(int i, const char *file){
 		er = FT_Set_Charmap( face, found );
 	} 
 
-	return cairo_ft_font_face_create_for_ft_face(face,FT_LOAD_DEFAULT);
+	c_face = cairo_ft_font_face_create_for_ft_face(face,FT_LOAD_DEFAULT);
+	status = cairo_font_face_set_user_data (c_face, &key,
+		face, (cairo_destroy_func_t) FT_Done_Face);
+	if (status) {
+	    cairo_font_face_destroy (c_face);
+	    FT_Done_Face (face);
+	    return NULL;
+	}
+	return c_face;
 }
 
 void Rcairo_set_font(int i, const char *fcname){
