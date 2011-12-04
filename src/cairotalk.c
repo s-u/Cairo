@@ -210,6 +210,12 @@ void Rcairo_set_font(int i, const char *fcname){
 }
 #endif
 
+static void set_cf_antialias(cairo_t *cc) {
+	cairo_font_options_t *fo = cairo_font_options_create();
+	cairo_font_options_set_antialias(fo, CAIRO_ANTIALIAS_SUBPIXEL);
+	cairo_set_font_options(cc, fo);
+	cairo_font_options_destroy(fo);
+}
 
 static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	cairo_t *cc = xd->cb->cc;
@@ -221,6 +227,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 
 	if (Rcairo_fonts[i].updated || (xd->fontface != gc->fontface)){
 		cairo_set_font_face(cc,Rcairo_fonts[i].face);
+		set_cf_antialias(cc);
 		Rcairo_fonts[i].updated = 0;
 #ifdef JGD_DEBUG
 		  Rprintf("  font face changed to \"%d\" %fpt\n", gc->fontface, gc->cex*gc->ps + 0.5);
@@ -243,7 +250,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
   if (gc->fontface==2 || gc->fontface==4) wght=CAIRO_FONT_WEIGHT_BOLD;
   
   cairo_select_font_face (cc, Cfontface, slant, wght);
-
+  set_cf_antialias(cc);
 #ifdef JGD_DEBUG
   Rprintf("  font \"%s\" %fpt (slant:%d, weight:%d)\n", Cfontface, gc->cex*gc->ps + 0.5, slant, wght);
 #endif
@@ -1075,6 +1082,7 @@ void Rcairo_backend_init_surface(Rcairo_backend *be) {
 	cairo_select_font_face (cc, "Helvetica",
 			CAIRO_FONT_SLANT_NORMAL,
 			CAIRO_FONT_WEIGHT_NORMAL);
+	set_cf_antialias(cc);
 	cairo_set_font_size (cc, 14);
 #endif
 }

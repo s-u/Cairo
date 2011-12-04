@@ -7,6 +7,10 @@ NEWS/Changelog
 
     o	fix memory leak when setting fonts via CairoFonts()
 
+    o	explicitly request font anti-aliasing even if it is not the
+	surface default - in particular Windows has disabled font
+	anti-aliasing by default
+
 1.5-0	(2011-09-30)
     o	fix swapped bold vs italic traits if freetype is not available
 
