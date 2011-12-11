@@ -416,7 +416,11 @@ SEXP cairo_font_set(SEXP args){
 		}
 	}
 #else
-	warning("the R Cairo package was not installed with fontconfig. Please consider installing the cairo graphics engine (www.cairographics.org) with freetype and fontconfig support");
+#ifdef WIN32
+	warning("CairoFonts() has no effect on Windows. Please use par(family=\"...\") to specify the desired font - see ?par.");
+#else
+	warning("The R Cairo package was not installed with fontconfig. Please consider installing the cairo graphics engine (www.cairographics.org) with freetype and fontconfig support");
+#endif
 #endif
 	return R_NilValue;
 }

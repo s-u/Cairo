@@ -1,6 +1,6 @@
 NEWS/Changelog
 
-1.5-1	(under development)
+1.5-1	(2011-12-10)
     o	add support for dev.hold()/dev.flush()
 
     o	use new R 2.14.0 device capabilities advertizing feature
