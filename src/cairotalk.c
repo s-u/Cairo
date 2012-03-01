@@ -1133,7 +1133,16 @@ SEXP Rcairo_capture(SEXP dev) {
 	GEDevDesc *gd = GEgetDevice(devNr);
 	if (gd) {
 		NewDevDesc *dd = gd->dev;
-		if (dd) return CairoGD_Cap(dd);
+		if (dd) {
+			SEXP res = CairoGD_Cap(dd);
+			if (res != R_NilValue) {
+				PROTECT(res);
+				setAttrib(res, R_ClassName, mkString("nativeRaster"));
+				UNPROTECT(1);
+				return res;
+			}
+		}
 	}
+	Rf_error("Unable to capture content - not a valid image backend Cairo device");
 	return R_NilValue;
 }
