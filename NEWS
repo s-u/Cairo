@@ -1,5 +1,12 @@
 NEWS/Changelog
 
+1.5-2	(under development)
+    o	added Cairo.onSave() callback which allows R code to be run
+	when Cairo finishes a page
+
+    o	added Cairo.serial() function which allows user code to check
+	whether the graphics have been updated
+
 1.5-1	(2011-12-10)
     o	add support for dev.hold()/dev.flush()
 

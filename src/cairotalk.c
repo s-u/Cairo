@@ -380,6 +380,7 @@ static void CairoGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  Ne
 			Rcairo_set_line(xd, gc);
 			cairo_stroke(cc);
 		} else cairo_new_path(cc);
+		xd->cb->serial++;
 	}
 }
 
@@ -409,6 +410,12 @@ static void CairoGD_Close(NewDevDesc *dd)
   if(!xd || !xd->cb) return;
   
   xd->cb->save_page(xd->cb,xd->npages);
+  if (xd->cb->onSave) {
+	  SEXP devNr = PROTECT(ScalarInteger(ndevNumber(dd) + 1));
+	  SEXP pageNr = PROTECT(ScalarInteger(xd->npages + 1));
+	  eval(lang3(xd->cb->onSave, devNr, pageNr), R_GlobalEnv);
+	  UNPROTECT(2);
+  }
   xd->cb->destroy_backend(xd->cb);
 
   free(xd);
@@ -473,6 +480,7 @@ static void CairoGD_Line(double x1, double y1, double x2, double y2,  R_GE_gcont
       Rcairo_set_color(cc, gc->col);
       Rcairo_set_line(xd, gc);
       cairo_stroke(cc);
+	  xd->cb->serial++;
     }
 }
 
@@ -538,8 +546,15 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 	cc = xd->cb->cc;
 
 	xd->npages++;
-	if (xd->npages > 0)  /* first request is not saved as this is part of the init */
+	if (xd->npages > 0) { /* first request is not saved as this is part of the init */
 		xd->cb->save_page(xd->cb,xd->npages);
+		if (xd->cb->onSave) {
+			SEXP devNr = PROTECT(ScalarInteger(ndevNumber(dd) + 1));
+			SEXP pageNr = PROTECT(ScalarInteger(xd->npages));
+			eval(lang3(xd->cb->onSave, devNr, pageNr), R_GlobalEnv);
+			UNPROTECT(2);
+		}
+	}
 
 	cairo_reset_clip(cc);
 	/* we don't need to fill if the back-end sets nozero and bg is transparent */
@@ -562,6 +577,7 @@ static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 		}
 		cairo_new_path(cc);
 		cairo_paint(cc);
+		xd->cb->serial++;
 	}
 }
 
@@ -741,6 +757,7 @@ static void CairoGD_Path(double *x, double *y, int npoly, int *nper, Rboolean wi
 			Rcairo_set_color(cc, gc->col);
 			cairo_stroke(cc);
 		} else cairo_new_path(cc);
+		xd->cb->serial++;
     }
 }
 
@@ -769,6 +786,7 @@ static void CairoGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  Ne
 			Rcairo_set_color(cc, gc->col);
 			cairo_stroke(cc);
 		} else cairo_new_path(cc);
+		xd->cb->serial++;
 	}
 }
 
@@ -790,6 +808,7 @@ static void CairoGD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  N
 			Rcairo_set_color(cc, gc->col);
 			Rcairo_set_line(xd, gc);
 			cairo_stroke(cc);
+			xd->cb->serial++;
 		}
 	}
 }
@@ -838,6 +857,7 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 			Rcairo_set_color(cc, gc->col);
 			cairo_stroke(cc);
 		} else cairo_new_path(cc);
+		xd->cb->serial++;
 	}
 }
 
@@ -903,6 +923,7 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
 		cairo_restore(cc);
 		cairo_surface_destroy(image);
 		free(imageData);
+		xd->cb->serial++;
 	}
 }
 
@@ -963,6 +984,8 @@ static void CairoGD_Text(double x, double y, constxt char *str,  double rot, dou
 	}
 	Rcairo_set_color(cc, gc->col);
 	cairo_show_text(cc, str);
+	xd->cb->serial++;
+
 #ifdef JGD_DEBUG
 	{
 		cairo_text_extents_t te;

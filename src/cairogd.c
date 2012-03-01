@@ -507,3 +507,49 @@ SEXP raw_to_ptr(SEXP ptr, SEXP woff, SEXP raw, SEXP roff, SEXP len) {
 	return R_NilValue;
 }
 
+SEXP Cairo_get_serial(SEXP dev) {
+	int devNr = asInteger(dev) - 1;
+	GEDevDesc *gd = GEgetDevice(devNr);
+	if (gd) {
+		NewDevDesc *dd = gd->dev;
+		if (dd) {
+			CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
+#ifdef USE_MAGIC
+			if (xd->magic != CAIROGD_MAGIC)
+				error("Not a Cairo device");
+#endif
+			if(xd && xd->cb)
+				return ScalarInteger(xd->cb->serial & 0x7ffffff); /* return 31-bit so it is easier to handle in R */
+		}
+	}
+	Rf_error("Not a valid Cairo device");
+	return R_NilValue;
+}
+
+SEXP Cairo_set_onSave(SEXP dev, SEXP fn) {
+	int devNr = asInteger(dev) - 1;
+	GEDevDesc *gd = GEgetDevice(devNr);
+	if (gd) {
+		NewDevDesc *dd = gd->dev;
+		if (dd) {
+			CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
+#ifdef USE_MAGIC
+			if (xd->magic != CAIROGD_MAGIC)
+				error("Not a Cairo device");
+#endif
+			if (xd && xd->cb) {
+				SEXP old = xd->cb->onSave;
+				if (!old) old = R_NilValue;
+				if (fn != R_NilValue) {
+					R_PreserveObject(fn);
+					xd->cb->onSave = fn;
+				} else xd->cb->onSave = 0;
+				if (old != R_NilValue)
+					R_ReleaseObject(old);
+				return old;
+			}
+		}
+	}
+	Rf_error("Not a valid Cairo device");	
+	return R_NilValue;
+}
