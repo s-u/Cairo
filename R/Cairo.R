@@ -135,6 +135,6 @@ CairoWin <- function(width = 7, height = 7, pointsize = 12,
 	Cairo(width, height, '', 'win', pointsize=pointsize, bg=bg, units="in", ...)
 }
 
-Cairo.serial <- function(device = dev.cur()) .Call("Cairo_get_serial", device, PACAKGE="Cairo")
+Cairo.serial <- function(device = dev.cur()) .Call("Cairo_get_serial", device, PACKAGE="Cairo")
 
 Cairo.onSave <- function(device = dev.cur(), onSave) .Call("Cairo_set_onSave", device, onSave, PACKAGE="Cairo")
