@@ -1126,3 +1126,14 @@ SEXP Rcairo_initialize() {
 	return R_NilValue;
 }
 
+/* this is a shortcut for dev.capture(native=TRUE) that also works in onSave
+   (R disables the device before calling Close so you can't use dev.capture) */
+SEXP Rcairo_capture(SEXP dev) {
+	int devNr = asInteger(dev) - 1;
+	GEDevDesc *gd = GEgetDevice(devNr);
+	if (gd) {
+		NewDevDesc *dd = gd->dev;
+		if (dd) return CairoGD_Cap(dd);
+	}
+	return R_NilValue;
+}

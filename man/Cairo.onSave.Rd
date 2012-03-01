@@ -43,12 +43,9 @@ Simon Urbanek
 \examples{
 if (require(png, quietly=TRUE)) {
   dev <- Cairo(800, 600, type='raster')
-  Cairo.onSave(dev, function(dev, page) {
-    cur <- dev.cur()
-    if (cur != dev) dev.set(dev)
-    png <<- writePNG(dev.capture(native=TRUE))
-    if (cur != dev) dev.set(cur)
-  })
+  Cairo.onSave(dev, function(dev, page)
+    .GlobalEnv$png <<- writePNG(Cairo.capture(dev))
+  )
   plot(1:10, col=2)
   dev.off()
   str(png)
