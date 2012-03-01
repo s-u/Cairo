@@ -1137,7 +1137,7 @@ SEXP Rcairo_capture(SEXP dev) {
 			SEXP res = CairoGD_Cap(dd);
 			if (res != R_NilValue) {
 				PROTECT(res);
-				setAttrib(res, R_ClassName, mkString("nativeRaster"));
+				setAttrib(res, R_ClassSymbol, mkString("nativeRaster"));
 				UNPROTECT(1);
 				return res;
 			}
