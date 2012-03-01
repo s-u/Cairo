@@ -44,7 +44,7 @@ Simon Urbanek
 if (require(png, quietly=TRUE)) {
   dev <- Cairo(800, 600, type='raster')
   Cairo.onSave(dev, function(dev, page)
-    .GlobalEnv$png <<- writePNG(Cairo.capture(dev))
+    .GlobalEnv$png <- writePNG(Cairo.capture(dev))
   )
   plot(1:10, col=2)
   dev.off()
