@@ -33,7 +33,7 @@ static cairo_status_t send_image_data(void *closure, const unsigned char *data, 
 {
 	Rcairo_backend *be = (Rcairo_backend *)closure;
 	int conn;
-	conn = (int)be->backendSpecific;
+	conn = *(int *)be->backendSpecific;
 
 	if (R_WriteConnection(conn, data, length, 1))
 		return CAIRO_STATUS_SUCCESS;
