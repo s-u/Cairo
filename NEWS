@@ -1,5 +1,8 @@
 NEWS/Changelog
 
+1.5-3	(under development)
+
+
 1.5-2	(2012-11-05)
     o	added Cairo.onSave() callback which allows R code to be run
 	when Cairo finishes a page
