@@ -1,6 +1,7 @@
 NEWS/Changelog
 
 1.5-3	(under development)
+    o	remove compatibility layers to make R 3.x happy
 
 
 1.5-2	(2012-11-05)
