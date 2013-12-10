@@ -1,5 +1,9 @@
 NEWS/Changelog
 
+1.5-4	(under development)
+    o	fix invalid pointsize scaling if dpi auto-detection is used
+
+
 1.5-3	(2013-12-03)
     o	remove compatibility layers to make R 3.x happy
 

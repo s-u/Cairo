@@ -85,10 +85,12 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
 		xd->dpiy = dpi[1];
 		dpi_exX = dpi[0] / 72.0;
 		dpi_exY = dpi[1] / 72.0;
-		if (xd->dpix>0 && xd->dpiy>0) xd->asp = xd->dpix / xd->dpiy;
-	} else {
+		if (dpi_exX == 0.0) dpi_exX = 1.0;
+		if (dpi_exY == 0.0) dpi_exY = 1.0;
+		if (xd->dpix > 0.0 && xd->dpiy > 0.0)
+			xd->asp = xd->dpix / xd->dpiy;
+	} else
 		xd->dpix = xd->dpiy = 0.0;
-	}
 
 	/* ---- fill dd ----- */
 
