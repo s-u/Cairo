@@ -1,6 +1,6 @@
 NEWS/Changelog
 
-1.5-4	(under development)
+1.5-4	(2013-12-12)
     o	fix invalid pointsize scaling if dpi auto-detection is used
 	(closes #1)
 
@@ -11,6 +11,8 @@ NEWS/Changelog
 	it now passed down to Cairo() which now accepts `res' to
 	override the value of `dpi' if `res' is set to anyhting other
 	than NA or NULL. (closes #3)
+
+    o	release onSave callback function on close (closes #2)
 
 
 1.5-3	(2013-12-03)
