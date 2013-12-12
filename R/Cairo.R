@@ -21,7 +21,7 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 		stop("connection must be open and writeable")
 	if (length(units)!=1 || ! units %in% c("px","pt","in","cm","mm"))
 		stop("invalid unit (supported are px, pt, in, cm and mm)")
-	if (any(dpi=="auto" || dpi=="")) dpi <- 0
+	if (any(dpi=="auto" || dpi=="")) dpi <- 72
 	if (length(dpi)!=1 || !is.numeric(dpi) || dpi<0)
 		stop("invalid dpi specification (must be 'auto' or a positive number)")
 	dpi <- as.double(dpi)
