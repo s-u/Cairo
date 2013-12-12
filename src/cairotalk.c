@@ -409,6 +409,7 @@ static void CairoGD_Close(NewDevDesc *dd)
   CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
   if(!xd || !xd->cb) return;
   
+  xd->npages++;
   xd->cb->save_page(xd->cb,xd->npages);
   if (xd->cb->onSave) {
 	  SEXP devNr = PROTECT(ScalarInteger(ndevNumber(dd) + 1));
