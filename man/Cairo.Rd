@@ -108,8 +108,12 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
        \item{xpos}{see \code{\link{X11}}}
        \item{ypos}{see \code{\link{X11}}}
        \item{filename}{same as \code{file} in \code{Cairo}}
-       \item{res}{see \code{\link{png}}, will be mapped to \code{dpi}
-         for \code{Cairo}}
+       \item{res}{resolution in ppi, see \code{\link{png}}, will
+         override \code{dpi} in \code{Cairo} if set to anything other
+         than \code{NA} or \code{NULL}. Note that cairographics does not
+         support tagging PNG output files with DPI so the raster image will
+         be produced with the dpi setting, but readers may render it at
+         some default dpi setting.}
        \item{quality}{quality of the jpeg, see \code{\link{jpeg}}}
        \item{onefile}{logical: if true (the default) allow multiple
          figures in one file (see \code{\link{pdf}}). false is currently
@@ -162,8 +166,8 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
          window instead. We may try that in future releases.
    \item TrueType (and OpenType) fonts are supported when this package is compiled
 	against a cairo graphics library configured with FreeType and
-         Fontconfig support. Therefore make sure have a cairo grpahics
-         library with all bell and whistles to get a good result.
+         Fontconfig support. Therefore make sure have a cairo graphics
+         library with all bells and whistles to get a good result.
    \item R math symbols are supported, but require a TrueType "Symbol" font accessible
 	to Cairo under that name.
   }

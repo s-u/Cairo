@@ -2,6 +2,15 @@ NEWS/Changelog
 
 1.5-4	(under development)
     o	fix invalid pointsize scaling if dpi auto-detection is used
+	(closes #1)
+
+    o	fix failure to emit final page in some multi-page settings
+	(closes #4)
+
+    o	the `res' parameter in CairoPNG(), CairoTIFF() and CairoJPEG()
+	it now passed down to Cairo() which now accepts `res' to
+	override the value of `dpi' if `res' is set to anyhting other
+	than NA or NULL. (closes #3)
 
 
 1.5-3	(2013-12-03)

@@ -21,6 +21,10 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 		stop("connection must be open and writeable")
 	if (length(units)!=1 || ! units %in% c("px","pt","in","cm","mm"))
 		stop("invalid unit (supported are px, pt, in, cm and mm)")
+        ## res is used in bitmap wrappers to set dpi
+        ## the default is NA so we only honor it if it's set to a non-default value
+        res <- list(...)$res
+        if (!is.null(res) && all(!is.na(res))) dpi <- res
 	if (any(dpi=="auto" || dpi=="")) dpi <- 0
 	if (length(dpi)!=1 || !is.numeric(dpi) || dpi<0)
 		stop("invalid dpi specification (must be 'auto' or a positive number)")
@@ -79,17 +83,17 @@ CairoX11 <- function(display=Sys.getenv("DISPLAY"), width = 7, height = 7, point
 
 CairoPNG <- function(filename = "Rplot%03d.png", width = 480, height = 480,
 					 pointsize = 12, bg = "white",  res = NA, ...) {
-	Cairo(width, height, type='png', file=filename, pointsize=pointsize, bg=bg, ...)
+	Cairo(width, height, type='png', file=filename, pointsize=pointsize, bg=bg, res=res, ...)
 }
 
 CairoTIFF <- function(filename = "Rplot%03d.tiff", width = 480, height = 480,
 					  pointsize = 12, bg = "white",  res = NA, ...) {
-	Cairo(width, height, type='tiff', file=filename, pointsize=pointsize, bg=bg, ...)
+	Cairo(width, height, type='tiff', file=filename, pointsize=pointsize, bg=bg, res=res, ...)
 }
 
 CairoJPEG <- function(filename = "Rplot%03d.jpeg", width = 480, height = 480,
 					  pointsize = 12, quality = 75, bg = "white", res = NA, ...) {
-	Cairo(width, height, type='jpeg', file=filename, pointsize=pointsize, bg=bg, quality=quality, ...)
+	Cairo(width, height, type='jpeg', file=filename, pointsize=pointsize, bg=bg, quality=quality, res=res, ...)
 }
 
 CairoPDF <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
