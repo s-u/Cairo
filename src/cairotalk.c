@@ -413,7 +413,7 @@ static void CairoGD_Close(NewDevDesc *dd)
   xd->cb->save_page(xd->cb,xd->npages);
   if (xd->cb->onSave && xd->cb->onSave != R_NilValue) {
 	  SEXP devNr = PROTECT(ScalarInteger(ndevNumber(dd) + 1));
-	  SEXP pageNr = PROTECT(ScalarInteger(xd->npages + 1));
+	  SEXP pageNr = PROTECT(ScalarInteger(xd->npages));
 	  eval(lang3(xd->cb->onSave, devNr, pageNr), R_GlobalEnv);
 	  UNPROTECT(2);
 	  R_ReleaseObject(xd->cb->onSave);

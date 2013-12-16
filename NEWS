@@ -1,5 +1,10 @@
 NEWS/Changelog
 
+1.5-5	(under development)
+    o	fix onSave reporting incorrect page number for the last page
+	(introduced in 1.5-4, closes #6)
+
+
 1.5-4	(2013-12-12)
     o	fix invalid pointsize scaling if dpi auto-detection is used
 	(closes #1)
