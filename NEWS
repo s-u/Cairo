@@ -4,6 +4,9 @@ NEWS/Changelog
     o	fix onSave reporting incorrect page number for the last page
 	(introduced in 1.5-4, closes #6)
 
+    o	scale fonts unconditionally according to the dpi adjustment
+	(fixes issues with grid graphics and dpi changes)
+
 
 1.5-4	(2013-12-12)
     o	fix invalid pointsize scaling if dpi auto-detection is used

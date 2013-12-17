@@ -83,6 +83,8 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
 	if (dpi) {
 		xd->dpix = dpi[0];
 		xd->dpiy = dpi[1];
+		/* FIXME: Pango uses 96dpi - do we care or are we always
+		   going through FT such that 72dpi is correct? */
 		dpi_exX = dpi[0] / 72.0;
 		dpi_exY = dpi[1] / 72.0;
 		if (dpi_exX == 0.0) dpi_exX = 1.0;
@@ -105,7 +107,9 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
     dd->cra[0] = 0.9 * initps * dpi_exX; /* FIXME: we should use font metric for this */
     dd->cra[1] = 1.2 * initps * dpi_exY;
 
-	xd->basefontsize *= dpi_exX; /* FIXME: we have no way of supporting non-square pixels? */
+	/* adjust font size according to the DPI scalig.
+	   FIXME: we have no way of supporting non-square pixels? */
+	xd->fontscale = dpi_exX;
 
     /* Character Addressing Offsets */
     /* These are used to plot a single plotting character */

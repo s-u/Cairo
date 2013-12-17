@@ -258,7 +258,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 
   /* Add 0.5 per devX11.c in R src. We want to match it's png output as close
    * as possible. */
-  cairo_set_font_size (cc, gc->cex * gc->ps + 0.5);
+  cairo_set_font_size (cc, gc->cex * gc->ps * xd->fontscale + 0.5);
 }
 
 static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
