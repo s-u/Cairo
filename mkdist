@@ -48,6 +48,9 @@ if test "$1" != "-f"; then
 #    cd ../..
 fi
 
+# R CMD check doesn't like version ...
+rm -f version
+
 echo "Creating package ..."
 cd ..
 R CMD build ${PNAME}

@@ -1,6 +1,6 @@
 NEWS/Changelog
 
-1.5-5	(under development)
+1.5-5	(2013-12-23)
     o	fix onSave reporting incorrect page number for the last page
 	(introduced in 1.5-4, closes #6)
 
