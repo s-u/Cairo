@@ -267,7 +267,7 @@ static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	R_GE_linejoin ljoin = CAIRO_LINE_JOIN_ROUND;
 	
 	/* Line width: par lwd  */
-	cairo_set_line_width(cc, gc->lwd);
+	cairo_set_line_width(cc, gc->lwd * xd->fontscale); /* use fontscale to match the DPI setting */
 
 	/* Line end: par lend  */
 	switch(gc->lend){

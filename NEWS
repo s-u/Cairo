@@ -1,5 +1,9 @@
 NEWS/Changelog
 
+1.5-6	(under development)
+    o	scale line width by the same amount as fonts such that
+	resolution changes are consistent even in that respect
+
 1.5-5	(2013-12-23)
     o	fix onSave reporting incorrect page number for the last page
 	(introduced in 1.5-4, closes #6)
