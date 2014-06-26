@@ -1,6 +1,6 @@
 NEWS/Changelog
 
-1.5-6	(under development)
+1.5-6	(2014-06-26)
     o	scale line width by the same amount as fonts such that
 	resolution changes are consistent even in that respect
 
