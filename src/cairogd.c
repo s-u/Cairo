@@ -389,15 +389,16 @@ SEXP cairo_font_match(SEXP args){
 					FcChar8 *fname;
 
 					fname = FcNameUnparse(fs->fonts[j]);
-					if (fname){
-						vpat = FcNameParse(fname);
-						FcPatternDel(vpat,FC_CHARSET);
-						FcPatternDel(vpat,FC_LANG);
-						free(fname);
-						fname = FcNameUnparse(vpat);
+					if (fname) {
+						if ((vpat = FcNameParse(fname))) {
+							FcPatternDel(vpat,FC_CHARSET);
+							FcPatternDel(vpat,FC_LANG);
+							free(fname);
+							fname = FcNameUnparse(vpat);
+						}
 						Rprintf("   \"%s\"\n",fname);
 						free(fname);
-						FcPatternDestroy (vpat);
+						FcPatternDestroy(vpat);
 					}
 				}
 			}

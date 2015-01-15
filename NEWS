@@ -1,8 +1,14 @@
 NEWS/Changelog
 
+1.5-7	(under development)
+    o	fix a segfault in CairoFontMatch() in case FcNameParse()
+	fails (closes #10)
+
+
 1.5-6	(2014-06-26)
     o	scale line width by the same amount as fonts such that
 	resolution changes are consistent even in that respect
+
 
 1.5-5	(2013-12-23)
     o	fix onSave reporting incorrect page number for the last page
