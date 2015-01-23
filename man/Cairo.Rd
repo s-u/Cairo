@@ -95,8 +95,9 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
     \code{"auto"} the DPI resolution will be determined by the
     back-end.}
   \item{...}{additional backend specific parameters (e.g. \code{quality}
-         setting for JPEG (0..100) and \code{compression} for TIFF
-         (0,1=none, 5=LZW (default), 7=JPEG, 8=Adobe Deflate))	 
+         setting for JPEG (0..100), \code{compression} for TIFF
+         (0,1=none, 5=LZW (default), 7=JPEG, 8=Adobe Deflate),
+	 code{locator} for a custom locator function in image back-ends)
 
     All parameters
          listed below are defined by the other devices are are used by

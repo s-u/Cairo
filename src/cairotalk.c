@@ -618,7 +618,13 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 		int alpha_plane = 0;
 		int quality = 0; /* find out if we have quality setting */
 #if R_GE_version >= 9
-		dd->haveLocator = 1; /* no locator on image back-ends */
+		SEXP loc_cb = findArg("locator", aux);
+		if (loc_cb && TYPEOF(loc_cb) == CLOSXP) {
+			dd->haveLocator = 2; /* yes, custom supplied locator callback */
+		} else {
+			dd->haveLocator = 1; /* no locator on image back-ends */
+			loc_cb = R_NilValue;
+		}
 #endif
 		if (R_ALPHA(xd->bg) < 255) alpha_plane=1;
 		if (!strcmp(type,"jpeg") || !strcmp(type,"jpg")) {
@@ -653,7 +659,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 			}
 		}
 		xd->cb->width = w; xd->cb->height = h;
-		xd->cb = Rcairo_new_image_backend(xd->cb, conn, file, type, (int)(w+0.5), (int)(h+0.5), quality, alpha_plane);
+		xd->cb = Rcairo_new_image_backend(xd->cb, conn, file, type, (int)(w+0.5), (int)(h+0.5), quality, alpha_plane, loc_cb);
 	}
 	else if (!strcmp(type,"pdf") || !strcmp(type,"ps") || !strcmp(type,"postscript") || !strcmp(type,"svg")) {
 #if R_GE_version >= 9

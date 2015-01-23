@@ -4,6 +4,13 @@ NEWS/Changelog
     o	fix a segfault in CairoFontMatch() in case FcNameParse()
 	fails (closes #10)
 
+    o	image back-end can now provide custom locator if
+	a `locator` argument is passed to `Cairo()` with the desired
+	callback function. The callback function accepts no arguments
+	and should return either a numeric vector of length 2 (x, y)
+	or `NULL`. This is mainly useful for `type='raster'` passed to
+	external UI where that UI can provide locator capability.
+
 
 1.5-6	(2014-06-26)
     o	scale line width by the same amount as fonts such that

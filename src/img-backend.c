@@ -57,6 +57,8 @@ static void image_backend_destroy(Rcairo_backend* be)
 		if (image->buf) free(image->buf);
 		if (image->filename) free(image->filename);
 		free(be->backendSpecific);
+		if (image->locator_call && image->locator_call != R_NilValue)
+			R_ReleaseObject(image->locator_call);
 	}
 
 	cairo_surface_destroy(be->cs);
@@ -134,8 +136,28 @@ static void image_send_page(Rcairo_backend* be, int pageno){
 }
 #endif
 
+int  image_locator(struct st_Rcairo_backend *be, double *x, double *y) {
+	Rcairo_image_backend *image;
+	image = (Rcairo_image_backend *)be->backendSpecific;
+	if (image->locator_call && image->locator_call != R_NilValue) {
+		SEXP res = eval(image->locator_call, R_GlobalEnv);
+		if (TYPEOF(res) == INTSXP && LENGTH(res) == 2) {
+			*x = INTEGER(res)[0];
+			*y = INTEGER(res)[1];
+			return 1;
+		}
+		if (TYPEOF(res) == REALSXP && LENGTH(res) == 2) {
+			*x = REAL(res)[0];
+			*y = REAL(res)[1];
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
 Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const char *filename, const char *type,
-										 int width, int height, int quality, int alpha_plane)
+										 int width, int height, int quality, int alpha_plane, SEXP locator_cb)
 {
 	Rcairo_image_backend *image;
 	int stride = 4 * width;
@@ -164,6 +186,7 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const cha
 
 	be->backend_type = BET_IMAGE;
 	be->destroy_backend = image_backend_destroy;
+	be->locator = image_locator;
 	be->backendSpecific = (void *)image;
 	be->truncate_rect = 1;
 	be->width = width;
@@ -182,6 +205,11 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const cha
 		if (image->buf) free(image->buf); free(be); free(image->filename); free(image);
 		return NULL;
 	}
+
+	if (locator_cb != R_NilValue)
+		R_PreserveObject((image->locator_call = lang1(locator_cb)));
+	else
+		image->locator_call = R_NilValue;
 
 	if (!strcmp(type,"png") ||!strcmp(type,"png24") ||!strcmp(type,"png32")) {
 		if (!alpha_plane)

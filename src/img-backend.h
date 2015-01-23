@@ -12,12 +12,13 @@ typedef struct st_Rcairo_image_backend {
   int  conn;
   int  quality;
   cairo_format_t format;
+  SEXP locator_call;
 } Rcairo_image_backend;
 
 
 extern Rcairo_backend_def *RcairoBackendDef_image;
 
 Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const char *filename, const char *type,
-					 int width, int height, int quality, int alpha_plane);
+					 int width, int height, int quality, int alpha_plane, SEXP locator_cb);
 
 #endif
