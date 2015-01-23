@@ -617,8 +617,9 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 		!strcmp(type,"tif")  || !strcmp(type,"tiff") || !strcmp(type, "raster")) {
 		int alpha_plane = 0;
 		int quality = 0; /* find out if we have quality setting */
+		SEXP loc_cb = R_NilValue;
 #if R_GE_version >= 9
-		SEXP loc_cb = findArg("locator", aux);
+		loc_cb = findArg("locator", aux);
 		if (loc_cb && TYPEOF(loc_cb) == CLOSXP) {
 			dd->haveLocator = 2; /* yes, custom supplied locator callback */
 		} else {
