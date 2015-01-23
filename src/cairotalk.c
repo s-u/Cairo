@@ -333,7 +333,9 @@ static SEXP CairoGD_Cap(NewDevDesc *dd)
 		raster = PROTECT(allocVector(INTSXP, size));
 		dst = (unsigned int*) INTEGER(raster);
 
+#ifdef JGD_DEBUG
 		Rprintf("format = %s (%d x %d)\n", (fmt == CAIRO_FORMAT_ARGB32) ? "ARGB" : "RGB", w, h);
+#endif
 
 		if (fmt == CAIRO_FORMAT_ARGB32) /* ARGB is the default we use in most cases */
 			/* annoyingly Cairo uses pre-multiplied storage so we have to reverse that */
