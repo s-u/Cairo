@@ -11,6 +11,9 @@ NEWS/Changelog
 	or `NULL`. This is mainly useful for `type='raster'` passed to
 	external UI where that UI can provide locator capability.
 
+    o   add Cairo.snapshot() which is similar to recordPlot() but
+	also allows the retrieval of the last snapshot.
+
 
 1.5-6	(2014-06-26)
     o	scale line width by the same amount as fonts such that

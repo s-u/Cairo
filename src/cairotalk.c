@@ -1158,3 +1158,11 @@ SEXP Rcairo_capture(SEXP dev) {
 	Rf_error("Unable to capture content - not a valid image backend Cairo device");
 	return R_NilValue;
 }
+
+SEXP Rcairo_snapshot(SEXP dev, SEXP sLast) {
+    int last = asInteger(sLast);
+    int devNr = asInteger(dev) - 1;
+    GEDevDesc *gd = GEgetDevice(devNr);
+    if (!gd) Rf_error("invalid device");
+    return last ? gd->savedSnapshot : GEcreateSnapshot(gd);
+}

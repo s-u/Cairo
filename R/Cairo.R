@@ -144,3 +144,13 @@ Cairo.serial <- function(device = dev.cur()) .Call("Cairo_get_serial", device, P
 Cairo.onSave <- function(device = dev.cur(), onSave) .Call("Cairo_set_onSave", device, onSave, PACKAGE="Cairo")
 
 Cairo.capture <- function(device = dev.cur()) .Call("Rcairo_capture", device, PACKAGE="Cairo")
+
+Cairo.snapshot <- function(device = dev.cur(), last=FALSE) {
+    res <- if (is.na(last)) {
+        res <- .Call("Rcairo_snapshot", device, FALSE, PACKAGE="Cairo")
+        if (is.null(res[[1]])) .Call("Rcairo_snapshot", device, TRUE, PACKAGE="Cairo") else res
+    } else .Call("Rcairo_snapshot", device, last, PACKAGE="Cairo")
+    attr(res, "pid") <- Sys.getpid()
+    class(res) <- "recordedplot"
+    res
+}
