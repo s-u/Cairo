@@ -12,7 +12,7 @@ typedef struct st_Rcairo_image_backend {
   int  conn;
   int  quality;
   cairo_format_t format;
-  SEXP locator_call;
+  SEXP locator_call, locator_dev;
 } Rcairo_image_backend;
 
 

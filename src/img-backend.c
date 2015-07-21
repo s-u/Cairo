@@ -140,7 +140,9 @@ int  image_locator(struct st_Rcairo_backend *be, double *x, double *y) {
 	Rcairo_image_backend *image;
 	image = (Rcairo_image_backend *)be->backendSpecific;
 	if (image->locator_call && image->locator_call != R_NilValue) {
-		SEXP res = eval(image->locator_call, R_GlobalEnv);
+		SEXP res;
+		INTEGER(image->locator_dev)[0] = ndevNumber(be->dd) + 1;
+		res = eval(image->locator_call, R_GlobalEnv);
 		if (TYPEOF(res) == INTSXP && LENGTH(res) == 2) {
 			*x = INTEGER(res)[0];
 			*y = INTEGER(res)[1];
@@ -207,7 +209,10 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const cha
 	}
 
 	if (locator_cb != R_NilValue)
-		R_PreserveObject((image->locator_call = lang1(locator_cb)));
+		R_PreserveObject((image->locator_call =
+						  lang2(locator_cb,
+								(image->locator_dev = allocVector(INTSXP, 1))
+								)));
 	else
 		image->locator_call = R_NilValue;
 
