@@ -56,9 +56,9 @@ static void image_backend_destroy(Rcairo_backend* be)
 		Rcairo_image_backend *image = (Rcairo_image_backend *)be->backendSpecific;
 		if (image->buf) free(image->buf);
 		if (image->filename) free(image->filename);
-		free(be->backendSpecific);
 		if (image->locator_call && image->locator_call != R_NilValue)
 			R_ReleaseObject(image->locator_call);
+		free(be->backendSpecific);
 	}
 
 	cairo_surface_destroy(be->cs);
