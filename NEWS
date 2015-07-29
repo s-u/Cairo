@@ -1,5 +1,10 @@
 NEWS/Changelog
 
+1.5-8	(2015-07-29)
+    o	fix a premature memory release in locator handling for
+	raster back-ends.
+
+
 1.5-7	(2015-07-27)
     o	fix a segfault in CairoFontMatch() in case FcNameParse()
 	fails (closes #10)
