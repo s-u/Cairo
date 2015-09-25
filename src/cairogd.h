@@ -1,10 +1,22 @@
 #ifndef _DEV_GD_H
 #define _DEV_GD_H
 
-#define CAIROGD_VER 0x010508 /* Cairo v1.5-8 */
+#define CAIROGD_VER 0x010509 /* Cairo v1.5-9 */
 
 /* cairo R package config */
 #include "cconfig.h"
+
+#include <cairo.h>
+#if CAIRO_HAS_FT_FONT
+#include <cairo-ft.h>
+#include FT_TRUETYPE_IDS_H
+#include <fontconfig/fontconfig.h>
+#endif
+
+/* work around bug #45376 in freetype 2.6.0 */
+#ifdef TYPEOF
+#undef TYPEOF
+#endif
 
 #include "backend.h"
 #include <R_ext/Print.h>
@@ -13,13 +25,6 @@
 #include <Rdevices.h>
 #define BEGIN_SUSPEND_INTERRUPTS
 #define END_SUSPEND_INTERRUPTS
-#endif
-
-#include <cairo.h>
-#if CAIRO_HAS_FT_FONT
-#include <cairo-ft.h>
-#include FT_TRUETYPE_IDS_H
-#include <fontconfig/fontconfig.h>
 #endif
 
 /* the internal representation of a color in this (R) API is RGBa with a=0 meaning transparent and a=255 meaning opaque (hence a means 'opacity'). previous implementation was different (inverse meaning and 0x80 as NA), so watch out. */

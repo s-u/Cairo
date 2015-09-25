@@ -1,5 +1,10 @@
 NEWS/Changelog
 
+1.5-9	(2015-09-25)
+    o	work around bug #45376 in freetype 2.6.0 causing compilation
+	failure
+
+
 1.5-8	(2015-07-29)
     o	fix a premature memory release in locator handling for
 	raster back-ends.
