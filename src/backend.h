@@ -11,6 +11,24 @@
 #include <R_ext/GraphicsEngine.h>
 #include <R_ext/GraphicsDevice.h>
 
+#if defined(HAVE_NEW_CONN_H) || defined(HAVE_RCONN_H)
+#include <R.h>
+#include <Rinternals.h>
+#include <Rdefines.h>
+#define R_INTERFACE_PTRS
+#include <Rinterface.h>
+#include <Rembedded.h>
+#include <R_ext/Print.h>
+#ifdef HAVE_NEW_CONN_H
+#include <R_ext/Connections.h>
+#endif
+#ifdef HAVE_RCONN_H
+#include <R_ext/RConn.h>
+#endif
+#endif
+
+
+
 #if R_VERSION >= R_Version(2,8,0)
 #ifndef NewDevDesc
 #define NewDevDesc DevDesc
