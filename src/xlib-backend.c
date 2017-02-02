@@ -92,7 +92,7 @@ int  xlib_locator(struct st_Rcairo_backend *be, double *x, double *y) {
 	XEvent event;
 	Rcairo_xlib_data *cd = (Rcairo_xlib_data *) be->backendSpecific;
 	Rcairo_xlib_data *cdEvent = NULL;
-	caddr_t temp;
+	XPointer temp;
 	int done = 0;
 	Display *display = cd->display;
 
@@ -179,7 +179,7 @@ static void ProcessX11DisplayEvents(Display *display)
 }
 
 static void handleDisplayEvent(Display *display, XEvent event) {
-	caddr_t temp;
+	XPointer temp;
 	Rcairo_xlib_data *xd = NULL;
 		
 	if (event.xany.type == Expose) {
@@ -363,7 +363,7 @@ Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, const char *display,
 			XSetWMProtocols(xd->display, xd->window, &protocol, 1);
 		}
 		
-		XSaveContext(xd->display, xd->window, devPtrContext, (caddr_t) xd);
+		XSaveContext(xd->display, xd->window, devPtrContext, (XPointer) xd);
 		
 		XSelectInput(xd->display, xd->window,
 					 ExposureMask | ButtonPressMask | StructureNotifyMask);
