@@ -15,10 +15,11 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 	if (is.null(file) || !nchar(file))
 		file <- if (ctype != 'x11') paste("plot.",ctype,sep='') else Sys.getenv("DISPLAY")
 
-	if (typeof(file) == "character" && length(file) != 1)
+	if (is.character(file) && length(file) != 1)
 		stop("file must be a character vector of length 1 or a connection")
 	else if (inherits(file,"connection") && (summary(file)$opened != "opened" || summary(file)$"can write" != "yes"))
 		stop("connection must be open and writeable")
+        if (is.character(file)) file <- path.expand(file)
 	if (length(units)!=1 || ! units %in% c("px","pt","in","cm","mm"))
 		stop("invalid unit (supported are px, pt, in, cm and mm)")
         ## res is used in bitmap wrappers to set dpi

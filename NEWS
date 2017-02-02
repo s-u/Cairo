@@ -3,6 +3,8 @@ NEWS/Changelog
 1.5-10	(under development)
     o	Support compilation with C++11-only compilers (#19)
 
+    o	Add path.expand() for filenames (#12)
+
 
 1.5-9	(2015-09-25)
     o	work around bug #45376 in freetype 2.6.0 causing compilation
