@@ -1,5 +1,8 @@
 NEWS/Changelog
 
+1.5-10	(under development)
+
+
 1.5-9	(2015-09-25)
     o	work around bug #45376 in freetype 2.6.0 causing compilation
 	failure
