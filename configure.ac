@@ -237,7 +237,7 @@ int main(void) {
 fi
 
 # --- check for JPEG support ---
-AC_MSG_CHECKING([wheter libjpeg works])
+AC_MSG_CHECKING([whether libjpeg works])
 zLIBS="${LIBS}"
 LIBS="${LIBS} -ljpeg"
 AC_LINK_IFELSE([
@@ -254,7 +254,7 @@ int main(void) {
     LIBS="${zLIBS}"])
 
 # --- check for TIFF support
-AC_MSG_CHECKING([wheter libtiff works])
+AC_MSG_CHECKING([whether libtiff works])
 zLIBS="${LIBS}"
 LIBS="${LIBS} -ltiff"
 AC_LINK_IFELSE([
