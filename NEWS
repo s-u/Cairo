@@ -1,9 +1,13 @@
 NEWS/Changelog
 
-1.5-10	(under development)
-    o	Support compilation with C++11-only compilers (#19)
+1.5-10	(2019-03-27)
+    o	support compilation with C++11-only compilers (#19)
 
-    o	Add path.expand() for filenames (#12)
+    o	add path.expand() for filenames (#12)
+
+    o	add C symbol registration
+
+    o	update configure.ac to be more compliant
 
 
 1.5-9	(2015-09-25)

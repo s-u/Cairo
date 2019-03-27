@@ -13,6 +13,10 @@
 #include <Rversion.h>
 #define USE_RINTERNALS 1
 #include <Rinternals.h>
+#include <R_ext/Rdynload.h>
+#include <R_ext/Visibility.h> /* attribute_visible */
+
+#include "Rapi.h"
 
 /* Device Driver Actions */
 
@@ -1130,6 +1134,32 @@ void Rcairo_register_builtin_backends() {
 	if (RcairoBackendDef_svg) Rcairo_register_backend(RcairoBackendDef_svg);
 	if (RcairoBackendDef_xlib) Rcairo_register_backend(RcairoBackendDef_xlib);
 	if (RcairoBackendDef_w32) Rcairo_register_backend(RcairoBackendDef_w32);
+}
+
+static const R_CallMethodDef callMethods[] = {
+    {"Cairo_get_serial", (DL_FUNC) &Cairo_get_serial, 1},
+    {"Cairo_set_onSave", (DL_FUNC) &Cairo_set_onSave, 2},
+    {"Rcairo_capture", (DL_FUNC) &Rcairo_capture, 1},
+    {"Rcairo_initialize", (DL_FUNC) &Rcairo_initialize, 0},
+    {"Rcairo_snapshot", (DL_FUNC) &Rcairo_snapshot, 2},
+    {"Rcairo_supported_types", (DL_FUNC) &Rcairo_supported_types, 0},
+    {"get_img_backplane", (DL_FUNC) &get_img_backplane, 1},
+    {"ptr_to_raw", (DL_FUNC) &ptr_to_raw, 3},
+    {"raw_to_ptr", (DL_FUNC) &raw_to_ptr, 5},
+    {NULL, NULL, 0}
+};
+
+static const R_ExternalMethodDef externalMethods[] = {
+	{"cairo_create_new_device", (DL_FUNC) &cairo_create_new_device, -1},
+    {"cairo_font_match", (DL_FUNC) &cairo_font_match, -1},
+    {"cairo_font_set", (DL_FUNC) &cairo_font_set, -1},
+    {NULL, NULL, 0}
+};
+
+void attribute_visible R_init_Cairo(DllInfo *dll) {
+	R_registerRoutines(dll, 0, callMethods, 0, externalMethods);
+    R_useDynamicSymbols(dll, FALSE);
+    /* R_forceSymbols(dll, TRUE); */
 }
 
 /* called on load */

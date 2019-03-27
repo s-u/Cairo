@@ -19,6 +19,7 @@ AC_SUBST(R_HOME)
 #AC_CANONICAL_HOST
 
 # Checks for programs.
+AC_LANG(C)
 AC_PROG_CC
 
 # Checks for libraries.
@@ -94,26 +95,26 @@ CPPFLAGS="$CPPFLAGS ${CAIRO_CFLAGS} ${HAVE_RCONN_H}"
 AC_CHECK_HEADER(cairo.h,,AC_MSG_ERROR([Cannot find cairo.h! Please install cairo (http://www.cairographics.org/) and/or set CAIRO_CFLAGS/LIBS correspondingly.]))
 
 AC_MSG_CHECKING([for PNG support in Cairo])
-AC_LINK_IFELSE([
+AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include "cairo.h"
 int main(void) {
 #ifndef CAIRO_HAS_PNG_FUNCTIONS
 #error no PNG support
 #endif
     return 0;
-}],[AC_MSG_RESULT([yes])] ,[AC_MSG_RESULT([no])
+}])],[AC_MSG_RESULT([yes])] ,[AC_MSG_RESULT([no])
 AC_MSG_ERROR([Cairo library has no PNG support.])])
 
 uses_ats=no
 AC_MSG_CHECKING([for ATS font support in Cairo])
-AC_LINK_IFELSE([
+AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include "cairo.h"
 int main(void) {
 #ifndef CAIRO_HAS_ATSUI_FONT
 #error no PNG support
 #endif
     return 0;
-}],[AC_MSG_RESULT([yes])
+}])],[AC_MSG_RESULT([yes])
 uses_ats=yes],[AC_MSG_RESULT([no])])
 
 if test "xx${CAIRO_LIBS}" == "xx"; then
@@ -134,7 +135,7 @@ LIBS="$LIBS ${CAIRO_LIBS}"
 AC_SEARCH_LIBS(deflate, z)
 
 AC_MSG_CHECKING([whether Cairo programs can be compiled])
-AC_LINK_IFELSE([
+AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include <cairo.h>
 int main(void) {
   cairo_surface_t *cs = 0;
@@ -142,7 +143,7 @@ int main(void) {
   cr = cairo_create(cs);
   return 0;
 }
-],[AC_MSG_RESULT(yes)],[AC_MSG_ERROR([Cannot compile a simple Cairo program. See config.log for details.])])
+])],[AC_MSG_RESULT(yes)],[AC_MSG_ERROR([Cannot compile a simple Cairo program. See config.log for details.])])
 
 
 dnl AC_CHECK_LIB(cairo, cairo_image_surface_get_format)
@@ -153,25 +154,25 @@ AC_CHECK_DECLS([cairo_image_surface_get_format], [#include <cairo.h>])
 
 has_cairo_ft=no
 AC_MSG_CHECKING([for FreeType support in cairo])
-AC_COMPILE_IFELSE([
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <cairo.h>
 #ifndef CAIRO_HAS_FT_FONT
 #error nope, no ft
 #endif
-],[has_cairo_ft=yes])
+])],[has_cairo_ft=yes])
 AC_MSG_RESULT(${has_cairo_ft})
 
 need_xtra_ft_flags=no
 if test "${has_cairo_ft}" = yes; then
  AC_MSG_CHECKING([whether FreeType needs additional flags])
- AC_LINK_IFELSE([
+ AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include <cairo.h>
 #include <cairo-ft.h>
 int main(void) {
    cairo_ft_font_face_create_for_pattern(0);
    return 0;
 }
-],[],[need_xtra_ft_flags=yes])
+])],[],[need_xtra_ft_flags=yes])
  AC_MSG_RESULT(${need_xtra_ft_flags})
 fi
 
@@ -220,14 +221,14 @@ if test "${need_xtra_ft_flags}" = yes; then
  zCPPFLAGS="${CPPFLAGS}"
  CPPFLAGS="${CPPFLAGS} ${FT_CPPFLAGS}"
  AC_MSG_CHECKING([whether additional flags work])
- AC_LINK_IFELSE([
+ AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include <cairo.h>
 #include <cairo-ft.h>
 int main(void) {
    cairo_ft_font_face_create_for_pattern(0);
    return 0;
 }
- ],[AC_MSG_RESULT(yes)
+ ])],[AC_MSG_RESULT(yes)
  CAIRO_LIBS="${CAIRO_LIBS} ${FT_LIBS}"
  CAIRO_CFLAGS="${CAIRO_CFLAGS} ${FT_CPPFLAGS}"
  ],[
@@ -240,7 +241,7 @@ fi
 AC_MSG_CHECKING([wheter libjpeg works])
 zLIBS="${LIBS}"
 LIBS="${LIBS} -ljpeg"
-AC_LINK_IFELSE([
+AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include <stdio.h>
 #include <jpeglib.h>
 int main(void) {
@@ -248,7 +249,7 @@ int main(void) {
   jpeg_create_compress(&cinfo);
   return 0;
 }
-],[ AC_MSG_RESULT([yes])
+])],[ AC_MSG_RESULT([yes])
     AC_DEFINE(SUPPORTS_JPEG, 1, [Define to 1 if libjpeg is present and working])],
   [ AC_MSG_RESULT(no)
     LIBS="${zLIBS}"])
@@ -257,14 +258,14 @@ int main(void) {
 AC_MSG_CHECKING([wheter libtiff works])
 zLIBS="${LIBS}"
 LIBS="${LIBS} -ltiff"
-AC_LINK_IFELSE([
+AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include <tiffio.h>
 int main(void) {
   TIFF *out = TIFFOpen("new.tif", "w");
   TIFFSetField (out, TIFFTAG_IMAGEWIDTH, 100);
   return 0;
 }
-],[ AC_MSG_RESULT([yes])
+])],[ AC_MSG_RESULT([yes])
     AC_DEFINE(SUPPORTS_TIFF, 1, [Define to 1 if libtiff is present and working])],
   [ AC_MSG_RESULT(no)
     LIBS="${zLIBS}"])
