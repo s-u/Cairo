@@ -1,5 +1,9 @@
 NEWS/Changelog
 
+1.5-11	(under development)
+    o	fixed missing PROTECT() (thanks to Tomáš Kalibera)
+
+
 1.5-10	(2019-03-27)
     o	support compilation with C++11-only compilers (#19)
 

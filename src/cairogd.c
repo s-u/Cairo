@@ -269,7 +269,8 @@ SEXP cairo_create_new_device(SEXP args)
 	    error("unable to start device %s", devname);
 	}
 	
-	gsetVar(install(".Device"), mkString(devname), R_NilValue);
+	gsetVar(PROTECT(install(".Device")), PROTECT(mkString(devname)), R_NilValue);
+	UNPROTECT(2);
 	dd = GEcreateDevDesc(dev);
 	GEaddDevice(dd);
 	GEinitDisplayList(dd);
