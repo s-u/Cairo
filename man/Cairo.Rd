@@ -197,5 +197,8 @@ for (i in 1:3)
   polygon(density(Petal.Length[unclass(Species)==i],bw=0.2),
     col=c("#ff000040","#00ff0040","#0000ff40")[i])
 dev.off()
+
+## remove the example files if not in an interactive session
+if (!interactive()) unlink(c("plot.png","plot.pdf"))
 }
 \keyword{device}
