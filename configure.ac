@@ -12,7 +12,7 @@ fi
 RBIN="${R_HOME}/bin/R"
 CC=`"${RBIN}" CMD config CC`;
 CFLAGS=`"${RBIN}" CMD config CFLAGS`
-CPP=`"${RBIN}" CMD config CPP`;
+CPP="${CC} -E"
 AC_SUBST(R_HOME)
 
 # platform check
