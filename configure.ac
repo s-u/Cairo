@@ -233,7 +233,7 @@ int main(void) {
  CAIRO_CFLAGS="${CAIRO_CFLAGS} ${FT_CPPFLAGS}"
  ],[
  AC_MSG_RESULT(no)
- AC_MSG_ERROR([Cannot use cairo-ft backend, although cairo claims it is working. Please check your caito installation and/or update cairo if necessary or set CAIRO_CFLAGS/CAIRO_LIBS accordingly.])
+ AC_MSG_ERROR([Cannot use cairo-ft backend, although cairo claims it is working. Please check your cairo installation and/or update cairo if necessary or set CAIRO_CFLAGS/CAIRO_LIBS accordingly.])
  ])
 fi
 
