@@ -127,7 +127,7 @@ cairo_font_face_t *Rcairo_set_font_face(int i, const char *file){
 	if (!Rcairo_ft_library){
 		if (FT_Init_FreeType(&Rcairo_ft_library)){
 			error("Failed to initialize freetype library in Rcairo_set_font_face!\n");
-			return FALSE;
+			return 0; /* unreachable code */
 		}
 	}
 
@@ -267,8 +267,8 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 
 static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	cairo_t *cc = xd->cb->cc;
-	R_GE_lineend lend = CAIRO_LINE_CAP_SQUARE;
-	R_GE_linejoin ljoin = CAIRO_LINE_JOIN_ROUND;
+	cairo_line_cap_t lend = CAIRO_LINE_CAP_SQUARE;
+	cairo_line_join_t ljoin = CAIRO_LINE_JOIN_ROUND;
 	
 	/* Line width: par lwd  */
 	cairo_set_line_width(cc, gc->lwd * xd->fontscale); /* use fontscale to match the DPI setting */
