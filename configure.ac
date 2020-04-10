@@ -55,8 +55,22 @@ if test "xx$CAIRO_LIBS" == "xx"; then
 	 AC_MSG_RESULT(${modlist})
 	 CAIRO_CFLAGS=`"${PKGCONF}" --cflags ${modlist}`
 	 CAIRO_LIBS=`"${PKGCONF}" --libs ${modlist}`
+	 AC_MSG_CHECKING([whether --static is needed])
+	 saveLIBS="$LIBS"
+	 LIBS="$saveLIBS ${CAIRO_LIBS}"
+	 AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY(cairo_reset_clip)],
+	     [AC_MSG_RESULT([no])],
+	     [CAIRO_LIBS=`"${PKGCONF}" --libs --static ${modlist}`
+	      LIBS="$saveLIBS ${CAIRO_LIBS}"
+	      AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY(cairo_reset_clip)],
+	      [AC_MSG_RESULT([yes])],
+	      [AC_MSG_RESULT([neither works, abandoning pkg-config])
+	       CAIRO_LIBS=''
+	      ])
+	     ])
+	 LIBS="$saveLIBS"
       else
-	AC_MSG_RESULT([no])
+	 AC_MSG_RESULT([no])
       fi
    fi
 fi
