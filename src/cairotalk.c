@@ -500,6 +500,7 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 	cairo_text_extents_t te = {0, 0, 0, 0, 0, 0};
 	char str[16];
 	int Unicode = mbcslocale;
+	double x_factor = 1.0;
 
 	if(!xd || !xd->cb) return;
 	if(c < 0) {c = -c; Unicode = 1;}
@@ -509,12 +510,9 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 	Rcairo_setup_font(xd, gc);
 
 	if (!c) { 
-		str[0]='M'; str[1]='g'; str[2]=0;
 		/* this should give us a reasonably decent (g) and almost max width (M) */
-	} else if (gc->fontface == 5) {
-		char s[2];
-		s[0] = c; s[1] = '\0';
-		AdobeSymbol2utf8(str, s, 16);		
+		str[0]='M'; str[1]='g'; str[2]=0;
+		x_factor = 0.5; /* halve the width since we use two chars */
 	} else if(Unicode) {
 		Rf_ucstoutf8(str, (unsigned int) c);
 	} else {
@@ -530,9 +528,9 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 #endif
 
 	*ascent  = -te.y_bearing; 
-	*descent = te.height+te.y_bearing;
+	*descent = te.height + te.y_bearing;
 	/* cairo doesn't report width of whitespace, so use x_advance */
-	*width = te.x_advance;
+	*width = te.x_advance * x_factor;
 
 #ifdef JGD_DEBUG
 	Rprintf("FM> ascent=%f, descent=%f, width=%f\n", *ascent, *descent, *width);
