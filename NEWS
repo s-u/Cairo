@@ -1,5 +1,12 @@
 NEWS/Changelog
 
+1.5-12
+    o	use pkg-config --static --libs when needed
+
+    o	adapt to API changes in R 4.0.0, also improves symbol
+	placement in recent R versions
+
+
 1.5-11	(2020-02-26)
     o	fixed missing PROTECT() (thanks to Tomáš Kalibera)
 
