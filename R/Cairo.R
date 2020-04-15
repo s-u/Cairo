@@ -76,7 +76,7 @@ CairoFonts <- function(
 	if (!is.null(symbol) && typeof(symbol) != "character")
 		stop("symbol option must be a character vector of length 1")
 	invisible(.External("cairo_font_set", regular, bold, italic, bolditalic,
-		symbol, symbolPUA, PACKAGE="Cairo"))
+		symbol, usePUA, PACKAGE="Cairo"))
 }
 
 
