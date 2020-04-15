@@ -1,0 +1,4 @@
+.travis.yml
+^\.github.?
+version
+README.md
