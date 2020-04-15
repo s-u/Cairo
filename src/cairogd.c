@@ -420,15 +420,25 @@ SEXP cairo_font_set(SEXP args){
 
 	args = CDR(args);
 
-	/* regular font */
+	/* 0-3 = regular, 4 = symbol, 5 = PUA */
 	for (i = 0; i < 5; i++){
 		v = CAR(args); args = CDR(args);
 		if (!isNull(v) && isString(v) && LENGTH(v)==1){
 			font = CHAR(STRING_ELT(v,0));
-			Rcairo_set_font(i,font);
+			Rcairo_set_font(i, font);
 		}
 	}
+	v = CAR(args);
+	if (!isNull(v)) {
+		int pua = asInteger(v) ? 1 : 0;
+#if R_VERSION >= R_Version(4,0,0)
+		Rcairo_symbol_font_use_pua = pua;
 #else
+		if (!pua)
+			warning("You R does not support symbol font without PUA, upgrade R to at least 4.0.0");
+#endif /* !PUA (R 4.0.0) */
+	}
+#else  /* FT_FONT */
 #ifdef WIN32
 	warning("CairoFonts() has no effect on Windows. Please use par(family=\"...\") to specify the desired font - see ?par.");
 #else

@@ -96,6 +96,8 @@ static int  CairoGD_HoldFlush(NewDevDesc *dd, int level);
 #define Rcairo_set_color(cc, col) { if (CALPHA(col)==255) { cairo_set_source_rgb (cc, ((double)CREDC(col))/255., ((double)CGREENC(col))/255., ((double)CBLUEC(col))/255.); } else { cairo_set_source_rgba (cc, ((double)CREDC(col))/255., ((double)CGREENC(col))/255., ((double)CBLUEC(col))/255., ((double)CALPHA(col))/255.); }; }
 #endif
 
+int Rcairo_symbol_font_use_pua = 1;
+
 #ifdef CAIRO_HAS_FT_FONT
 FT_Library Rcairo_ft_library = NULL;
 
@@ -119,7 +121,7 @@ cairo_font_face_t *Rcairo_set_font_face(int i, const char *file){
 	cairo_status_t status;
 	FT_Face face;
 	FT_Error er;
-	FT_CharMap found = 0; 
+	FT_CharMap found = 0;
 	FT_CharMap charmap; 
 	int n; 
 
@@ -170,14 +172,9 @@ void Rcairo_set_font(int i, const char *fcname){
 	FcChar8	*file;
 	int j;
 
-	if (Rcairo_fonts[i].face != NULL){
-		cairo_font_face_destroy(Rcairo_fonts[i].face);
-		Rcairo_fonts[i].face = NULL;
-	}
-
 	pat = FcNameParse((FcChar8 *)fcname);
 	if (!pat){
-		error("Problem with font config library in Rcairo_set_font\n");
+		error("Fontconfig cannot parse font specification \"%s\" in CairoFonts()", fcname);
 		return;
 	}
 	FcConfigSubstitute (0, pat, FcMatchPattern);
@@ -189,18 +186,19 @@ void Rcairo_set_font(int i, const char *fcname){
 	if (match) {
 		FcFontSetAdd (fs, match);
 	} else {
-		error("No font found in Rcairo_set_font");
+		error("No font found in CairoFonts() for \"%s\"", fcname);
 		FcFontSetDestroy (fs);
 		return;
 	}
 
 	/* should be at least one font face in fontset */
 	if (fs) {
-
 		for (j = 0; j < fs->nfont; j++) {
-
 			/* Need to make sure a real font file exists */
-			if (FcPatternGetString (fs->fonts[j], FC_FILE, 0, &file) == FcResultMatch){
+			if (FcPatternGetString (fs->fonts[j], FC_FILE, 0, &file) == FcResultMatch) {
+				if (Rcairo_fonts[i].face)
+					cairo_font_face_destroy(Rcairo_fonts[i].face);
+
 				Rcairo_fonts[i].face = Rcairo_set_font_face(i,(const char *)file);
 				break;
 			}
@@ -208,9 +206,8 @@ void Rcairo_set_font(int i, const char *fcname){
 		FcFontSetDestroy (fs);
 		Rcairo_fonts[i].updated = 1;
 	} else {
-		error("No font found Rcairo_set_font");
+		error("No font found for \"%s\" in CairoFonts()", fcname);
 	}
-
 }
 #endif
 
@@ -513,8 +510,14 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 		/* this should give us a reasonably decent (g) and almost max width (M) */
 		str[0]='M'; str[1]='g'; str[2]=0;
 		x_factor = 0.5; /* halve the width since we use two chars */
-	} else if(Unicode) {
+	} else if (Unicode) {
 		Rf_ucstoutf8(str, (unsigned int) c);
+#if R_VERSION >= R_Version(4,0,0)
+		if (gc->fontface == 5 && !Rcairo_symbol_font_use_pua) { /* handle conversion away form PUA */
+			const char *npstr = utf8Toutf8NoPUA(str);
+			memcpy(str, npstr, 4); /* at most 3 + NUL */
+		}
+#endif
 	} else {
 		str[0] = c; str[1] = 0;
 		/* Here, we assume that c < 256 */
@@ -959,6 +962,11 @@ static double CairoGD_StrWidth(constxt char *str,  R_GE_gcontext *gc,  NewDevDes
 
 	Rcairo_setup_font(xd, gc);
 
+#if R_VERSION >= R_Version(4,0,0)
+	if (gc->fontface == 5 && !Rcairo_symbol_font_use_pua)
+		str = utf8Toutf8NoPUA(str);
+#endif
+
 	{
 		cairo_t *cc = xd->cb->cc;
 		cairo_text_extents_t te;
@@ -982,6 +990,11 @@ static void CairoGD_Text(double x, double y, constxt char *str,  double rot, dou
 
 #ifdef JGD_DEBUG
 	Rprintf("text \"%s\" (%d) face %d  %f:%f rot=%f hadj=%f [%08x:%08x]\n", str, len, gc->fontface, x, y, rot, hadj, gc->col, gc->fill);
+#endif
+
+#if R_VERSION >= R_Version(4,0,0)
+	if (gc->fontface == 5 && !Rcairo_symbol_font_use_pua)
+		str = utf8Toutf8NoPUA(str);
 #endif
 
 	cairo_save(cc);

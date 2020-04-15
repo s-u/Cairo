@@ -15,4 +15,6 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd, const char *type, int con
 void Rcairo_set_font(int i, const char *fcname);
 #endif
 
+extern int Rcairo_symbol_font_use_pua;
+
 #endif

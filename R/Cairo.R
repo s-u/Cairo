@@ -59,7 +59,12 @@ CairoFontMatch <- function(fontpattern="Helvetica",sort=FALSE,verbose=FALSE) {
 	invisible(.External("cairo_font_match",fontpattern,sort,verbose,PACKAGE="Cairo"))
 }
 
-CairoFonts <- function(regular="Helvetica:style=Regular",bold="Helvetica:style=Bold",italic="Helvetica:style=Italic",bolditalic="Helvetica:style=Bold Italic,BoldItalic",symbol="Symbol"){
+CairoFonts <- function(
+	   regular="Helvetica:style=Regular",
+	   bold="Helvetica:style=Bold",
+	   italic="Helvetica:style=Italic",
+	   bolditalic="Helvetica:style=Bold Italic,BoldItalic",
+	   symbol="Symbol", usePUA=TRUE) {
 	if (!is.null(regular) && typeof(regular) != "character")
 		stop("regular option must be a character vector of length 1")
 	if (!is.null(bold) && typeof(bold) != "character")
@@ -70,7 +75,8 @@ CairoFonts <- function(regular="Helvetica:style=Regular",bold="Helvetica:style=B
 		stop("bolditalic option must be a character vector of length 1")
 	if (!is.null(symbol) && typeof(symbol) != "character")
 		stop("symbol option must be a character vector of length 1")
-	invisible(.External("cairo_font_set",regular,bold,italic,bolditalic,symbol,PACKAGE="Cairo"))
+	invisible(.External("cairo_font_set", regular, bold, italic, bolditalic,
+		symbol, symbolPUA, PACKAGE="Cairo"))
 }
 
 
