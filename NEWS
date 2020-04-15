@@ -1,5 +1,12 @@
 NEWS/Changelog
 
+1.5-13
+    o	add support for CairoFont(usePUA=FALSE) to support regular
+	fonts without Adobe Symbol Encoding as symbol fonts in
+	R 4.0.0 and higher. Setting usePUA=FALSE in older versions of
+	R will issue a warning.
+
+
 1.5-12
     o	use pkg-config --static --libs when needed
 
