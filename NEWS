@@ -1,13 +1,19 @@
 NEWS/Changelog
 
-1.5-13
+1.5-14
+    o	add entry points for GE version 13 (needed for R 4.1.0)
+	Note that this is just a port of CRAN NMU which was posted as
+	version 1.15-12.2 on CRAN, but was not an actual Cairo version.
+
+
+1.5-13	(2020-04-15)
     o	add support for CairoFont(usePUA=FALSE) to support regular
 	fonts without Adobe Symbol Encoding as symbol fonts in
 	R 4.0.0 and higher. Setting usePUA=FALSE in older versions of
 	R will issue a warning.
 
 
-1.5-12
+1.5-12	(2020-04-11)
     o	use pkg-config --static --libs when needed
 
     o	adapt to API changes in R 4.0.0, also improves symbol
