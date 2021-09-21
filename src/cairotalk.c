@@ -80,6 +80,7 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
                        R_GE_gcontext *gc, NewDevDesc *dd);
 static SEXP CairoGD_Cap(NewDevDesc *dd);
 static int  CairoGD_HoldFlush(NewDevDesc *dd, int level);
+/* additional GE 13 API */
 static SEXP     CairoGD_setPattern(SEXP pattern, pDevDesc dd);
 static void     CairoGD_releasePattern(SEXP ref, pDevDesc dd);
 static SEXP     CairoGD_setClipPath(SEXP path, SEXP ref, pDevDesc dd);
@@ -1045,7 +1046,8 @@ static SEXP CairoGD_setPattern(SEXP pattern, pDevDesc dd) {
     return R_NilValue;
 }
 
-static void CairoGD_releasePattern(SEXP ref, pDevDesc dd) {} 
+static void CairoGD_releasePattern(SEXP ref, pDevDesc dd) {
+}
 
 static SEXP CairoGD_setClipPath(SEXP path, SEXP ref, pDevDesc dd) {
     return R_NilValue;
