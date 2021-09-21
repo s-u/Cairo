@@ -143,6 +143,10 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
 	dd->haveLocator = 2;      /* yes */
 #endif
 
+#if R_GE_version >= 13
+    dd->deviceVersion = R_GE_definitions;
+#endif
+
     dd->deviceSpecific = (void *) xd;
 
 #ifdef JGD_DEBUG
@@ -249,6 +253,7 @@ SEXP cairo_create_new_device(SEXP args)
 	Rprintf("type=%s, file=%s, bgcolor=0x%08x, canvas=0x%08x, umul=%f, dpi=%f\n", type, file, bgcolor, canvas, umul, dpi[0]);
 #endif
 	
+    R_GE_checkVersionOrDie(R_GE_version);
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
 	if (!(dev = (NewDevDesc*)calloc(1, sizeof(NewDevDesc))))

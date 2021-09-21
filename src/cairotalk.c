@@ -80,6 +80,12 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
                        R_GE_gcontext *gc, NewDevDesc *dd);
 static SEXP CairoGD_Cap(NewDevDesc *dd);
 static int  CairoGD_HoldFlush(NewDevDesc *dd, int level);
+static SEXP     CairoGD_setPattern(SEXP pattern, pDevDesc dd);
+static void     CairoGD_releasePattern(SEXP ref, pDevDesc dd);
+static SEXP     CairoGD_setClipPath(SEXP path, SEXP ref, pDevDesc dd);
+static void     CairoGD_releaseClipPath(SEXP ref, pDevDesc dd);
+static SEXP     CairoGD_setMask(SEXP path, SEXP ref, pDevDesc dd);
+static void     CairoGD_releaseMask(SEXP ref, pDevDesc dd);
 
 /* fake mbcs support for old R versions */
 #if R_GE_version < 4
@@ -1035,6 +1041,24 @@ static void CairoGD_Text(double x, double y, constxt char *str,  double rot, dou
 	cairo_restore(cc);
 }
 
+static SEXP CairoGD_setPattern(SEXP pattern, pDevDesc dd) {
+    return R_NilValue;
+}
+
+static void CairoGD_releasePattern(SEXP ref, pDevDesc dd) {} 
+
+static SEXP CairoGD_setClipPath(SEXP path, SEXP ref, pDevDesc dd) {
+    return R_NilValue;
+}
+
+static void CairoGD_releaseClipPath(SEXP ref, pDevDesc dd) {}
+
+static SEXP CairoGD_setMask(SEXP path, SEXP ref, pDevDesc dd) {
+    return R_NilValue;
+}
+
+static void CairoGD_releaseMask(SEXP ref, pDevDesc dd) {}
+
 /** fill the R device structure with callback functions */
 void Rcairo_setup_gd_functions(NewDevDesc *dd) {
     dd->close = CairoGD_Close;
@@ -1065,6 +1089,14 @@ void Rcairo_setup_gd_functions(NewDevDesc *dd) {
 	dd->path = CairoGD_Path;
 #if R_GE_version >= 9
 	dd->holdflush = CairoGD_HoldFlush;
+#if R_GE_version >= 13
+    dd->setPattern      = CairoGD_setPattern;
+    dd->releasePattern  = CairoGD_releasePattern;
+    dd->setClipPath     = CairoGD_setClipPath;
+    dd->releaseClipPath = CairoGD_releaseClipPath;
+    dd->setMask         = CairoGD_setMask;
+    dd->releaseMask     = CairoGD_releaseMask;
+#endif
 #endif
 #endif
 #endif
