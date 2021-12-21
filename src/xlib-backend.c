@@ -14,7 +14,7 @@
 
 #if CAIRO_HAS_XLIB_SURFACE
 
-static char *types_list[] = { "x11", 0 };
+static const char *types_list[] = { "x11", 0 };
 static Rcairo_backend_def RcairoBackendDef_ = {
 	BET_XLIB,
 	types_list,

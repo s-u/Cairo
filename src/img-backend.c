@@ -23,7 +23,7 @@
 
 #define default_jpeg_quality 75
 
-static char* img_types[] = {
+static const char* img_types[] = {
 	"png",
 #ifdef SUPPORTS_JPEG
 	"jpeg",

@@ -41,8 +41,8 @@
 
 typedef struct st_Rcairo_backend_def {
     int backend_type;      /* see BET_xxx constants */
-    char **types;          /* supported types (0-terminated list) */
-    char *name;            /* human-readable back-end name */
+    const char **types;    /* supported types (0-terminated list) */
+    const char *name;      /* human-readable back-end name */
     int  flags;            /* see CBDF_xxx constants */
     /*----- creation call-back -----*/
     void *create;          /* not used yet, should be set to 0 */

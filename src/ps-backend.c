@@ -14,7 +14,7 @@
 
 #if CAIRO_HAS_PDF_SURFACE
 
-static char *types_list[] = { "ps", 0 };
+static const char *types_list[] = { "ps", 0 };
 static Rcairo_backend_def RcairoBackendDef_ = {
   BET_PS,
   types_list,

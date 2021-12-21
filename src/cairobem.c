@@ -4,7 +4,7 @@
 
 #include "backend.h"
 
-static char *types[64];
+static const char *types[64];
 
 static struct bed_list_st {
   Rcairo_backend_def* bed;
@@ -24,8 +24,8 @@ void Rcairo_register_backend(Rcairo_backend_def* def) {
   }
   l->bed = def;
   { /* collect types list */
-    char **c = types;
-    char **d = def->types;
+    const char **c = types;
+    const char **d = def->types;
     while (*c) c++;
     while (*d) {
       *c=*d; c++; d++;
@@ -34,8 +34,8 @@ void Rcairo_register_backend(Rcairo_backend_def* def) {
   }
 }
 
-int Rcairo_type_supported(char *type) {
-  char **c = types;
+int Rcairo_type_supported(const char *type) {
+  const char **c = types;
   if (!type) return 0;
   while (*c) {
     if (!strcmp(type, *c)) return 1;
@@ -45,7 +45,7 @@ int Rcairo_type_supported(char *type) {
 }
 
 SEXP Rcairo_supported_types() {
-  char **c = types;
+  const char **c = types;
   int i = 0;
   SEXP res;
   while (*c) { c++; i++; }

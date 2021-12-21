@@ -14,7 +14,7 @@
 
 #if CAIRO_HAS_SVG_SURFACE
 
-static char *types_list[] = { "svg", 0 };
+static const char *types_list[] = { "svg", 0 };
 static Rcairo_backend_def RcairoBackendDef_ = {
   BET_SVG,
   types_list,
