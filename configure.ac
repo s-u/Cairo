@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(Cairo, 1.3, Simon.Urbanek@r-project.org)
+AC_INIT([Cairo],[1.3],[Simon.Urbanek@r-project.org])
 AC_CONFIG_SRCDIR([src/cairogd.c])
-AC_CONFIG_HEADER([src/cconfig.h])
+AC_CONFIG_HEADERS([src/cconfig.h])
 
 # find R home and set CC/CFLAGS
 : ${R_HOME=`R RHOME`}
@@ -12,11 +12,10 @@ fi
 RBIN="${R_HOME}/bin/R"
 CC=`"${RBIN}" CMD config CC`;
 CFLAGS=`"${RBIN}" CMD config CFLAGS`
+CPPFLAGS=`"${RBIN}" CMD config CPPFLAGS`
+LDFLAGS=`"${RBIN}" CMD config LDFLAGS`
 CPP="${CC} -E"
 AC_SUBST(R_HOME)
-
-# platform check
-#AC_CANONICAL_HOST
 
 # Checks for programs.
 AC_LANG(C)
@@ -25,17 +24,11 @@ AC_PROG_CC
 # Checks for libraries.
 
 # Checks for header files.
-AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([string.h sys/time.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
-#AC_HEADER_TIME
-
-# Checks for library functions.
-#AC_FUNC_MALLOC
-#AC_TYPE_SIGNAL
 
 AC_PATH_PROG([PKGCONF],[pkg-config],[],[$PATH:/usr/local/bin:ext/bin:ext:/sw/bin:/opt/bin])
 
@@ -63,7 +56,9 @@ if test "xx$CAIRO_LIBS" == "xx"; then
 	     [CAIRO_LIBS=`"${PKGCONF}" --libs --static ${modlist}`
 	      LIBS="$saveLIBS ${CAIRO_LIBS}"
 	      AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY(cairo_reset_clip)],
-	      [AC_MSG_RESULT([yes])],
+	      [AC_MSG_RESULT([yes])
+	       PKGCONF_LIB_ADD=--static
+	      ],
 	      [AC_MSG_RESULT([neither works, abandoning pkg-config])
 	       CAIRO_LIBS=''
 	      ])
@@ -143,9 +138,6 @@ AC_MSG_NOTICE([CAIRO_LIBS=${CAIRO_LIBS}])
 
 LIBS="$LIBS ${CAIRO_LIBS}"
 
-#AC_CHECK_LIB(cairo, cairo_create,,
-#[AC_MSG_ERROR([Cannot link to cairo library. Please check config.log for details and set CAIRO_LIBS accordingly.])])
-
 AC_SEARCH_LIBS(deflate, z)
 
 AC_MSG_CHECKING([whether Cairo programs can be compiled])
@@ -157,7 +149,8 @@ int main(void) {
   cr = cairo_create(cs);
   return 0;
 }
-])],[AC_MSG_RESULT(yes)],[AC_MSG_ERROR([Cannot compile a simple Cairo program. See config.log for details.])])
+])],[AC_MSG_RESULT(yes)],
+[AC_MSG_ERROR([Cannot compile a simple Cairo program. See config.log for details.])])
 
 
 dnl AC_CHECK_LIB(cairo, cairo_image_surface_get_format)
@@ -200,7 +193,7 @@ if test "${need_xtra_ft_flags}" = yes; then
    if test -n "${ftmod}"; then
       AC_MSG_RESULT(yes)
       FT_CPPFLAGS=`"${PKGCONF}" --cflags ${ftmod}`
-      FT_LIBS=`"${PKGCONF}" --libs ${ftmod}`
+      FT_LIBS=`"${PKGCONF}" --libs ${PKGCONF_LIB_ADD} ${ftmod}`
    else
       AC_MSG_RESULT(no)
    fi
@@ -271,7 +264,15 @@ int main(void) {
 # --- check for TIFF support
 AC_MSG_CHECKING([wheter libtiff works])
 zLIBS="${LIBS}"
-LIBS="${LIBS} -ltiff"
+if test -n "$PKGCONF"; then
+  ## FIXME: --cflags?
+  TIFF_LIBS=`"${PKGCONF}" --libs ${PKGCONF_LIB_ADD} libtiff-4`
+fi
+if test -z "${TIFF_LIBS}"; then
+  TIFF_LIBS=-ltiff
+fi
+LIBS="${LIBS} ${TIFF_LIBS}"
+
 AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include <tiffio.h>
 int main(void) {
@@ -283,6 +284,11 @@ int main(void) {
     AC_DEFINE(SUPPORTS_TIFF, 1, [Define to 1 if libtiff is present and working])],
   [ AC_MSG_RESULT(no)
     LIBS="${zLIBS}"])
+
+## our CPPFLAGS included R's CPPFLAGS which we don't need to
+## set so only include those we detected in addition to the
+## R CMD config CPPFLAGS
+CPPFLAGS="${CAIRO_CFLAGS} ${HAVE_RCONN_H}"
 
 AC_CONFIG_FILES([src/Makevars])
 AC_OUTPUT
