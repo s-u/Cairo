@@ -1,5 +1,17 @@
 #!/bin/sh
 
+echo "  checking Windows runtime"
+
+runtime=`"${R_HOME}/bin/Rscript" -e 'cat(R.version$crt)'`
+echo "  found: '$runtime'"
+
+if [ x"$runtime" = xucrt ]; then
+    echo "  UCRT run-time, assuming toolchain has everything"
+    echo "  declaring SUPPORTS_JPEG and SUPPORTS_TIFF"
+    echo '#define SUPPORTS_JPEG 1' > src/cconfig.h
+    echo '#define SUPPORTS_TIFF 1' >> src/cconfig.h
+else
+echo "  MSVCRT run-time"
 echo "  checking cairo headers and libraries"
 allok=yes
 
@@ -45,5 +57,7 @@ if [ ${allok} != yes ]; then
 fi
 
 echo "  seems ok, ready to go"
+
+fi    
 
 exit 0
