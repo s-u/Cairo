@@ -204,7 +204,8 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const cha
 												  width, height, stride);
 
 	if (cairo_surface_status(be->cs) != CAIRO_STATUS_SUCCESS){
-		if (image->buf) free(image->buf); free(be); free(image->filename); free(image);
+		if (image->buf) free(image->buf);
+		free(be); free(image->filename); free(image);
 		return NULL;
 	}
 
@@ -246,7 +247,8 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const cha
 	be->cc = cairo_create(be->cs);
 
 	if (cairo_status(be->cc) != CAIRO_STATUS_SUCCESS){
-		if (image->buf) free(image->buf); free(be); free(image->filename); free(image);
+		if (image->buf) free(image->buf);
+		free(be); free(image->filename); free(image);
 		return NULL;
 	}
 
