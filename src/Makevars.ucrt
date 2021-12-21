@@ -1,0 +1,12 @@
+ifdef DEBUG
+  XTRA_PKG_CPPFLAGS=-DJGD_DEBUG
+endif
+
+ifeq "$(WIN)" "64"
+BITS=64
+else
+BITS=32
+endif
+
+PKG_CPPFLAGS=-I. -I$(LOCAL_SOFT)/include/cairo -I$(LOCAL_SOFT)/include/freetype2 $(XTRA_PKG_CPPFLAGS)
+PKG_LIBS=-lcairo -lfontconfig -lintl -liconv -lexpat -lfreetype -lharfbuzz -lpixman-1 -ltiff -lwebp -llzma -lzstd -ljpeg -lpng -lbz2 -lz -lgdi32 -lmsimg32 $(GRAPHAPP_LIB)
