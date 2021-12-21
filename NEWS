@@ -1,6 +1,10 @@
 NEWS/Changelog
 
-1.5-14
+1.5-14	(2021-12-21)
+    o	update configure/autoconf, some dependencies such as libtiff
+	are now also detected using pkg-config. Tests are now correctly
+	using CPPFLAGS from R.
+
     o	add entry points for GE version 13 (needed for R 4.1.0)
 	Note that this is just a port of CRAN NMU which was posted as
 	version 1.15-12.2 on CRAN, but was not an actual Cairo version.
