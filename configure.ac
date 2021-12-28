@@ -89,6 +89,17 @@ fi
 
 AC_MSG_NOTICE([CAIRO_CFLAGS=${CAIRO_CFLAGS}])
 
+# Check for New Connections support
+AC_MSG_CHECKING([if R have R_ext/Connections.h])
+if test -f "${R_HOME}/include/R_ext/Connections.h"; then
+	AC_MSG_RESULT([yes])
+	HAVE_RCONN_H="-DHAVE_NEW_CONN_H"
+else
+	AC_MSG_RESULT([no])
+	HAVE_RCONN_H=""
+fi
+
+
 # Check for Rconn patch
 AC_MSG_CHECKING([if R was compiled with the RConn patch])
 if test -f "${R_HOME}/include/R_ext/RConn.h"; then
@@ -99,7 +110,7 @@ else
 	HAVE_RCONN_H=""
 fi
 
-CPPFLAGS="$CPPFLAGS ${CAIRO_CFLAGS} ${HAVE_RCONN_H}"
+CPPFLAGS="$CPPFLAGS ${CAIRO_CFLAGS} ${HAVE_NEW_CONN_H} ${HAVE_RCONN_H}"
 
 AC_CHECK_HEADER(cairo.h,,AC_MSG_ERROR([Cannot find cairo.h! Please install cairo (http://www.cairographics.org/) and/or set CAIRO_CFLAGS/LIBS correspondingly.]))
 

@@ -2,8 +2,7 @@
    Copyright (C) 2004-2007   Simon Urbanek
    Copyright (C) 2006        Jeffrey Horner
    License: GPL v2 */
-
-#ifdef HAVE_RCONN_H
+#if defined(HAVE_NEW_CONN_H) || defined(HAVE_RCONN_H)
 #include <R.h>
 #include <Rinternals.h>
 #include <Rdefines.h>
@@ -11,7 +10,12 @@
 #include <Rinterface.h>
 #include <Rembedded.h>
 #include <R_ext/Print.h>
+#ifdef HAVE_NEW_CONN_H
+#include <R_ext/Connections.h>
+#endif
+#ifdef HAVE_RCONN_H
 #include <R_ext/RConn.h>
+#endif
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,14 +123,18 @@ static void image_save_page_png(Rcairo_backend* be, int pageno){
 static void image_save_page_null(Rcairo_backend* be, int pageno) {
 }
 
-#ifdef HAVE_RCONN_H
+#if defined(HAVE_NEW_CONN_H) || defined(HAVE_RCONN_H)
 static cairo_status_t send_image_data(void *closure, const unsigned char *data, unsigned int length)
 {
 	Rcairo_backend *be = (Rcairo_backend *)closure;
 	Rcairo_image_backend *image;
 	image = (Rcairo_image_backend *)be->backendSpecific;
 
+#if defined(HAVE_NEW_CONN_H) 
+	if (R_WriteConnection(image->conn, (void *)data, length))
+#else
 	if (R_WriteConnection(image->conn, data, length, 1))
+#endif 
 		return CAIRO_STATUS_SUCCESS;
 	else
 		return CAIRO_STATUS_WRITE_ERROR;
@@ -158,7 +166,7 @@ int  image_locator(struct st_Rcairo_backend *be, double *x, double *y) {
 }
 
 
-Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const char *filename, const char *type,
+Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, Rconnection conn, const char *filename, const char *type,
 										 int width, int height, int quality, int alpha_plane, SEXP locator_cb)
 {
 	Rcairo_image_backend *image;
@@ -178,7 +186,7 @@ Rcairo_backend *Rcairo_new_image_backend(Rcairo_backend *be, int conn, const cha
 
 		strcpy(image->filename,filename);
 	} else {
-#ifdef HAVE_RCONN_H
+#if defined(HAVE_NEW_CONN_H) || defined(HAVE_RCONN_H)
 		image->conn = conn;
 		be->save_page = image_send_page;
 #else

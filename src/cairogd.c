@@ -47,7 +47,10 @@ static SEXP findArg(char *name, SEXP list) {
    -
    gamma: 0.6
 */
-Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, const char *file,
+#if defined(HAVE_RCONN_H)
+#define Rconnection int
+#endif
+Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, Rconnection conn, const char *file,
 								  double width, double height, double initps,
 								  int bgcolor, int canvas, double umul, double *dpi, SEXP aux)
 {
@@ -200,7 +203,11 @@ SEXP cairo_create_new_device(SEXP args)
 	const char *type, *file = NULL;
 	double width, height, initps, umul, dpi[2];
 	int bgcolor = -1, canvas = -1;
+#if  defined(HAVE_RCONN_H)
 	int conn = -1;
+#elif defined(HAVE_NEW_CONN_H) 
+        Rconnection conn = NULL;
+#endif
 
 	SEXP v;
 	args=CDR(args);
@@ -215,9 +222,12 @@ SEXP cairo_create_new_device(SEXP args)
 		PROTECT(v);
 		file=CHAR(STRING_ELT(v,0));
 		UNPROTECT(1);
+#if  defined(HAVE_RCONN_H)
 	} else if (isInteger(v)){
-#ifdef HAVE_RCONN_H
 		conn = asInteger(v);
+#elif defined(HAVE_NEW_CONN_H) 
+        } else if (1){
+                conn = R_GetConnection(v);
 #else
 		error("file must be a filename. to support writing to a connection, recompile R and Cairo with the R Connection Patch. ");
 #endif

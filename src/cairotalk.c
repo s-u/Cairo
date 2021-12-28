@@ -607,7 +607,7 @@ static SEXP findArg(const char *name, SEXP list) {
 	return 0;
 }
 
-Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int conn, const char *file, double w, double h,
+Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, Rconnection conn, const char *file, double w, double h,
 					  double umpl, SEXP aux)
 {
 	if (umpl==0) error("unit multiplier cannot be zero");

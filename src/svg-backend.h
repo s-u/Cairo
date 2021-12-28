@@ -9,6 +9,6 @@
 
 extern Rcairo_backend_def *RcairoBackendDef_svg;
 
-Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, const char *filename, double width, double height);
+Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, Rconnection conn, const char *filename, double width, double height);
 
 #endif
