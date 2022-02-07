@@ -206,7 +206,7 @@ if test "${need_xtra_ft_flags}" = yes; then
         FCI="-I${pre}/include"
 	FCL="-L${pre}/lib"
      fi
-     if test -z "{FTI}" -a -e "${pre}/include/freetype2/freetype/freetype.h"; then
+     if test -z "${FTI}" -a -e "${pre}/include/freetype2/freetype/freetype.h"; then
         FTI="-I${pre}/include/freetype2"
 	FTL="-L${pre}/lib"
      fi
