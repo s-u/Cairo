@@ -5,6 +5,10 @@ NEWS/Changelog
 	while processing events such that broken connections are
 	detected and don't kill R.
 
+    o	added the option to license under GPL v3. All original
+	authors explicitly agreed and included code based on R is
+	licensed under GPL-2+ allowing this.
+
 
 1.5-14	(2021-12-21)
     o	update configure/autoconf, some dependencies such as libtiff

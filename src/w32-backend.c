@@ -4,7 +4,7 @@
 
    GA interface is partially based on devWindows.c from R
 
-   License: GPL v2
+   License: GPL v2 or GPL v3
 
    Conditionals:
    NATIVE_UI - if set, we use plain Win32 API (works for stand-alone

@@ -1,7 +1,7 @@
 /* -*- mode: C; tab-width: 4; c-basic-offset: 4 -*-
    Copyright (C) 2004-2007   Simon Urbanek
    Copyright (C) 2006        Jeffrey Horner
-   License: GPL v2 */
+   License: GPL v2 or GPL v3 */
 
 #ifdef HAVE_RCONN_H
 #include <R.h>
