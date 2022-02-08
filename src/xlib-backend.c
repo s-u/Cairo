@@ -160,30 +160,55 @@ static void Rcairo_init_xlib() {
 
 typedef struct Rcairo_display_list_s {
 	Display *display;
+	InputHandler *handler;
 	struct Rcairo_display_list_s *next;
 } Rcairo_display_list;
 
-static Rcairo_display_list display_list = { 0, 0 };
+static Rcairo_display_list display_list = { 0, 0, 0 };
 
 /* FIXME: this is bad - we need to associate it with a display */
 static Atom _XA_WM_PROTOCOLS, protocol;
 
-static void ProcessX11DisplayEvents(Display *display)
+#include <setjmp.h>
+
+/* Xlib provides no way to detect I/O error, it just exists the process, so
+   we use a handler to detect such conditions and prevent it from exiting */
+typedef int (x11_io_handler_t)(Display*);
+
+static jmp_buf x11_io_error_jmp;
+static Display *x11_io_error_display;
+
+static int x11_safety_handler(Display *display) {
+	x11_io_error_display = display;
+	longjmp(x11_io_error_jmp, 1);
+	return 0;
+}
+
+static int ProcessX11DisplayEvents(Display *display)
 {
 	XEvent event;
-	
-	while (display && XPending(display)) {
-		XNextEvent(display, &event);
-		handleDisplayEvent(display, event);
+	int ok = 0;
+	/* setup IOErrorHandler while we process events
+	   such that errors don't kill R */
+	x11_io_handler_t *last_handler = XSetIOErrorHandler(x11_safety_handler);
+	if (setjmp(x11_io_error_jmp) == 0) {
+		while (display && XPending(display)) {
+			XNextEvent(display, &event);
+			handleDisplayEvent(display, event);
+		}
+		ok = 1;
 	}
+	XSetIOErrorHandler(last_handler);
+	return ok;
 }
 
 static void handleDisplayEvent(Display *display, XEvent event) {
 	XPointer temp;
 	Rcairo_xlib_data *xd = NULL;
-		
+
+	/* fprintf(stderr, "handleDisplayEvent, type=%d, inclose=%d\n", (int) event.type, inclose); */
 	if (event.xany.type == Expose) {
-		/* printf(" - expose\n"); */
+		/* fprintf(stderr, "Expose (inclose=%d)\n", inclose); */
 		while(XCheckTypedEvent(display, Expose, &event))
 			;
 		XFindContext(display, event.xexpose.window,
@@ -192,6 +217,7 @@ static void handleDisplayEvent(Display *display, XEvent event) {
 		if (event.xexpose.count == 0) /* sync - some X11 implementations seem to need this */
 			XSync(xd->display, 0);
 	} else if (event.type == ConfigureNotify) {
+		/* fprintf(stderr,"ConfigureNotify (inclose=%d)\n", inclose); */
 		while(XCheckTypedEvent(display, ConfigureNotify, &event))
 			;
 		XFindContext(display, event.xconfigure.window,
@@ -205,8 +231,15 @@ static void handleDisplayEvent(Display *display, XEvent event) {
 			while(XCheckTypedEvent(display, Expose, &event))
 				;
 		}
+	} else if (event.type == DestroyNotify) {
+		/* fprintf(stderr,"DestroyNotify (inclose=%d)\n", inclose); */
+		XFindContext(display, event.xclient.window,
+					 devPtrContext, &temp);
+		xd = (Rcairo_xlib_data *) temp;
+		Rcairo_backend_kill(xd->be);
 	} else if ((event.type == ClientMessage) &&
 			   (event.xclient.message_type == _XA_WM_PROTOCOLS))
+		/* fprintf(stderr,"ClientMessage (inclose=%d)\n", inclose); */
 		if (!inclose && event.xclient.data.l[0] == protocol) {
 			XFindContext(display, event.xclient.window,
 						 devPtrContext, &temp);
@@ -217,11 +250,21 @@ static void handleDisplayEvent(Display *display, XEvent event) {
 
 static void ProcessX11Events(void *foo)
 {
-	Rcairo_display_list *l = &display_list;
+	Rcairo_display_list *l = &display_list, *last = 0;
+	/* fprintf(stderr, "ProcessX11Events:\n"); */
 	while (l && l->display) {
-		ProcessX11DisplayEvents(l->display);
+		/* fprintf(stderr, "   display=%p (inclose=%d)\n", l->display, inclose); */
+		if (ProcessX11DisplayEvents(l->display)) { /* error -> need to remove */
+			removeInputHandler(&R_InputHandlers, l->handler);
+			l->display = 0;
+			l->handler = 0;
+			if (last)
+				last->next = l->next;
+			Rf_error("X11 fatal IO error: please save work and shut down R");
+		} else last = l;
 		l = l->next;
 	}
+	/* fprintf(stderr, "--done ProcessX11Events--\n"); */
 }
 
 Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, const char *display, double width, double height, double umpl)
@@ -271,8 +314,8 @@ Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, const char *display,
 				l = l->next = (Rcairo_display_list *)calloc(1, sizeof(Rcairo_display_list));
 			if (l->display != xd->display) { /* new display */
 				l->display = xd->display;
-				addInputHandler(R_InputHandlers, ConnectionNumber(xd->display),
-								ProcessX11Events, 71);
+				l->handler = addInputHandler(R_InputHandlers, ConnectionNumber(xd->display),
+											 ProcessX11Events, 71);
 				Rcairo_init_xlib();
 			}
 		}
