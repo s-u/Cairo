@@ -4056,8 +4056,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
 fi
 
 # --- check for JPEG support ---
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking wheter libjpeg works" >&5
-printf %s "checking wheter libjpeg works... " >&6; }
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether libjpeg works" >&5
+printf %s "checking whether libjpeg works... " >&6; }
 zLIBS="${LIBS}"
 LIBS="${LIBS} -ljpeg"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -4087,9 +4087,60 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 
+# --- check for Harfbuzz/ICU support ---
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether Harfbuzz + ICU works" >&5
+printf %s "checking whether Harfbuzz + ICU works... " >&6; }
+zLIBS="${LIBS}"
+zCPPFLAGS="${CPPFLAGS}"
+if test -n "$PKGCONF"; then
+: ${HB_CPPFLAGS=`"${PKGCONF}" --cflags harfbuzz-icu`}
+: ${HB_LIBS=`"${PKGCONF}" --libs ${PKGCONF_LIB_ADD} harfbuzz-icu`}
+fi
+if test -z "${HB_LIBS}"; then
+  HB_LIBS='-lharfbuzz-icu -licuuc -licudata -lharfbuzz'
+fi
+LIBS="${LIBS} ${HB_LIBS} -lstdc++"
+CPPFLAGS="${CPPFLAGS} ${HB_CPPFLAGS}"
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <unicode/ubidi.h>
+#include <unicode/uchar.h>
+
+#include <harfbuzz/hb.h>
+#include <harfbuzz/hb-ft.h>
+#include <harfbuzz/hb-icu.h>
+int main(void) {
+  UBiDi *bidi = 0;
+  UChar *text = 0;
+  bidi = ubidi_open();
+  hb_buffer_t *buf = hb_buffer_create();
+  hb_buffer_set_unicode_funcs(buf, hb_icu_get_unicode_funcs());
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+printf "%s\n" "#define HAVE_HARFBUZZ 1" >>confdefs.h
+
+else $as_nop
+   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    LIBS="${zLIBS}"
+    CPPFLAGS="${zCPPFLAGS}"
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+
 # --- check for TIFF support
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking wheter libtiff works" >&5
-printf %s "checking wheter libtiff works... " >&6; }
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether libtiff works" >&5
+printf %s "checking whether libtiff works... " >&6; }
 zLIBS="${LIBS}"
 if test -n "$PKGCONF"; then
   ## FIXME: --cflags?

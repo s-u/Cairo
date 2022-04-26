@@ -18,6 +18,21 @@
 
 #include "Rapi.h"
 
+#ifdef HAVE_HARFBUZZ
+#include <string.h>
+#include <sys/errno.h>
+
+#include <unicode/utypes.h>
+#include <unicode/ubidi.h>
+#include <unicode/uchar.h>
+
+#include <harfbuzz/hb.h>
+#include <harfbuzz/hb-ft.h>
+#include <harfbuzz/hb-icu.h>
+
+#include <R_ext/Riconv.h>
+#endif
+
 /* Device Driver Actions */
 
 #if R_VERSION < 0x10900
@@ -110,20 +125,38 @@ FT_Library Rcairo_ft_library = NULL;
 
 typedef struct {
 	cairo_font_face_t *face;
+	FT_Face ft_face;
+#ifdef HAVE_HARFBUZZ
+	hb_font_t *hb_font;
+	hb_face_t *hb_face;
+#endif
 	int updated;
 } Rcairo_font_face;
 
-Rcairo_font_face Rcairo_fonts[5] = {
-	{ NULL, 0 },
-	{ NULL, 0 },
-	{ NULL, 0 },
-	{ NULL, 0 },
-	{ NULL, 0 }
-};
+Rcairo_font_face Rcairo_fonts[5];
 
 static const cairo_user_data_key_t key;
 
-cairo_font_face_t *Rcairo_set_font_face(int i, const char *file){
+void Rcairo_font_destroy(Rcairo_font_face *rf) {
+	if (rf->face) {
+		cairo_font_face_destroy(rf->face);
+		rf->face = NULL;
+	}
+	if (rf->ft_face) {
+		FT_Done_Face(rf->ft_face);
+		rf->ft_face = NULL;
+	}
+#ifdef HAVE_HARFBUZZ
+	if (rf->hb_font)
+		hb_font_destroy(rf->hb_font);
+	rf->hb_font = NULL;
+	if (rf->hb_face)
+		hb_face_destroy(rf->hb_face);
+    rf->hb_face = NULL;
+#endif
+}
+
+cairo_font_face_t *Rcairo_set_font_face(Rcairo_font_face *rf, int setCharmap, const char *file){
 	cairo_font_face_t *c_face;
 	cairo_status_t status;
 	FT_Face face;
@@ -157,11 +190,12 @@ cairo_font_face_t *Rcairo_set_font_face(int i, const char *file){
 	}
 
 	/* Only do this for symbol font */
-	if (found && i == 4){
+	if (found && setCharmap){
 		er = FT_Set_Charmap( face, found );
 	} 
 
 	c_face = cairo_ft_font_face_create_for_ft_face(face,FT_LOAD_DEFAULT);
+#if 0 /* FIXME: memory management is now likely more tricky than that ... */
 	status = cairo_font_face_set_user_data (c_face, &key,
 		face, (cairo_destroy_func_t) FT_Done_Face);
 	if (status) {
@@ -169,6 +203,17 @@ cairo_font_face_t *Rcairo_set_font_face(int i, const char *file){
 	    FT_Done_Face (face);
 	    return NULL;
 	}
+#endif
+#ifdef HAVE_HARFBUZZ
+	/* see also hb_ft_font_create_referenced */
+    rf->hb_face = hb_ft_face_create(face, NULL);
+	/* font needs size ... */
+	FT_Set_Char_Size(face, 0, 1000, 0, 0);
+	rf->hb_font = hb_ft_font_create(face, NULL);
+	hb_ft_font_set_funcs(rf->hb_font);
+#endif
+	rf->ft_face = face;
+	rf->face = c_face;
 	return c_face;
 }
 
@@ -203,10 +248,16 @@ void Rcairo_set_font(int i, const char *fcname){
 		for (j = 0; j < fs->nfont; j++) {
 			/* Need to make sure a real font file exists */
 			if (FcPatternGetString (fs->fonts[j], FC_FILE, 0, &file) == FcResultMatch) {
-				if (Rcairo_fonts[i].face)
-					cairo_font_face_destroy(Rcairo_fonts[i].face);
-
-				Rcairo_fonts[i].face = Rcairo_set_font_face(i,(const char *)file);
+				Rcairo_font_face rc_face; /* set in a copy first so we only destroy existing on error */
+				memset(&rc_face, 0, sizeof(rc_face));
+				/* returns cairo face on success or NULL on error */
+				if (Rcairo_set_font_face(&rc_face, i == 4, (const char *)file)) { /* success */
+					if (Rcairo_fonts[i].face)
+						Rcairo_font_destroy(&Rcairo_fonts[i]);
+					memcpy(&Rcairo_fonts[i], &rc_face, sizeof(rc_face));
+					fprintf(stderr, "INFO: setting font index %d to font %p from file %s\n", i, rc_face.face, file);
+				} else
+					Rf_warning("Unable to get face for font type %d from %s (for %s)", i + 1, (const char*) file, fcname);
 				break;
 			}
 		}
@@ -234,7 +285,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	if (i < 0 || i >= 5) i = 0;
 
 	if (Rcairo_fonts[i].updated || (xd->fontface != gc->fontface)){
-		cairo_set_font_face(cc,Rcairo_fonts[i].face);
+		cairo_set_font_face(cc, Rcairo_fonts[i].face);
 		set_cf_antialias(cc);
 		Rcairo_fonts[i].updated = 0;
 #ifdef JGD_DEBUG
@@ -244,7 +295,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 
 	xd->fontface = gc->fontface;
 
-#else
+#else /* no FreeType */
   char *Cfontface="Helvetica";
   int slant = CAIRO_FONT_SLANT_NORMAL;
   int wght  = CAIRO_FONT_WEIGHT_NORMAL;
@@ -497,6 +548,168 @@ static void CairoGD_Line(double x1, double y1, double x2, double y2,  R_GE_gcont
     }
 }
 
+#ifdef HAVE_HARFBUZZ
+
+static UChar js_buf[128];
+
+static int str2utf16(const char *c, int len, UChar **buf, const char *ifrom) {
+    void *ih;
+    const char *ce = (len < 0) ? strchr(c, 0) : (c + len);
+    if (ce == c) {
+        buf[0] = 0;
+        return 0;
+    }
+    size_t osize = sizeof(UChar) * (ce - c + 1), isize = ce - c;
+    UChar *js = buf[0] = (osize < sizeof(js_buf)) ? js_buf : (UChar*) R_alloc(sizeof(UChar), ce - c + 1);
+    char *dst = (char*) js;
+    int end_test = 1, is_le = (((char*)&end_test)[0] == 1) ? 1 : 0;
+    if (!ifrom) ifrom = "";
+	ih = Riconv_open(is_le ? "UTF-16LE" : "UTF-16BE", ifrom);
+    if (ih == (void *)(-1))
+		Rf_error("Unable to start conversion to UTF-16");
+	while (c < ce) {
+        size_t res = Riconv(ih, &c, &isize, &dst, &osize);
+        /* this should never happen since we allocated far more than needed */
+        if (res == -1 && errno == E2BIG)
+			Rf_error("Conversion to UTF-16 failed due to unexpectedly large buffer requirements.");
+		else if(res == -1 && (errno == EILSEQ || errno == EINVAL)) { /* invalid char */
+            if (is_le) {
+                *(dst++) = '?';
+                *(dst++) = 0;
+            } else {
+                *(dst++) = 0;
+                *(dst++) = '?';
+            }
+            osize -= 2;
+            c++;
+            isize--;
+        }
+    }
+    Riconv_close(ih);
+	/* FIXME: not 64-bit safe ... */
+    return (int) (dst - (char*) js);
+}
+
+typedef struct {
+	unsigned int glyphs, g_alloc;
+	cairo_glyph_t *glyph;
+	double x, y;
+} rc_text_shape;
+
+static rc_text_shape shared_text_shape;
+
+/* FIXME: this is not thread safe. Threads are not supported in R
+   anyway, but just saying... This will be used across Cairo
+   devices, but keeping one buffer reduces allocations. */   
+static rc_text_shape *init_text_shape() {
+	shared_text_shape.x = 0.0;
+	shared_text_shape.y = 0.0;
+	shared_text_shape.glyphs = 0;
+	return &shared_text_shape;
+}
+
+static void chb_add_glyphs(rc_text_shape *rc, Rcairo_font_face *fcface,
+						   const UChar *text, int32_t start, int32_t len, int direction) {
+	hb_buffer_t *buf = hb_buffer_create();
+	
+	hb_buffer_set_unicode_funcs(buf, hb_icu_get_unicode_funcs());
+	hb_buffer_set_direction(buf, direction ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
+	/* stript and language ... R doesn't define them so how do we determine them ?
+	hb_buffer_set_script(buf, ); 
+	hb_buffer_set_language(buf, hb_language_from_string(..., -1)); */
+	if (len > 1 && text[start] >= 0x300 && text[start] <= 0x400) {
+		hb_buffer_set_script(buf, HB_SCRIPT_ARABIC);
+		hb_buffer_set_language(buf, hb_language_from_string("fa", -1));
+	}
+
+	/* Layout the text */
+	hb_buffer_add_utf16(buf, ((const uint16_t*) text) + start, len, 0, len);
+	hb_shape(fcface->hb_font, buf, NULL, 0);
+
+	fprintf(stderr, "TEXT: ");
+	{
+		for (int k = start; k < start + len; k++)
+			fprintf(stderr, "%04x[%c] ", text[k], (text[k] < 127) ? ((char) text[k]) : '.');
+	}
+	fprintf(stderr, "\n");
+
+	/* Get the glyphs info */
+	unsigned int         glyph_count;
+	hb_glyph_info_t     *glyph_info   = hb_buffer_get_glyph_infos(buf, &glyph_count);
+	hb_glyph_position_t *glyph_pos    = hb_buffer_get_glyph_positions(buf, &glyph_count);
+
+#define MIN_GLYPH_N(X) (((X) < 128) ? 128 : (X))
+	if (glyph_count + rc->glyphs > rc->g_alloc) {
+		unsigned int need = (sizeof(cairo_glyph_t) * MIN_GLYPH_N(glyph_count + rc->glyphs)) * 2;
+		void *ng = malloc(need);
+		fprintf(stderr, "INFO: allocating %u bytes to fit at least %u glyphs\n", need, (glyph_count + rc->glyphs));
+		if (!ng)
+			Rf_error("Cannot allocate memory for %u glyphs", glyph_count);
+		if (rc->glyph && rc->glyphs) {
+			fprintf(stderr, "      (copying existing %u glyphs)\n", rc->glyphs);
+			memcpy(ng, rc->glyph, rc->glyphs * sizeof(cairo_glyph_t));
+			free(rc->glyph);
+		}
+		rc->glyph = ng;
+		rc->g_alloc = need / sizeof(cairo_glyph_t);
+	}
+	fprintf(stderr, "  start location: %.2f, %.2f (glyphs=%d, alloc=%d)\n", rc->x, rc->y, rc->glyphs, rc->g_alloc);
+	for (unsigned int i = 0; i < glyph_count; i++) {
+		int j = rc->glyphs++;
+		rc->glyph[j].index = glyph_info[i].codepoint;
+		rc->glyph[j].x = rc->x + (glyph_pos[i].x_offset / 64.0);
+		rc->glyph[j].y = rc->y - (glyph_pos[i].y_offset / 64.0);
+		fprintf(stderr, "  [%02d -> %02d]  %.2f, %.2f 0x%04x\n", i, j, rc->glyph[j].x, rc->glyph[j].y, (int) rc->glyph[j].index);
+		rc->x += glyph_pos[i].x_advance / 64.0;
+		rc->y -= glyph_pos[i].y_advance / 64.0;
+	}
+	
+	fprintf(stderr, "  final location: %.2f, %.2f (%u glyphs)\n", rc->x, rc->y, rc->glyphs);
+	hb_buffer_destroy(buf);
+}
+
+/* split text into runs with the same directionality then call HB to shape each run.
+   The result is a set of cairo glyphs with locations */
+static rc_text_shape *c_setup_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const char *str) {
+	cairo_t *cc = xd->cb->cc;
+	UBiDi *bidi = 0;
+	UChar *text = 0;
+	UErrorCode err = U_ZERO_ERROR;
+	int32_t ulen = 0;
+	if (!bidi) bidi = ubidi_open();
+	if (!bidi) Rf_error("Unable to allocate memory for UBiDi");
+	ulen = str2utf16(str, strlen(str), &text, "") / sizeof(UChar); /* str2utf16 returns bytes, need chars */
+	ubidi_setPara(bidi, text, ulen, UBIDI_DEFAULT_LTR, NULL, &err);
+	if (U_FAILURE(err))
+		Rf_error("Unable to compute UBiDi for string '%'", str);
+
+	rc_text_shape *ts = init_text_shape();
+	int i = gc->fontface - 1;
+	if (i < 0 || i >= 5) i = 0;
+	Rcairo_font_face *rf = &Rcairo_fonts[i];
+
+	UBiDiDirection direction = ubidi_getDirection(bidi);
+	if (direction != UBIDI_MIXED) {
+		fprintf(stderr, "INFO: unidirectional text with direction %s, text: %s\n", (direction & 1) ? "RTL" : "LTR", str);
+		chb_add_glyphs(ts, rf, text, 0, ulen, direction ? 1 : 0);
+	} else {
+		int32_t count, i, start, length;
+		count = ubidi_countRuns(bidi, &err);	
+		if (U_FAILURE(err))
+			Rf_error("Unable to determine directionality runs for string '%s'", str);
+
+		fprintf(stderr, "INFO: multidirectional text '%s' with %d runs\n", str, (int) count);
+		for (i = 0; i < count; ++i) {
+			direction = ubidi_getVisualRun(bidi, i, &start, &length);
+			fprintf(stderr, "     %s: %d, %d chars\n", (direction & 1) ? "RTL" : "LTR", start, length);
+			chb_add_glyphs(ts, rf, text, start, length, direction ? 1 : 0);
+		}
+	}
+	return ts;
+}
+
+#endif /* HARFBUZZ */
+
 static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, double* descent,  double* width, NewDevDesc *dd)
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
@@ -513,11 +726,14 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 
 	Rcairo_setup_font(xd, gc);
 
+	/* FIXME: with FT we could use face->ascender, descender from the font
+	   or face->glyph->metrics for the particular character */
+	
 	if (!c) { 
 		/* this should give us a reasonably decent (g) and almost max width (M) */
 		str[0]='M'; str[1]='g'; str[2]=0;
 		x_factor = 0.5; /* halve the width since we use two chars */
-	} else if (Unicode) {
+	} else if (c > 127 && Unicode) {
 		Rf_ucstoutf8(str, (unsigned int) c);
 #if R_VERSION >= R_Version(4,0,0)
 		if (gc->fontface == 5 && !Rcairo_symbol_font_use_pua) { /* handle conversion away form PUA */
@@ -976,12 +1192,27 @@ static double CairoGD_StrWidth(constxt char *str,  R_GE_gcontext *gc,  NewDevDes
 
 	{
 		cairo_t *cc = xd->cb->cc;
-		cairo_text_extents_t te;
+		cairo_text_extents_t te = {0, 0, 0, 0, 0, 0};
+#ifdef HAVE_HARFBUZZ
+		rc_text_shape *ts = c_setup_glyphs(xd, gc, str);
+		cairo_glyph_extents(cc, ts->glyph, ts->glyphs, &te);
+#else
 		cairo_text_extents(cc, str, &te);
+#endif
 		/* Cairo doesn't take into account whitespace char widths, 
 		 * but the x_advance does */
 		return te.x_advance;
 	}
+}
+
+static void rc_glyphs_move(rc_text_shape *ts, double x, double y) {
+	unsigned int i = 0;
+	while (i < ts->glyphs) {
+		ts->glyph[i].x += x;
+		ts->glyph[i++].y += y;
+	}
+	ts->x += x;
+	ts->y += y;
 }
 
 static void CairoGD_Text(double x, double y, constxt char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
@@ -1004,26 +1235,47 @@ static void CairoGD_Text(double x, double y, constxt char *str,  double rot, dou
 		str = utf8Toutf8NoPUA(str);
 #endif
 
+#ifdef HAVE_HARFBUZZ
+	rc_text_shape *ts = c_setup_glyphs(xd, gc, str);
+#endif
+	
 	cairo_save(cc);
 	cairo_move_to(cc, x, y);
 	if (hadj!=0. || rot!=0.) {
-		cairo_text_extents_t te;
+		cairo_text_extents_t te = {0, 0, 0, 0, 0, 0};
+#ifdef HAVE_HARFBUZZ
+		cairo_glyph_extents(cc, ts->glyph, ts->glyphs, &te);
+#else
 		cairo_text_extents(cc, str, &te);
+#endif
 		if (rot!=0.)
 			cairo_rotate(cc, -rot/180.*M_PI);
-		if (hadj!=0.)
+		if (hadj!=0.) {
+#ifdef HAVE_HARFBUZZ
+			rc_glyphs_move(ts, -te.x_advance*hadj, 0);
+#endif
 			cairo_rel_move_to(cc, -te.x_advance*hadj, 0);
-
+		}
 		/* Rcairo_set_color(cc, 0xff80ff); */
 	}
 	Rcairo_set_color(cc, gc->col);
+
+#ifdef HAVE_HARFBUZZ
+	rc_glyphs_move(ts, x, y);
+	cairo_show_glyphs(cc, ts->glyph, ts->glyphs);
+#else
 	cairo_show_text(cc, str);
+#endif
 	xd->cb->serial++;
 
 #ifdef JGD_DEBUG
 	{
-		cairo_text_extents_t te;
+		cairo_text_extents_t te = {0, 0, 0, 0, 0, 0};
+#ifdef HAVE_HARFBUZZ
+		cairo_glyph_extents(cc, ts->glyph, ts->glyphs, &te);
+#else
 		cairo_text_extents(cc, str, &te);
+#endif
 
 		if (hadj!=0.) x = x - (te.x_advance*hadj);
 

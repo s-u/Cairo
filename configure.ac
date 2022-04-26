@@ -261,6 +261,42 @@ int main(void) {
   [ AC_MSG_RESULT(no)
     LIBS="${zLIBS}"])
 
+# --- check for Harfbuzz/ICU support ---
+AC_MSG_CHECKING([whether Harfbuzz + ICU works])
+zLIBS="${LIBS}"
+zCPPFLAGS="${CPPFLAGS}"
+if test -n "$PKGCONF"; then
+: ${HB_CPPFLAGS=`"${PKGCONF}" --cflags harfbuzz-icu`}
+: ${HB_LIBS=`"${PKGCONF}" --libs ${PKGCONF_LIB_ADD} harfbuzz-icu`}
+fi
+if test -z "${HB_LIBS}"; then
+  HB_LIBS='-lharfbuzz-icu -licuuc -licudata -lharfbuzz'
+fi
+LIBS="${LIBS} ${HB_LIBS} -lstdc++"
+CPPFLAGS="${CPPFLAGS} ${HB_CPPFLAGS}"
+
+AC_LINK_IFELSE([AC_LANG_SOURCE([
+#include <unicode/ubidi.h>
+#include <unicode/uchar.h>
+
+#include <harfbuzz/hb.h>
+#include <harfbuzz/hb-ft.h>
+#include <harfbuzz/hb-icu.h>
+int main(void) {
+  UBiDi *bidi = 0;
+  UChar *text = 0;
+  bidi = ubidi_open();
+  hb_buffer_t *buf = hb_buffer_create();
+  hb_buffer_set_unicode_funcs(buf, hb_icu_get_unicode_funcs());
+  return 0;
+}
+])],[ AC_MSG_RESULT([yes])
+    AC_DEFINE(HAVE_HARFBUZZ, 1, [Define to 1 if Harfbuzz and ICU are present and working])],
+  [ AC_MSG_RESULT(no)
+    LIBS="${zLIBS}"
+    CPPFLAGS="${zCPPFLAGS}"
+    ])
+
 # --- check for TIFF support
 AC_MSG_CHECKING([whether libtiff works])
 zLIBS="${LIBS}"
