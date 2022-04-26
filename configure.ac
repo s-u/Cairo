@@ -262,6 +262,15 @@ int main(void) {
     LIBS="${zLIBS}"])
 
 # --- check for Harfbuzz/ICU support ---
+
+AC_ARG_WITH([harfbuzz],
+  AS_HELP_STRING(--with-harfbuzz,[compile support for bi-directional Unicode and advanced text layout (like ligature support) using Harfbuzz and ICU libraries. (default is @<:@auto@:>@).]),
+        [with_harfbuzz=$withval], [with_harfbuzz=auto])
+
+AC_MSG_CHECKING([whether Harfbuzz layout is desired])
+AC_MSG_RESULT(${with_harfbuzz})
+
+if test x${with_harfbuzz} != xno; then
 AC_MSG_CHECKING([whether Harfbuzz + ICU works])
 zLIBS="${LIBS}"
 zCPPFLAGS="${CPPFLAGS}"
@@ -274,6 +283,7 @@ if test -z "${HB_LIBS}"; then
 fi
 LIBS="${LIBS} ${HB_LIBS} -lstdc++"
 CPPFLAGS="${CPPFLAGS} ${HB_CPPFLAGS}"
+
 
 AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include <unicode/ubidi.h>
@@ -296,6 +306,7 @@ int main(void) {
     LIBS="${zLIBS}"
     CPPFLAGS="${zCPPFLAGS}"
     ])
+fi
 
 # --- check for TIFF support
 AC_MSG_CHECKING([whether libtiff works])
