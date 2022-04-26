@@ -129,6 +129,7 @@ typedef struct {
 #ifdef HAVE_HARFBUZZ
 	hb_font_t *hb_font;
 	hb_face_t *hb_face;
+	long font_size;
 #endif
 	int updated;
 } Rcairo_font_face;
@@ -205,10 +206,11 @@ cairo_font_face_t *Rcairo_set_font_face(Rcairo_font_face *rf, int setCharmap, co
 	}
 #endif
 #ifdef HAVE_HARFBUZZ
-	/* see also hb_ft_font_create_referenced */
+	/* see also hb_ft_font_create_referenced, but we manage lifetime so shold be ok */
     rf->hb_face = hb_ft_face_create(face, NULL);
 	/* font needs size ... */
-	FT_Set_Char_Size(face, 0, 1000, 0, 0);
+	rf->font_size = 800; /* default is 12pt = 12.5 * 64 = 800 */
+	FT_Set_Char_Size(face, 0, rf->font_size, 0, 0);
 	rf->hb_font = hb_ft_font_create(face, NULL);
 	hb_ft_font_set_funcs(rf->hb_font);
 #endif
@@ -315,9 +317,24 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 #endif
 #endif
 
-  /* Add 0.5 per devX11.c in R src. We want to match it's png output as close
+  /* Add 0.5 per devX11.c in R src. We want to match its png output as close
    * as possible. */
   cairo_set_font_size (cc, gc->cex * gc->ps * xd->fontscale + 0.5);
+
+#ifdef HAVE_HARFBUZZ
+    fprintf(stderr, "INFO: set font[%d] size to %.f (cex=%.f, ps=%.f, fontscale=%.f)\n", i,
+			(gc->cex * gc->ps * xd->fontscale + 0.5) * 64, gc->cex, gc->ps, xd->fontscale);
+	long new_size = (gc->cex * gc->ps * xd->fontscale + 0.5) * 64;
+	if (Rcairo_fonts[i].font_size != new_size || !Rcairo_fonts[i].hb_font) {
+		fprintf(stderr, "INFO: allocating new instance of font %d for size %ld\n", i, new_size);
+		FT_Set_Char_Size(Rcairo_fonts[i].ft_face, 0, new_size, 0, 0);
+		Rcairo_fonts[i].font_size = new_size;
+		if (Rcairo_fonts[i].hb_font)
+			hb_font_destroy(Rcairo_fonts[i].hb_font);
+		Rcairo_fonts[i].hb_font = hb_ft_font_create(Rcairo_fonts[i].ft_face, NULL);
+		hb_ft_font_set_funcs(Rcairo_fonts[i].hb_font);
+	}
+#endif
 }
 
 static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
@@ -608,18 +625,31 @@ static rc_text_shape *init_text_shape() {
 	return &shared_text_shape;
 }
 
+#define CHB_DIR_LTR 0
+#define CHB_DIR_RTL 1
+#define CHB_FIRST   4
+#define CHB_LAST    8
+
 static void chb_add_glyphs(rc_text_shape *rc, Rcairo_font_face *fcface,
-						   const UChar *text, int32_t start, int32_t len, int direction) {
+						   const UChar *text, int32_t start, int32_t len, int flags) {
 	hb_buffer_t *buf = hb_buffer_create();
-	
-	hb_buffer_set_unicode_funcs(buf, hb_icu_get_unicode_funcs());
-	hb_buffer_set_direction(buf, direction ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
+	hb_unicode_funcs_t* unicode_func = hb_icu_get_unicode_funcs();
+	hb_buffer_set_unicode_funcs(buf, unicode_func);
+	hb_buffer_set_direction(buf, (flags & CHB_DIR_RTL) ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
+	if (flags & CHB_FIRST) hb_buffer_set_flags (buf, HB_BUFFER_FLAG_BOT);
+	if (flags & CHB_LAST) hb_buffer_set_flags (buf, HB_BUFFER_FLAG_EOT);
 	/* stript and language ... R doesn't define them so how do we determine them ?
 	hb_buffer_set_script(buf, ); 
 	hb_buffer_set_language(buf, hb_language_from_string(..., -1)); */
-	if (len > 1 && text[start] >= 0x300 && text[start] <= 0x400) {
-		hb_buffer_set_script(buf, HB_SCRIPT_ARABIC);
-		hb_buffer_set_language(buf, hb_language_from_string("fa", -1));
+	if (len > 0) {
+		hb_script_t script = hb_unicode_script(unicode_func, text[start]);
+		hb_buffer_set_script(buf, script);
+		// hb_buffer_set_language(buf, hb_language_from_string("fa", -1));
+		hb_tag_t tag = hb_script_to_iso15924_tag(script);
+		char scs[8];
+		hb_tag_to_string(tag, scs);
+		scs[5] = 0;
+		fprintf(stderr, "INFO: script identified as %s\n", scs);
 	}
 
 	/* Layout the text */
@@ -691,7 +721,8 @@ static rc_text_shape *c_setup_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const c
 	UBiDiDirection direction = ubidi_getDirection(bidi);
 	if (direction != UBIDI_MIXED) {
 		fprintf(stderr, "INFO: unidirectional text with direction %s, text: %s\n", (direction & 1) ? "RTL" : "LTR", str);
-		chb_add_glyphs(ts, rf, text, 0, ulen, direction ? 1 : 0);
+		chb_add_glyphs(ts, rf, text, 0, ulen,
+					   (direction ? CHB_DIR_RTL : CHB_DIR_LTR) | CHB_FIRST | CHB_LAST);
 	} else {
 		int32_t count, i, start, length;
 		count = ubidi_countRuns(bidi, &err);	
@@ -699,10 +730,13 @@ static rc_text_shape *c_setup_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const c
 			Rf_error("Unable to determine directionality runs for string '%s'", str);
 
 		fprintf(stderr, "INFO: multidirectional text '%s' with %d runs\n", str, (int) count);
-		for (i = 0; i < count; ++i) {
+		for (i = 0; i < count; i++) {
 			direction = ubidi_getVisualRun(bidi, i, &start, &length);
 			fprintf(stderr, "     %s: %d, %d chars\n", (direction & 1) ? "RTL" : "LTR", start, length);
-			chb_add_glyphs(ts, rf, text, start, length, direction ? 1 : 0);
+			chb_add_glyphs(ts, rf, text, start, length,
+						   (direction ? CHB_DIR_RTL : CHB_DIR_LTR) |
+						   ((i == 0) ? CHB_FIRST: 0) |
+						   ((i == count - 1) ? CHB_LAST : 0));
 		}
 	}
 	return ts;
@@ -1205,6 +1239,7 @@ static double CairoGD_StrWidth(constxt char *str,  R_GE_gcontext *gc,  NewDevDes
 	}
 }
 
+#ifdef HAVE_HARFBUZZ
 static void rc_glyphs_move(rc_text_shape *ts, double x, double y) {
 	unsigned int i = 0;
 	while (i < ts->glyphs) {
@@ -1214,6 +1249,7 @@ static void rc_glyphs_move(rc_text_shape *ts, double x, double y) {
 	ts->x += x;
 	ts->y += y;
 }
+#endif
 
 static void CairoGD_Text(double x, double y, constxt char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
@@ -1240,7 +1276,9 @@ static void CairoGD_Text(double x, double y, constxt char *str,  double rot, dou
 #endif
 	
 	cairo_save(cc);
-	cairo_move_to(cc, x, y);
+
+	cairo_translate(cc, x, y);
+
 	if (hadj!=0. || rot!=0.) {
 		cairo_text_extents_t te = {0, 0, 0, 0, 0, 0};
 #ifdef HAVE_HARFBUZZ
@@ -1249,21 +1287,17 @@ static void CairoGD_Text(double x, double y, constxt char *str,  double rot, dou
 		cairo_text_extents(cc, str, &te);
 #endif
 		if (rot!=0.)
-			cairo_rotate(cc, -rot/180.*M_PI);
-		if (hadj!=0.) {
-#ifdef HAVE_HARFBUZZ
-			rc_glyphs_move(ts, -te.x_advance*hadj, 0);
-#endif
-			cairo_rel_move_to(cc, -te.x_advance*hadj, 0);
-		}
+			cairo_rotate(cc, - rot / 180. * M_PI);
+		if (hadj!=0.)
+			cairo_translate(cc, -te.x_advance*hadj, 0);
 		/* Rcairo_set_color(cc, 0xff80ff); */
 	}
 	Rcairo_set_color(cc, gc->col);
 
 #ifdef HAVE_HARFBUZZ
-	rc_glyphs_move(ts, x, y);
 	cairo_show_glyphs(cc, ts->glyph, ts->glyphs);
 #else
+	cairo_move_to(cc, 0, 0);
 	cairo_show_text(cc, str);
 #endif
 	xd->cb->serial++;
