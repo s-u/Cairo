@@ -301,9 +301,9 @@ fi
 if test -z "${HB_LIBS}"; then
   HB_LIBS='-lharfbuzz-icu -licuuc -licudata -lharfbuzz'
 fi
+## ICU uses C++ (sadly) so requires stdc++
 LIBS="${LIBS} ${HB_LIBS} -lstdc++"
 CPPFLAGS="${CPPFLAGS} ${HB_CPPFLAGS}"
-
 
 AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include <unicode/ubidi.h>
@@ -325,6 +325,7 @@ int main(void) {
   [ AC_MSG_RESULT(no)
     LIBS="${zLIBS}"
     CPPFLAGS="${zCPPFLAGS}"
+    HB_CPPFLAGS=''
     ])
 fi
 
@@ -355,7 +356,15 @@ int main(void) {
 ## our CPPFLAGS included R's CPPFLAGS which we don't need to
 ## set so only include those we detected in addition to the
 ## R CMD config CPPFLAGS
-CPPFLAGS="${CAIRO_CFLAGS} ${HAVE_RCONN_H}"
+CPPFLAGS="${CAIRO_CFLAGS} ${HB_CPPFLAGS} ${HAVE_RCONN_H}"
+
+AC_ARG_ENABLE([debug],
+[AS_HELP_STRING([--enable-debug],[enable debug flags and output. @<:@no@:>@])],
+[want_debug="${enableval}"],
+[want_debug=no])
+if test ${want_debug} = yes; then
+CPPFLAGS="-DJGD_DEBUG=1 ${CPPFLAGS}"
+fi
 
 AC_CONFIG_FILES([src/Makevars])
 AC_OUTPUT
