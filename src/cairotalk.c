@@ -82,10 +82,17 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,
 static void CairoGD_Size(double *left, double *right,
 			 double *bottom, double *top,
 			 NewDevDesc *dd);
-static double CairoGD_StrWidth(constxt char *str, 
+static double CairoGD_StrWidthNative(constxt char *str,
 			       R_GE_gcontext *gc,
 			       NewDevDesc *dd);
-static void CairoGD_Text(double x, double y, constxt char *str,
+static double CairoGD_StrWidthUTF8(constxt char *str,
+			       R_GE_gcontext *gc,
+			       NewDevDesc *dd);
+static void CairoGD_TextNative(double x, double y, constxt char *str,
+			 double rot, double hadj,
+			 R_GE_gcontext *gc,
+			 NewDevDesc *dd);
+static void CairoGD_TextUTF8(double x, double y, constxt char *str,
 			 double rot, double hadj,
 			 R_GE_gcontext *gc,
 			 NewDevDesc *dd);
@@ -747,14 +754,14 @@ static void chb_add_glyphs(rc_text_shape *rc, Rcairo_font_face *fcface,
 
 /* split text into runs with the same directionality then call HB to shape each run.
    The result is a set of cairo glyphs with locations */
-static rc_text_shape *c_setup_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const char *str) {
+static rc_text_shape *c_setup_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const char *str, const char *encoding) {
 	UBiDi *bidi = 0;
 	UChar *text = 0;
 	UErrorCode err = U_ZERO_ERROR;
 	int32_t ulen = 0;
 	if (!bidi) bidi = ubidi_open();
 	if (!bidi) Rf_error("Unable to allocate memory for UBiDi");
-	ulen = str2utf16(str, strlen(str), &text, "") / sizeof(UChar); /* str2utf16 returns bytes, need chars */
+	ulen = str2utf16(str, strlen(str), &text, encoding) / sizeof(UChar); /* str2utf16 returns bytes, need chars */
 	ubidi_setPara(bidi, text, ulen, UBIDI_DEFAULT_LTR, NULL, &err);
 	if (U_FAILURE(err))
 		Rf_error("Unable to compute UBiDi for string '%'", str);
@@ -1262,7 +1269,11 @@ static void CairoGD_Size(double *left, double *right,  double *bottom, double *t
 	*bottom=xd->cb->height;
 }
 
-static double CairoGD_StrWidth(constxt char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
+/* NOTE: encoding is only used for the Harfbuzz implementation which converts everything
+   to UTF-16 before processing so in fact any input encoding will work.
+   All other paths pass the string through as-is so rely on cairo handing UTF-8 and R using
+   TextUTF8 and StrWidthUTF8. */
+static double CairoGD_StrWidthEnc(constxt char *str,  R_GE_gcontext *gc,  NewDevDesc *dd, const char *encoding)
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	int slen = strlen(str);
@@ -1280,7 +1291,7 @@ static double CairoGD_StrWidth(constxt char *str,  R_GE_gcontext *gc,  NewDevDes
 		cairo_t *cc = xd->cb->cc;
 		cairo_text_extents_t te = {0, 0, 0, 0, 0, 0};
 #ifdef HAVE_HARFBUZZ
-		rc_text_shape *ts = c_setup_glyphs(xd, gc, str);
+		rc_text_shape *ts = c_setup_glyphs(xd, gc, str, encoding);
 		cairo_glyph_extents(cc, ts->glyph, ts->glyphs, &te);
 #else
 		cairo_text_extents(cc, str, &te);
@@ -1291,7 +1302,17 @@ static double CairoGD_StrWidth(constxt char *str,  R_GE_gcontext *gc,  NewDevDes
 	}
 }
 
-static void CairoGD_Text(double x, double y, constxt char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static double CairoGD_StrWidthUTF8(constxt char *str, R_GE_gcontext *gc, NewDevDesc *dd) {
+	return CairoGD_StrWidthEnc(str, gc, dd, "UTF-8");
+}
+
+static double CairoGD_StrWidthNative(constxt char *str, R_GE_gcontext *gc, NewDevDesc *dd) {
+	return CairoGD_StrWidthEnc(str, gc, dd, "");
+}
+
+static void CairoGD_TextEnc(double x, double y, constxt char *str,  double rot, double hadj,
+							R_GE_gcontext *gc,  NewDevDesc *dd, const char *encoding)
+
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	cairo_t *cc;
@@ -1299,11 +1320,11 @@ static void CairoGD_Text(double x, double y, constxt char *str,  double rot, dou
 	if(!xd || !xd->cb) return;
 
 	cc = xd->cb->cc;
-		
+
 	Rcairo_setup_font(xd,gc);
 
 #ifdef JGD_DEBUG
-	Rprintf("text \"%s\" (%d) face %d  %f:%f rot=%f hadj=%f [%08x:%08x]\n", str, len, gc->fontface, x, y, rot, hadj, gc->col, gc->fill);
+	Rprintf("text (encoding '%s') \"%s\" (%d) face %d  %f:%f rot=%f hadj=%f [%08x:%08x]\n", encoding, str, len, gc->fontface, x, y, rot, hadj, gc->col, gc->fill);
 #endif
 
 #if R_VERSION >= R_Version(4,0,0)
@@ -1312,9 +1333,9 @@ static void CairoGD_Text(double x, double y, constxt char *str,  double rot, dou
 #endif
 
 #ifdef HAVE_HARFBUZZ
-	rc_text_shape *ts = c_setup_glyphs(xd, gc, str);
+	rc_text_shape *ts = c_setup_glyphs(xd, gc, str, encoding);
 #endif
-	
+
 	cairo_save(cc);
 
 	cairo_translate(cc, x, y);
@@ -1368,6 +1389,16 @@ static void CairoGD_Text(double x, double y, constxt char *str,  double rot, dou
 	cairo_restore(cc);
 }
 
+static void CairoGD_TextUTF8(double x, double y, constxt char *str,
+							 double rot, double hadj, R_GE_gcontext *gc, NewDevDesc *dd) {
+	CairoGD_TextEnc(x, y, str, rot, hadj, gc, dd, "UTF-8");
+}
+
+static void CairoGD_TextNative(double x, double y, constxt char *str,
+							   double rot, double hadj, R_GE_gcontext *gc, NewDevDesc *dd) {
+	CairoGD_TextEnc(x, y, str, rot, hadj, gc, dd, "");
+}
+
 static SEXP CairoGD_setPattern(SEXP pattern, pDevDesc dd) {
     return R_NilValue;
 }
@@ -1395,8 +1426,8 @@ void Rcairo_setup_gd_functions(NewDevDesc *dd) {
     dd->size = CairoGD_Size;
     dd->newPage = CairoGD_NewPage;
     dd->clip = CairoGD_Clip;
-    dd->strWidth = CairoGD_StrWidth;
-    dd->text = CairoGD_Text;
+    dd->strWidth = CairoGD_StrWidthNative;
+    dd->text = CairoGD_TextNative;
     dd->rect = CairoGD_Rect;
     dd->circle = CairoGD_Circle;
     dd->line = CairoGD_Line;
@@ -1407,8 +1438,8 @@ void Rcairo_setup_gd_functions(NewDevDesc *dd) {
     dd->metricInfo = CairoGD_MetricInfo;
 #if R_GE_version >= 4
 	dd->hasTextUTF8 = TRUE;
-    dd->strWidthUTF8 = CairoGD_StrWidth;
-    dd->textUTF8 = CairoGD_Text;
+    dd->strWidthUTF8 = CairoGD_StrWidthUTF8;
+    dd->textUTF8 = CairoGD_TextUTF8;
 	dd->wantSymbolUTF8 = TRUE;
 #if R_GE_version >= 6
 	dd->raster = CairoGD_Raster;
