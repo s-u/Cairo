@@ -748,7 +748,6 @@ static void chb_add_glyphs(rc_text_shape *rc, Rcairo_font_face *fcface,
 /* split text into runs with the same directionality then call HB to shape each run.
    The result is a set of cairo glyphs with locations */
 static rc_text_shape *c_setup_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const char *str) {
-	cairo_t *cc = xd->cb->cc;
 	UBiDi *bidi = 0;
 	UChar *text = 0;
 	UErrorCode err = U_ZERO_ERROR;
@@ -1291,18 +1290,6 @@ static double CairoGD_StrWidth(constxt char *str,  R_GE_gcontext *gc,  NewDevDes
 		return te.x_advance;
 	}
 }
-
-#ifdef HAVE_HARFBUZZ
-static void rc_glyphs_move(rc_text_shape *ts, double x, double y) {
-	unsigned int i = 0;
-	while (i < ts->glyphs) {
-		ts->glyph[i].x += x;
-		ts->glyph[i++].y += y;
-	}
-	ts->x += x;
-	ts->y += y;
-}
-#endif
 
 static void CairoGD_Text(double x, double y, constxt char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
