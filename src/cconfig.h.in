@@ -4,6 +4,9 @@
    `cairo_image_surface_get_format', and to 0 if you don't. */
 #undef HAVE_DECL_CAIRO_IMAGE_SURFACE_GET_FORMAT
 
+/* Define to 1 if Harfbuzz and ICU are present and working */
+#undef HAVE_HARFBUZZ
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
