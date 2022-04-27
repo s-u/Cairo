@@ -160,6 +160,15 @@ dnl fi
 AC_CHECK_DECLS([cairo_image_surface_get_format], [#include <cairo.h>])
 
 has_cairo_ft=no
+
+AC_ARG_WITH([freetype],
+  AS_HELP_STRING(--with-freetype,[compile support for better font handling using FreeType and Fontconfig if present and supported by cairo. (default is @<:@auto@:>@).]),
+        [with_freetype=$withval], [with_freetype=auto])
+
+AC_MSG_CHECKING([whether FreeType support is desired])
+AC_MSG_RESULT(${with_freetype})
+
+if test x${with_freetype} != xno; then ## with_freetype
 AC_MSG_CHECKING([for FreeType support in cairo])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <cairo.h>
@@ -243,6 +252,7 @@ int main(void) {
  AC_MSG_ERROR([Cannot use cairo-ft backend, although cairo claims it is working. Please check your caito installation and/or update cairo if necessary or set CAIRO_CFLAGS/CAIRO_LIBS accordingly.])
  ])
 fi
+fi ## with_freetype
 
 # --- check for JPEG support ---
 AC_MSG_CHECKING([whether libjpeg works])
@@ -269,7 +279,17 @@ AC_ARG_WITH([harfbuzz],
 
 AC_MSG_CHECKING([whether Harfbuzz layout is desired])
 AC_MSG_RESULT(${with_harfbuzz})
-
+if test x${with_harfbuzz} != xno; then
+if test x${has_cairo_ft} != xyes; then
+  if test x${with_harfbuzz} = xyes; then
+    AC_MSG_ERROR([ERROR: Harfbuzz support is requested, but FreeType is not available.
+    Harfbuzz requires cairo with FreeType support to be present.])
+  else
+    AC_MSG_NOTICE([NOTE: Harfbuzz requires cairo with FreeType support which is not available.])
+  fi
+  with_harfbuzz=no
+fi
+fi
 if test x${with_harfbuzz} != xno; then
 AC_MSG_CHECKING([whether Harfbuzz + ICU works])
 zLIBS="${LIBS}"
