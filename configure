@@ -701,6 +701,7 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+with_freetype
 with_harfbuzz
 '
       ac_precious_vars='build_alias
@@ -1328,6 +1329,9 @@ if test -n "$ac_init_help"; then
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-freetype         compile support for better font handling using
+                          FreeType and Fontconfig if present and supported by
+                          cairo. (default is [auto]).
   --with-harfbuzz         compile support for bi-directional Unicode and
                           advanced text layout (like ligature support) using
                           Harfbuzz and ICU libraries. (default is [auto]).
@@ -3936,6 +3940,23 @@ fi
 
 
 has_cairo_ft=no
+
+
+# Check whether --with-freetype was given.
+if test ${with_freetype+y}
+then :
+  withval=$with_freetype; with_freetype=$withval
+else $as_nop
+  with_freetype=auto
+fi
+
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether FreeType support is desired" >&5
+printf %s "checking whether FreeType support is desired... " >&6; }
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: ${with_freetype}" >&5
+printf "%s\n" "${with_freetype}" >&6; }
+
+if test x${with_freetype} != xno; then ## with_freetype
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for FreeType support in cairo" >&5
 printf %s "checking for FreeType support in cairo... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -4062,6 +4083,7 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 fi
+fi ## with_freetype
 
 # --- check for JPEG support ---
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether libjpeg works" >&5
@@ -4111,7 +4133,18 @@ fi
 printf %s "checking whether Harfbuzz layout is desired... " >&6; }
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: ${with_harfbuzz}" >&5
 printf "%s\n" "${with_harfbuzz}" >&6; }
-
+if test x${with_harfbuzz} != xno; then
+if test x${has_cairo_ft} != xyes; then
+  if test x${with_harfbuzz} = xyes; then
+    as_fn_error $? "ERROR: Harfbuzz support is requested, but FreeType is not available.
+    Harfbuzz requires cairo with FreeType support to be present." "$LINENO" 5
+  else
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: NOTE: Harfbuzz requires cairo with FreeType support which is not available." >&5
+printf "%s\n" "$as_me: NOTE: Harfbuzz requires cairo with FreeType support which is not available." >&6;}
+  fi
+  with_harfbuzz=no
+fi
+fi
 if test x${with_harfbuzz} != xno; then
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether Harfbuzz + ICU works" >&5
 printf %s "checking whether Harfbuzz + ICU works... " >&6; }
