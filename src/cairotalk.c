@@ -263,7 +263,9 @@ void Rcairo_set_font(int i, const char *fcname){
 					if (Rcairo_fonts[i].face)
 						Rcairo_font_destroy(&Rcairo_fonts[i]);
 					memcpy(&Rcairo_fonts[i], &rc_face, sizeof(rc_face));
-					fprintf(stderr, "INFO: setting font index %d to font %p from file %s (spec %s)\n", i, rc_face.face, file, fcname);
+#ifdef JGD_DEBUG
+					Rprintf("INFO: setting font index %d to font %p from file %s (spec %s)\n", i, rc_face.face, file, fcname);
+#endif
 				} else
 					Rf_warning("Unable to get face for font type %d from %s (for %s)", i + 1, (const char*) file, fcname);
 				break;
@@ -297,7 +299,9 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 		/* fetch custom family into corresponding custom slot */
 		if (!Rcairo_fonts[i].family || strcmp(Rcairo_fonts[i].family, gc->fontfamily)) {
 			char spec[128];
-			fprintf(stderr, "INFO: new custom family '%s' in slot %d\n", gc->fontfamily, i);
+#ifdef JGD_DEBUG
+			Rprintf("INFO: new custom family '%s' in slot %d\n", gc->fontfamily, i);
+#endif
 			if (strlen(gc->fontfamily) < sizeof(spec) - 32) {
 				const char *specs[4] = { ":style=Regular", ":style=Bold", ":style=Italic", ":style=BoldItalic, BoldItalic" };
 				strcpy(spec, gc->fontfamily);
@@ -347,11 +351,15 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
   cairo_set_font_size (cc, gc->cex * gc->ps * xd->fontscale + 0.5);
 
 #ifdef HAVE_HARFBUZZ
-    fprintf(stderr, "INFO: set font[%d] size to %.f (cex=%.f, ps=%.f, fontscale=%.f)\n", i,
+#ifdef JGD_DEBUG
+    Rprintf("INFO: set font[%d] size to %.f (cex=%.f, ps=%.f, fontscale=%.f)\n", i,
 			(gc->cex * gc->ps * xd->fontscale + 0.5) * 64, gc->cex, gc->ps, xd->fontscale);
+#endif
 	long new_size = (gc->cex * gc->ps * xd->fontscale + 0.5) * 64;
 	if (Rcairo_fonts[i].font_size != new_size || !Rcairo_fonts[i].hb_font) {
-		fprintf(stderr, "INFO: allocating new instance of font %d for size %ld\n", i, new_size);
+#ifdef JGD_DEBUG
+		Rprintf("INFO: allocating new instance of font %d for size %ld\n", i, new_size);
+#endif
 		FT_Set_Char_Size(Rcairo_fonts[i].ft_face, 0, new_size, 0, 0);
 		Rcairo_fonts[i].font_size = new_size;
 		if (Rcairo_fonts[i].hb_font)
@@ -674,19 +682,23 @@ static void chb_add_glyphs(rc_text_shape *rc, Rcairo_font_face *fcface,
 		char scs[8];
 		hb_tag_to_string(tag, scs);
 		scs[5] = 0;
-		fprintf(stderr, "INFO: script identified as %s\n", scs);
+#ifdef JGD_DEBUG
+		Rprintf("INFO: script identified as %s\n", scs);
+#endif
 	}
 
 	/* Layout the text */
 	hb_buffer_add_utf16(buf, ((const uint16_t*) text) + start, len, 0, len);
 	hb_shape(fcface->hb_font, buf, NULL, 0);
 
-	fprintf(stderr, "TEXT: ");
+#ifdef JGD_DEBUG
+	Rprintf("TEXT: ");
 	{
 		for (int k = start; k < start + len; k++)
-			fprintf(stderr, "%04x[%c] ", text[k], (text[k] < 127) ? ((char) text[k]) : '.');
+			Rprintf("%04x[%c] ", text[k], (text[k] < 127) ? ((char) text[k]) : '.');
 	}
-	fprintf(stderr, "\n");
+	Rprintf("\n");
+#endif
 
 	/* Get the glyphs info */
 	unsigned int         glyph_count;
@@ -697,29 +709,39 @@ static void chb_add_glyphs(rc_text_shape *rc, Rcairo_font_face *fcface,
 	if (glyph_count + rc->glyphs > rc->g_alloc) {
 		unsigned int need = (sizeof(cairo_glyph_t) * MIN_GLYPH_N(glyph_count + rc->glyphs)) * 2;
 		void *ng = malloc(need);
-		fprintf(stderr, "INFO: allocating %u bytes to fit at least %u glyphs\n", need, (glyph_count + rc->glyphs));
+#ifdef JGD_DEBUG
+		Rprintf("INFO: allocating %u bytes to fit at least %u glyphs\n", need, (glyph_count + rc->glyphs));
+#endif
 		if (!ng)
 			Rf_error("Cannot allocate memory for %u glyphs", glyph_count);
 		if (rc->glyph && rc->glyphs) {
-			fprintf(stderr, "      (copying existing %u glyphs)\n", rc->glyphs);
+#ifdef JGD_DEBUG
+			Rprintf("      (copying existing %u glyphs)\n", rc->glyphs);
+#endif
 			memcpy(ng, rc->glyph, rc->glyphs * sizeof(cairo_glyph_t));
 			free(rc->glyph);
 		}
 		rc->glyph = ng;
 		rc->g_alloc = need / sizeof(cairo_glyph_t);
 	}
-	fprintf(stderr, "  start location: %.2f, %.2f (glyphs=%d, alloc=%d)\n", rc->x, rc->y, rc->glyphs, rc->g_alloc);
+#ifdef JGD_DEBUG
+	Rprintf("  start location: %.2f, %.2f (glyphs=%d, alloc=%d)\n", rc->x, rc->y, rc->glyphs, rc->g_alloc);
+#endif
 	for (unsigned int i = 0; i < glyph_count; i++) {
 		int j = rc->glyphs++;
 		rc->glyph[j].index = glyph_info[i].codepoint;
 		rc->glyph[j].x = rc->x + (glyph_pos[i].x_offset / 64.0);
 		rc->glyph[j].y = rc->y - (glyph_pos[i].y_offset / 64.0);
-		fprintf(stderr, "  [%02d -> %02d]  %.2f, %.2f 0x%04x\n", i, j, rc->glyph[j].x, rc->glyph[j].y, (int) rc->glyph[j].index);
+#ifdef JGD_DEBUG
+		Rprintf("  [%02d -> %02d]  %.2f, %.2f 0x%04x\n", i, j, rc->glyph[j].x, rc->glyph[j].y, (int) rc->glyph[j].index);
+#endif
 		rc->x += glyph_pos[i].x_advance / 64.0;
 		rc->y -= glyph_pos[i].y_advance / 64.0;
 	}
-	
-	fprintf(stderr, "  final location: %.2f, %.2f (%u glyphs)\n", rc->x, rc->y, rc->glyphs);
+
+#ifdef JGD_DEBUG
+	Rprintf("  final location: %.2f, %.2f (%u glyphs)\n", rc->x, rc->y, rc->glyphs);
+#endif
 	hb_buffer_destroy(buf);
 }
 
@@ -745,7 +767,9 @@ static rc_text_shape *c_setup_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const c
 
 	UBiDiDirection direction = ubidi_getDirection(bidi);
 	if (direction != UBIDI_MIXED) {
-		fprintf(stderr, "INFO: unidirectional text with direction %s, text: %s\n", (direction & 1) ? "RTL" : "LTR", str);
+#ifdef JGD_DEBUG
+		Rprintf("INFO: unidirectional text with direction %s, text: %s\n", (direction & 1) ? "RTL" : "LTR", str);
+#endif
 		chb_add_glyphs(ts, rf, text, 0, ulen,
 					   (direction ? CHB_DIR_RTL : CHB_DIR_LTR) | CHB_FIRST | CHB_LAST);
 	} else {
@@ -754,10 +778,14 @@ static rc_text_shape *c_setup_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const c
 		if (U_FAILURE(err))
 			Rf_error("Unable to determine directionality runs for string '%s'", str);
 
-		fprintf(stderr, "INFO: multidirectional text '%s' with %d runs\n", str, (int) count);
+#ifdef JGD_DEBUG
+		Rprintf("INFO: multidirectional text '%s' with %d runs\n", str, (int) count);
+#endif
 		for (i = 0; i < count; i++) {
 			direction = ubidi_getVisualRun(bidi, i, &start, &length);
-			fprintf(stderr, "     %s: %d, %d chars\n", (direction & 1) ? "RTL" : "LTR", start, length);
+#ifdef JGD_DEBUG
+			Rprintf("     %s: %d, %d chars\n", (direction & 1) ? "RTL" : "LTR", start, length);
+#endif
 			chb_add_glyphs(ts, rf, text, start, length,
 						   (direction ? CHB_DIR_RTL : CHB_DIR_LTR) |
 						   ((i == 0) ? CHB_FIRST: 0) |
