@@ -669,6 +669,7 @@ static rc_text_shape *init_text_shape() {
 #define CHB_DIR_RTL 1
 #define CHB_FIRST   4
 #define CHB_LAST    8
+#define CHB_UTF8    16
 
 static void chb_add_glyphs(rc_text_shape *rc, Rcairo_font_face *fcface,
 						   const UChar *text, int32_t start, int32_t len, int flags) {
@@ -678,9 +679,6 @@ static void chb_add_glyphs(rc_text_shape *rc, Rcairo_font_face *fcface,
 	hb_buffer_set_direction(buf, (flags & CHB_DIR_RTL) ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
 	if (flags & CHB_FIRST) hb_buffer_set_flags (buf, HB_BUFFER_FLAG_BOT);
 	if (flags & CHB_LAST) hb_buffer_set_flags (buf, HB_BUFFER_FLAG_EOT);
-	/* stript and language ... R doesn't define them so how do we determine them ?
-	hb_buffer_set_script(buf, ); 
-	hb_buffer_set_language(buf, hb_language_from_string(..., -1)); */
 	if (len > 0) {
 		hb_script_t script = hb_unicode_script(unicode_func, text[start]);
 		hb_buffer_set_script(buf, script);
@@ -695,16 +693,22 @@ static void chb_add_glyphs(rc_text_shape *rc, Rcairo_font_face *fcface,
 	}
 
 	/* Layout the text */
-	hb_buffer_add_utf16(buf, ((const uint16_t*) text) + start, len, 0, len);
+	if (flags & CHB_UTF8)
+		hb_buffer_add_utf8(buf, ((const char*) text) + start, len, 0, len);
+	else
+		hb_buffer_add_utf16(buf, ((const uint16_t*) text) + start, len, 0, len);
+
 	hb_shape(fcface->hb_font, buf, NULL, 0);
 
 #ifdef JGD_DEBUG
-	Rprintf("TEXT: ");
-	{
+	if (flags & CHB_UTF8)
+		Rprintf("TEXT(UTF8): %s\n", (const char *)text);
+	else {
+		Rprintf("TEXT: ");
 		for (int k = start; k < start + len; k++)
 			Rprintf("%04x[%c] ", text[k], (text[k] < 127) ? ((char) text[k]) : '.');
+		Rprintf("\n");
 	}
-	Rprintf("\n");
 #endif
 
 	/* Get the glyphs info */
@@ -752,9 +756,24 @@ static void chb_add_glyphs(rc_text_shape *rc, Rcairo_font_face *fcface,
 	hb_buffer_destroy(buf);
 }
 
+/* simple processing for ASCII text: LTR, treat as UTF8 input */
+static rc_text_shape *c_setup_ascii_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const char *str) {
+	rc_text_shape *ts = init_text_shape();
+	int i = xd->fontface - 1;
+	if (i < 0 || i > 8) i = 0;
+	Rcairo_font_face *rf = &Rcairo_fonts[i];
+	chb_add_glyphs(ts, rf, (const UChar*) str, 0, strlen(str), CHB_DIR_LTR | CHB_FIRST | CHB_LAST | CHB_UTF8);
+	return ts;
+}
+
 /* split text into runs with the same directionality then call HB to shape each run.
    The result is a set of cairo glyphs with locations */
 static rc_text_shape *c_setup_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const char *str, const char *encoding) {
+	/* check for ASCII input to avoid complicated processing */
+	const unsigned char *c = (const unsigned char*) str;
+	while (*c && *c < 128) c++;
+	if (!*c)
+		return c_setup_ascii_glyphs(xd, gc, str);
 	UBiDi *bidi = 0;
 	UChar *text = 0;
 	UErrorCode err = U_ZERO_ERROR;
@@ -798,6 +817,7 @@ static rc_text_shape *c_setup_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const c
 						   ((i == count - 1) ? CHB_LAST : 0));
 		}
 	}
+	ubidi_close(bidi);
 	return ts;
 }
 
@@ -1324,7 +1344,7 @@ static void CairoGD_TextEnc(double x, double y, constxt char *str,  double rot, 
 	Rcairo_setup_font(xd,gc);
 
 #ifdef JGD_DEBUG
-	Rprintf("text (encoding '%s') \"%s\" (%d) face %d  %f:%f rot=%f hadj=%f [%08x:%08x]\n", encoding, str, len, gc->fontface, x, y, rot, hadj, gc->col, gc->fill);
+	Rprintf("text (encoding '%s') \"%s\" face %d  %f:%f rot=%f hadj=%f [%08x:%08x]\n", encoding, str, gc->fontface, x, y, rot, hadj, gc->col, gc->fill);
 #endif
 
 #if R_VERSION >= R_Version(4,0,0)
