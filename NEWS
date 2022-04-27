@@ -1,6 +1,6 @@
 NEWS/Changelog
 
-1.5-15
+1.5-15	(2022-03-16)
     o	CairoX11 (xlib back-end): install an X11 I/O error handler
 	while processing events such that broken connections are
 	detected and don't kill R.
