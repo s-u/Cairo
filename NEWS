@@ -18,6 +18,9 @@ NEWS/Changelog
 	`--without` form is used) then the corresponding support is
 	explicitly disabled. Note that Harfbuzz requires FreeType.
 
+    o	added `--enable-debug` argument to configure which will make
+	Cairo extremely chatty on the console.
+
 
 1.5-15	(2022-03-16)
     o	CairoX11 (xlib back-end): install an X11 I/O error handler
