@@ -1,7 +1,7 @@
 #ifndef _DEV_GD_H
 #define _DEV_GD_H
 
-#define CAIROGD_VER 0x01050f /* Cairo v1.5-15 */
+#define CAIROGD_VER 0x010600 /* Cairo v1.6-0 */
 
 /* cairo R package config */
 #include "cconfig.h"
