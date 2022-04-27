@@ -1,5 +1,24 @@
 NEWS/Changelog
 
+1.6-0	(under development)
+    o	Added text drawing using Harfbuzz and ICU. This significantly
+	improves the quality of text rendeded by Cairo and enables
+	support for right-to left and bi-directional text. (#23)
+	It also enables the use of ligatures. (#18)
+	This feature is only enabled if `pkg-config` is present and
+	knows how to use the `harfbuzz-icu` module.
+
+    o	The `family=` argument in text drawing is now honored also for
+	FreeType and Harfbuzz back-ends.
+
+    o	configure gains two arguments: `--with-freetype` and
+	`--with-harfbuzz`. They both default to `auto` which means
+	FreeType and Harfbuzz will be used if present. If set to `yes`
+	then the support is required. If set to `no` (or the
+	`--without` form is used) then the corresponding support is
+	explicitly disabled. Note that Harfbuzz requires FreeType.
+
+
 1.5-15	(2022-03-16)
     o	CairoX11 (xlib back-end): install an X11 I/O error handler
 	while processing events such that broken connections are
