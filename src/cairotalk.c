@@ -131,10 +131,12 @@ typedef struct {
 	hb_face_t *hb_face;
 	long font_size;
 #endif
+	char *family;
 	int updated;
 } Rcairo_font_face;
 
-Rcairo_font_face Rcairo_fonts[5];
+/* 0..3 regular, 4 symbol, 5..8 custom family */
+Rcairo_font_face Rcairo_fonts[10];
 
 static const cairo_user_data_key_t key;
 
@@ -143,10 +145,9 @@ void Rcairo_font_destroy(Rcairo_font_face *rf) {
 		cairo_font_face_destroy(rf->face);
 		rf->face = NULL;
 	}
-	if (rf->ft_face) {
-		FT_Done_Face(rf->ft_face);
-		rf->ft_face = NULL;
-	}
+	/* NOTE: the ownership of ft_face went to cairo
+	   so we don't get to release it. */
+	rf->ft_face = NULL;
 #ifdef HAVE_HARFBUZZ
 	if (rf->hb_font)
 		hb_font_destroy(rf->hb_font);
@@ -195,8 +196,11 @@ cairo_font_face_t *Rcairo_set_font_face(Rcairo_font_face *rf, int setCharmap, co
 		er = FT_Set_Charmap( face, found );
 	} 
 
+	/* NOTE: cairo may keep fonts around beyond our use (e.g. the PDF device
+	   keeps it until it generated the PDF later by re-playing the commands).
+	   Hence we have to let cairo manage the lifespan of the FT face.
+	   By keeping the cairo face we control our side of the bargain. */
 	c_face = cairo_ft_font_face_create_for_ft_face(face,FT_LOAD_DEFAULT);
-#if 0 /* FIXME: memory management is now likely more tricky than that ... */
 	status = cairo_font_face_set_user_data (c_face, &key,
 		face, (cairo_destroy_func_t) FT_Done_Face);
 	if (status) {
@@ -204,14 +208,16 @@ cairo_font_face_t *Rcairo_set_font_face(Rcairo_font_face *rf, int setCharmap, co
 	    FT_Done_Face (face);
 	    return NULL;
 	}
-#endif
 #ifdef HAVE_HARFBUZZ
-	/* see also hb_ft_font_create_referenced, but we manage lifetime so shold be ok */
-    rf->hb_face = hb_ft_face_create(face, NULL);
+	/* both HB objects increase the ref count on FT face so
+	   it doesn't get released while they need it */
+    rf->hb_face = hb_ft_face_create_referenced(face);
+
 	/* font needs size ... */
 	rf->font_size = 800; /* default is 12pt = 12.5 * 64 = 800 */
 	FT_Set_Char_Size(face, 0, rf->font_size, 0, 0);
-	rf->hb_font = hb_ft_font_create(face, NULL);
+
+	rf->hb_font = hb_ft_font_create_referenced(face);
 	hb_ft_font_set_funcs(rf->hb_font);
 #endif
 	rf->ft_face = face;
@@ -257,7 +263,7 @@ void Rcairo_set_font(int i, const char *fcname){
 					if (Rcairo_fonts[i].face)
 						Rcairo_font_destroy(&Rcairo_fonts[i]);
 					memcpy(&Rcairo_fonts[i], &rc_face, sizeof(rc_face));
-					fprintf(stderr, "INFO: setting font index %d to font %p from file %s\n", i, rc_face.face, file);
+					fprintf(stderr, "INFO: setting font index %d to font %p from file %s (spec %s)\n", i, rc_face.face, file, fcname);
 				} else
 					Rf_warning("Unable to get face for font type %d from %s (for %s)", i + 1, (const char*) file, fcname);
 				break;
@@ -286,16 +292,35 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 
 	if (i < 0 || i >= 5) i = 0;
 
-	if (Rcairo_fonts[i].updated || (xd->fontface != gc->fontface)){
+	if (i < 4 && *gc->fontfamily) {
+		i += 5;
+		/* fetch custom family into corresponding custom slot */
+		if (!Rcairo_fonts[i].family || strcmp(Rcairo_fonts[i].family, gc->fontfamily)) {
+			char spec[128];
+			fprintf(stderr, "INFO: new custom family '%s' in slot %d\n", gc->fontfamily, i);
+			if (strlen(gc->fontfamily) < sizeof(spec) - 32) {
+				const char *specs[4] = { ":style=Regular", ":style=Bold", ":style=Italic", ":style=BoldItalic, BoldItalic" };
+				strcpy(spec, gc->fontfamily);
+				strcat(spec, specs[i - 5]);
+				Rcairo_set_font(i, spec);
+			} else
+				Rcairo_set_font(i, spec);
+			if (Rcairo_fonts[i].family)
+				free(Rcairo_fonts[i].family);
+			Rcairo_fonts[i].family = strdup(gc->fontfamily);
+		}
+	}
+
+	if (Rcairo_fonts[i].updated || (xd->fontface != i + 1)){
 		cairo_set_font_face(cc, Rcairo_fonts[i].face);
 		set_cf_antialias(cc);
 		Rcairo_fonts[i].updated = 0;
 #ifdef JGD_DEBUG
-		  Rprintf("  font face changed to \"%d\" %fpt\n", gc->fontface, gc->cex*gc->ps + 0.5);
+		Rprintf("  font face %d changed to \"%s\" %fpt\n", i, gc->fontfamily, gc->cex*gc->ps + 0.5);
 #endif
-	} 
+	}
 
-	xd->fontface = gc->fontface;
+	xd->fontface = i + 1;
 
 #else /* no FreeType */
   char *Cfontface="Helvetica";
@@ -331,7 +356,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 		Rcairo_fonts[i].font_size = new_size;
 		if (Rcairo_fonts[i].hb_font)
 			hb_font_destroy(Rcairo_fonts[i].hb_font);
-		Rcairo_fonts[i].hb_font = hb_ft_font_create(Rcairo_fonts[i].ft_face, NULL);
+		Rcairo_fonts[i].hb_font = hb_ft_font_create_referenced(Rcairo_fonts[i].ft_face);
 		hb_ft_font_set_funcs(Rcairo_fonts[i].hb_font);
 	}
 #endif
@@ -714,8 +739,8 @@ static rc_text_shape *c_setup_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const c
 		Rf_error("Unable to compute UBiDi for string '%'", str);
 
 	rc_text_shape *ts = init_text_shape();
-	int i = gc->fontface - 1;
-	if (i < 0 || i >= 5) i = 0;
+	int i = xd->fontface - 1;
+	if (i < 0 || i > 8) i = 0;
 	Rcairo_font_face *rf = &Rcairo_fonts[i];
 
 	UBiDiDirection direction = ubidi_getDirection(bidi);
