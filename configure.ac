@@ -295,13 +295,13 @@ AC_MSG_CHECKING([whether Harfbuzz + ICU works])
 zLIBS="${LIBS}"
 zCPPFLAGS="${CPPFLAGS}"
 if test -n "$PKGCONF"; then
-: ${HB_CPPFLAGS=`"${PKGCONF}" --cflags harfbuzz-icu`}
-: ${HB_LIBS=`"${PKGCONF}" --libs ${PKGCONF_LIB_ADD} harfbuzz-icu`}
+: ${HB_CPPFLAGS=`"${PKGCONF}" --cflags harfbuzz-icu icu-uc`}
+: ${HB_LIBS=`"${PKGCONF}" --libs ${PKGCONF_LIB_ADD} harfbuzz-icu icu-uc`}
 fi
 if test -z "${HB_LIBS}"; then
   HB_LIBS='-lharfbuzz-icu -licuuc -licudata -lharfbuzz'
 fi
-## ICU uses C++ (sadly) so requires stdc++
+## ICU uses C++ (sadly) so requires stdc++ - this may not be very portable ...
 LIBS="${LIBS} ${HB_LIBS} -lstdc++"
 CPPFLAGS="${CPPFLAGS} ${HB_CPPFLAGS}"
 
