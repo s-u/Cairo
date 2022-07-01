@@ -70,7 +70,7 @@ Monospace:matrix=1 .1 0 1       The users preferred monospace font
 
 The '\', '-', ':' and ',' characters in family names
 must be preceeded by a '\' character to avoid having them
-misinterpreted. Similarly, values containing '\', '=', '\_', ':'
+misinterpreted. Similarly, values containing '\', '=', '_', ':'
 and ',' must also have them preceeded by a '\' character. The
 '\' characters are stripped out of the family name and values
 as the font name is read."
@@ -79,7 +79,7 @@ as the font name is read."
 \section{Known issues}{
   \itemize{
   	\item This function is only available when the Cairo graphics library is configured
-	with FreeType and Fontcofig support.
+	with FreeType and FontConfig support.
   }
 }
 \seealso{
