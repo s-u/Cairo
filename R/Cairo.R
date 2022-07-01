@@ -38,7 +38,7 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 }
 
 Cairo.capabilities <- function() {
-    ust <- unique(.supported.types)
+    ust <- c(unique(.supported.types), "freetype", "harfbuzz")
     cap <- !is.na(match(ust, .Call("Rcairo_supported_types", PACKAGE="Cairo")))
     names(cap) <- ust
     cap

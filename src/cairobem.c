@@ -44,17 +44,33 @@ int Rcairo_type_supported(const char *type) {
   return 0;
 }
 
+/* for additional capabilities */
+#include "cairogd.h"
+
 SEXP Rcairo_supported_types() {
   const char **c = types;
   int i = 0;
   SEXP res;
   while (*c) { c++; i++; }
+  /* we also add general capabilities: freetype and harfbuzz */
+#if USE_CAIRO_FT
+  i++;
+#ifdef HAVE_HARFBUZZ
+  i++;
+#endif
+#endif
   PROTECT(res=allocVector(STRSXP, i));
   i = 0; c = types;
   while (*c) {
     SET_STRING_ELT(res, i, mkChar(*c));
     c++; i++;
   }
+#if USE_CAIRO_FT
+  SET_STRING_ELT(res, i++, mkChar("freetype"));
+#ifdef HAVE_HARFBUZZ
+  SET_STRING_ELT(res, i++, mkChar("harfbuzz"));
+#endif
+#endif
   UNPROTECT(1);
   return res;
 }

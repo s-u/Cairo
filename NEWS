@@ -27,6 +27,12 @@ NEWS/Changelog
 	This behavior can be changed by using `-DUSE_CAIRO_FT=1` to
 	force the use of `cairo-ft` unconditionally.
 
+    o	Cairo.capabilities() now also reports two capabilities
+	which are not format-related: "freetype" and "harfbuzz". The
+	former inidicates whether `cairo-ft` is used and the later
+	indicates whether the newly introduced Harfbuzz + ICU
+	bi-directional rendering support is present.
+
 
 1.5-15	(2022-03-16)
     o	CairoX11 (xlib back-end): install an X11 I/O error handler
