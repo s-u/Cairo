@@ -304,7 +304,7 @@ void gdd_get_version(int *ver) {
 }
 
 SEXP cairo_font_match(SEXP args){
-#if CAIRO_HAS_FT_FONT
+#if USE_CAIRO_FT
 	SEXP v;
 	const char *fcname;
 	int sort;
@@ -418,7 +418,7 @@ SEXP cairo_font_match(SEXP args){
 }
 
 SEXP cairo_font_set(SEXP args){
-#if CAIRO_HAS_FT_FONT
+#if USE_CAIRO_FT
 	SEXP v;
 	int i;
 	const char *font;

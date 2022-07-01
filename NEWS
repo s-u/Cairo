@@ -21,6 +21,12 @@ NEWS/Changelog
     o	added `--enable-debug` argument to configure which will make
 	Cairo extremely chatty on the console.
 
+    o	By default `cairo-ft` will be ignored on Windows, becasue it
+	it does not work without associated FontConfig configuration
+	files and font cache. (#37)
+	This behavior can be changed by using `-DUSE_CAIRO_FT=1` to
+	force the use of `cairo-ft` unconditionally.
+
 
 1.5-15	(2022-03-16)
     o	CairoX11 (xlib back-end): install an X11 I/O error handler

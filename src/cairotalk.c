@@ -127,7 +127,7 @@ static void     CairoGD_releaseMask(SEXP ref, pDevDesc dd);
 
 int Rcairo_symbol_font_use_pua = 1;
 
-#ifdef CAIRO_HAS_FT_FONT
+#if USE_CAIRO_FT
 FT_Library Rcairo_ft_library = NULL;
 
 typedef struct {
@@ -296,7 +296,7 @@ static void set_cf_antialias(cairo_t *cc) {
 static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	cairo_t *cc = xd->cb->cc;
 
-#ifdef CAIRO_HAS_FT_FONT
+#if USE_CAIRO_FT
 	int i = gc->fontface - 1;
 
 	if (i < 0 || i >= 5) i = 0;
@@ -1523,7 +1523,7 @@ void Rcairo_backend_init_surface(Rcairo_backend *be) {
 
 	cairo_reset_clip(cc);
 
-#ifdef CAIRO_HAS_FT_FONT
+#if USE_CAIRO_FT
 	/* Ensure that fontconfig library is ready */
 	if (!has_initd_fc && !FcInit ())
 		error ("Can't init font config library\n");
