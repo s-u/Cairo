@@ -1,9 +1,9 @@
 NEWS/Changelog
 
-1.6-0	(under development)
+1.6-0	(2022-07-05)
     o	Added text drawing using Harfbuzz and ICU. This significantly
 	improves the quality of text rendeded by Cairo and enables
-	support for right-to left and bi-directional text. (#23)
+	support for right-to-left and bi-directional text. (#23)
 	It also enables the use of ligatures. (#18)
 	This feature is only enabled if `pkg-config` is present and
 	knows how to use the `harfbuzz-icu` module.
@@ -29,7 +29,7 @@ NEWS/Changelog
 
     o	Cairo.capabilities() now also reports two capabilities
 	which are not format-related: "freetype" and "harfbuzz". The
-	former inidicates whether `cairo-ft` is used and the later
+	former indicates whether `cairo-ft` is used and the later
 	indicates whether the newly introduced Harfbuzz + ICU
 	bi-directional rendering support is present.
 
