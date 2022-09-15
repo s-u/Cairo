@@ -49,7 +49,8 @@ static void pdf_backend_destroy(Rcairo_backend* be)
 	free(be);
 }
 
-Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, const char *filename, double width, double height)
+Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, const char *filename,
+				       double width, double height, SEXP aux)
 {
 	be->backend_type = BET_PDF;
 	be->destroy_backend = pdf_backend_destroy;
@@ -93,7 +94,46 @@ Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, const char 
 	}
 
 	cairo_set_operator(be->cc,CAIRO_OPERATOR_OVER);
+	/* metadata is only available since cairo 1.16 */
+#if (((CAIRO_VERSION_MAJOR << 8) | CAIRO_VERSION_MINOR) >= 0x110)
+	while (aux && aux != R_NilValue) {
+		SEXP arg = CAR(aux);
+		SEXP name = TAG(aux);
+		aux = CDR(aux);
 
+		if (Rf_install("title") == name && TYPEOF(arg) == STRSXP && LENGTH(arg) == 1)
+			cairo_pdf_surface_set_metadata(be->cs, CAIRO_PDF_METADATA_TITLE,
+						       Rf_translateCharUTF8(STRING_ELT(arg, 0)));
+		else if (Rf_install("author") == name && TYPEOF(arg) == STRSXP && LENGTH(arg) == 1)
+			cairo_pdf_surface_set_metadata(be->cs, CAIRO_PDF_METADATA_AUTHOR,
+						       Rf_translateCharUTF8(STRING_ELT(arg, 0)));
+		else if (Rf_install("subject") == name && TYPEOF(arg) == STRSXP && LENGTH(arg) == 1)
+			cairo_pdf_surface_set_metadata(be->cs, CAIRO_PDF_METADATA_SUBJECT,
+						       Rf_translateCharUTF8(STRING_ELT(arg, 0)));
+		else if (Rf_install("creator") == name && TYPEOF(arg) == STRSXP && LENGTH(arg) == 1)
+			cairo_pdf_surface_set_metadata(be->cs, CAIRO_PDF_METADATA_CREATOR,
+						       Rf_translateCharUTF8(STRING_ELT(arg, 0)));
+		else if (Rf_install("keywords") == name && TYPEOF(arg) == STRSXP && LENGTH(arg) == 1)
+			cairo_pdf_surface_set_metadata(be->cs, CAIRO_PDF_METADATA_KEYWORDS,
+						       Rf_translateCharUTF8(STRING_ELT(arg, 0)));
+		else if (Rf_install("create.date") == name && TYPEOF(arg) == STRSXP && LENGTH(arg) == 1)
+			cairo_pdf_surface_set_metadata(be->cs, CAIRO_PDF_METADATA_CREATE_DATE,
+						       Rf_translateCharUTF8(STRING_ELT(arg, 0)));
+		else if (Rf_install("modify.date") == name && TYPEOF(arg) == STRSXP && LENGTH(arg) == 1)
+			cairo_pdf_surface_set_metadata(be->cs, CAIRO_PDF_METADATA_MOD_DATE,
+						       Rf_translateCharUTF8(STRING_ELT(arg, 0)));
+		else if (Rf_install("version") == name &&
+			 (TYPEOF(arg) == REALSXP || TYPEOF(arg) == STRSXP) && LENGTH(arg) == 1) {
+			double ver = asReal(arg);
+			if (ver != 1.4 && ver != 1.5)
+				Rf_warning("Unsupported PDF version requested, ignoring, only 1.4 or 1.5 is supported by cairographics");
+			else
+				cairo_pdf_surface_restrict_to_version(be->cs,
+								      (ver == 1.4) ? CAIRO_PDF_VERSION_1_4 : CAIRO_PDF_VERSION_1_5);
+		} else if (name != R_NilValue)
+			Rf_warning("Unused or invalid argument `%s', ingoring", CHAR(PRINTNAME(name)));			}
+#endif
+	
 	return be;
 }
 #else

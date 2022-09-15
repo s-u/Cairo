@@ -42,8 +42,8 @@ CairoTIFF(filename = "Rplot\%03d.tiff", width = 480, height = 480,
          pointsize = 12, bg = "white", res = NA, ...)
 CairoPDF(file = ifelse(onefile, "Rplots.pdf","Rplot\%03d.pdf"),
          width = 6, height = 6, onefile = TRUE, family = "Helvetica",
-         title = "R Graphics Output", fonts = NULL, version = "1.1",
-         paper = "special", encoding, bg, fg, pointsize, pagecentre)
+         title = "R Graphics Output", fonts = NULL, paper = "special",
+         encoding, bg, fg, pointsize, pagecentre, ...)
 CairoSVG(file = ifelse(onefile, "Rplots.svg", "Rplot\%03d.svg"),
          width = 6, height = 6, onefile = TRUE, bg = "transparent",
          pointsize = 12, ...)
@@ -101,7 +101,18 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
          (0,1=none, 5=LZW (default), 7=JPEG, 8=Adobe Deflate),
 	 \code{locator} for a custom locator function in image back-ends)
 
-    All parameters
+	 The PDF back-end supports following additional arguments:
+	 \code{author}, \code{subject}, \code{creator}, \code{keywords},
+	 \code{create.date} and \code{modify.date}. If specified, all of
+	 the above must be single strings. The dates must be in
+	 PDF-defined format, you can use something like
+	 \code{paste0("D:",gsub("[- :]","",.POSIXct(Sys.time(),"GMT"))),"Z")} 
+	 to convert from \code{POSIXct} to PDF format. In addition, the
+	 \code{version} argument (as documented in \code{\link{pdf}})
+	 can be either a string or a scalar real number. However,
+	 the cairographics library only supports values 1.4 and 1.5.
+	 
+	 All parameters
          listed below are defined by the other devices are are used by
          the wrappers to make it easier replace other devices by
          \code{Cairo}. They are described in detail in the documentation
@@ -122,10 +133,9 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
          figures in one file (see \code{\link{pdf}}). false is currently
          not supported by vector devices}
        \item{family}{font family, see \code{\link{pdf}}}
-       \item{title}{see \code{\link{pdf}} (ignored)}
+       \item{title}{see \code{\link{pdf}}}
        \item{fonts}{see \code{\link{pdf}}, ignored, \code{Cairo}
          automatically detects and embeds fonts}
-       \item{version}{PDF version, see \code{\link{pdf}} (ignored)}
        \item{paper}{see \code{\link{pdf}} (ignored, \code{Cairo} uses device dimensions)}
        \item{encoding}{see \code{\link{pdf}} (ignored, \code{Cairo} uses
          native enconding except for symbols)}
@@ -154,6 +164,8 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
        \item{command}{see \code{\link{postscript}} (ignored)}
        \item{colormodel}{see \code{\link{postscript}} (ignored,
          \code{Cairo} always uses \code{RGB} or \code{ARGB})}
+
+       
 }
 \value{
   The (invisible) return value is NULL if the device couldn't be created

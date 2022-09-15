@@ -105,12 +105,12 @@ CairoJPEG <- function(filename = "Rplot%03d.jpeg", width = 480, height = 480,
 
 CairoPDF <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
 					 width = 6, height = 6, onefile = TRUE, family = "Helvetica",
-					 title = "R Graphics Output", fonts = NULL, version = "1.1",
-					 paper = "special", encoding, bg, fg, pointsize, pagecentre) {
+					 title = "R Graphics Output", fonts = NULL,
+					 paper = "special", encoding, bg, fg, pointsize, pagecentre, ...) {
 	if (!onefile) stop("Sorry, PDF backend of Cairo supports onefile=TRUE only")
     if (missing(pointsize)) pointsize <- 12
     if (missing(bg)) bg <- "white"
-	Cairo(width, height, file, "pdf", pointsize=pointsize, bg=bg, units="in")
+	Cairo(width, height, file, "pdf", pointsize=pointsize, bg=bg, units="in", title = title, ...)
 }
 
 CairoSVG <- function(file = ifelse(onefile, "Rplots.svg", "Rplot%03d.svg"),

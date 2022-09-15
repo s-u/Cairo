@@ -1023,7 +1023,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 		xd->cb->width = w; xd->cb->height = h;
 		xd->cb->flags|=CDF_NOZERO;
 		if (!strcmp(type,"pdf"))
-			xd->cb = Rcairo_new_pdf_backend(xd->cb, conn, file, w, h);
+			xd->cb = Rcairo_new_pdf_backend(xd->cb, conn, file, w, h, aux);
 		else if (!strcmp(type,"ps") || !strcmp(type,"postscript"))
 			xd->cb = Rcairo_new_ps_backend(xd->cb, conn, file, w, h);
 		else if (!strcmp(type,"svg"))
