@@ -31,7 +31,7 @@ Rcairo_backend_def *RcairoBackendDef_xlib = &RcairoBackendDef_;
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
-#include <X11/Intrinsic.h>      /*->    Xlib.h  Xutil.h Xresource.h .. */
+#include <X11/Xresource.h>
 
 typedef struct {
 	Rcairo_backend *be; /* back-link */
