@@ -1,5 +1,18 @@
 NEWS/Changelog
 
+1.6-1	(under development)
+    o	The following additional arguments can be used to set PDF
+	metadata: title, author, subject, creator, keywords,
+	create.date and modify.date if cairo version 1.16 or
+	higher is used. (#15)
+	
+    o	The `version` argument for PDF back-end is now honored and
+	defaults to 1.4. Note that currently cairo library only
+	supports PDF target versions 1.4 or 1.5.
+
+    o	The xlib back-end no longer requires headers from Xt. (#39)
+
+
 1.6-0	(2022-07-05)
     o	Added text drawing using Harfbuzz and ICU. This significantly
 	improves the quality of text rendeded by Cairo and enables
