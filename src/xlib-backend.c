@@ -153,7 +153,7 @@ static void xlib_backend_destroy(Rcairo_backend* be)
 
 static int firstInit = 1;
 
-static void Rcairo_init_xlib() {
+static void Rcairo_init_xlib(void) {
 	if (!firstInit) return;
 	devPtrContext = XUniqueContext();
 }

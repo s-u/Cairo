@@ -658,7 +658,7 @@ static rc_text_shape shared_text_shape;
 /* FIXME: this is not thread safe. Threads are not supported in R
    anyway, but just saying... This will be used across Cairo
    devices, but keeping one buffer reduces allocations. */   
-static rc_text_shape *init_text_shape() {
+static rc_text_shape *init_text_shape(void) {
 	shared_text_shape.x = 0.0;
 	shared_text_shape.y = 0.0;
 	shared_text_shape.glyphs = 0;
@@ -1549,7 +1549,7 @@ void Rcairo_backend_init_surface(Rcairo_backend *be) {
 }
 
 /* add any new back-ends to this list */
-void Rcairo_register_builtin_backends() {
+void Rcairo_register_builtin_backends(void) {
 	if (RcairoBackendDef_image) Rcairo_register_backend(RcairoBackendDef_image);
 	if (RcairoBackendDef_pdf) Rcairo_register_backend(RcairoBackendDef_pdf);
 	if (RcairoBackendDef_ps) Rcairo_register_backend(RcairoBackendDef_ps);
@@ -1585,7 +1585,7 @@ void attribute_visible R_init_Cairo(DllInfo *dll) {
 }
 
 /* called on load */
-SEXP Rcairo_initialize() {
+SEXP Rcairo_initialize(void) {
 	Rcairo_register_builtin_backends();
 	return R_NilValue;
 }

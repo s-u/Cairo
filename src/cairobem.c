@@ -47,7 +47,7 @@ int Rcairo_type_supported(const char *type) {
 /* for additional capabilities */
 #include "cairogd.h"
 
-SEXP Rcairo_supported_types() {
+SEXP Rcairo_supported_types(void) {
   const char **c = types;
   int i = 0;
   SEXP res;
