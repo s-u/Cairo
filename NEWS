@@ -1,6 +1,6 @@
 NEWS/Changelog
 
-1.6-1	(under development)
+1.6-1	(2023-08-17)
     o	The following additional arguments can be used to set PDF
 	metadata: title, author, subject, creator, keywords,
 	create.date and modify.date if cairo version 1.16 or
