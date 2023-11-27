@@ -315,7 +315,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 				strcat(spec, specs[i - 5]);
 				Rcairo_set_font(i, spec);
 			} else
-				Rcairo_set_font(i, spec);
+				Rcairo_set_font(i, gc->fontfamily);
 			if (Rcairo_fonts[i].family)
 				free(Rcairo_fonts[i].family);
 			Rcairo_fonts[i].family = strdup(gc->fontfamily);
