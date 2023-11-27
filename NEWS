@@ -1,9 +1,13 @@
 NEWS/Changelog
 
-1.6-2
+1.6-2	(2023-11-28)
     o	Minor bugfixes: invalid format specified in UBiDi error
 	string, incorrect font name passed if the font family
 	name is too long.
+
+    o	Update Windows build to use pkg-config (Thanks to Tomáš
+	Kalibera!) (#43)
+
 
 1.6-1	(2023-08-17)
     o	The following additional arguments can be used to set PDF
