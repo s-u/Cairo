@@ -249,10 +249,26 @@ int main(void) {
  CAIRO_CFLAGS="${CAIRO_CFLAGS} ${FT_CPPFLAGS}"
  ],[
  AC_MSG_RESULT(no)
- AC_MSG_ERROR([Cannot use cairo-ft backend, although cairo claims it is working. Please check your caito installation and/or update cairo if necessary or set CAIRO_CFLAGS/CAIRO_LIBS accordingly.])
+ AC_MSG_ERROR([Cannot use cairo-ft backend, although cairo claims it is working. Please check your cairo installation and/or update cairo if necessary or set CAIRO_CFLAGS/CAIRO_LIBS accordingly.])
  ])
 fi
 fi ## with_freetype
+
+# --- check for Xt support (we need it in additon to xlib surface) ---
+if test -n "${PKGCONF}"; then
+  AC_MSG_CHECKING([whether pkg-config knows about Xt])
+  xtmod=''
+  for module in xt; do
+    if "${PKGCONF}" --exists ${module}; then xtmod="${xtmod} ${module}"; fi
+  done
+  if test -n "${ftmod}"; then
+    AC_MSG_RESULT(yes)
+    XT_CPPFLAGS=`"${PKGCONF}" --cflags ${xtmod}`
+    XT_LIBS=`"${PKGCONF}" --libs ${PKGCONF_LIB_ADD} ${xtmod}`
+  else
+    AC_MSG_RESULT(no)
+  fi
+fi
 
 # --- check for JPEG support ---
 AC_MSG_CHECKING([whether libjpeg works])
