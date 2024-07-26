@@ -139,7 +139,7 @@ Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, const char 
 #else
 Rcairo_backend_def *RcairoBackendDef_pdf = 0;
 
-Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, const char *filename, double width, double height)
+Rcairo_backend *Rcairo_new_pdf_backend(Rcairo_backend *be, int conn, const char *filename, double width, double height, SEXP aux)
 {
 	error("cairo library was compiled without PDF back-end.");
 	return NULL;
