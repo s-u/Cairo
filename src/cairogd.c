@@ -276,11 +276,17 @@ SEXP cairo_create_new_device(SEXP args)
 	    free(dev);
 	    error("unable to start device %s", devname);
 	}
-	
+
+	dd = GEcreateDevDesc(dev);
+#if R_VERSION >= R_Version(3,0,0)
+	/* technically, this was added in R 2.7.0 (undocumented), but it is really
+	   needed only since 4.4.0 when API cleanup removed gsetVar() */
+	GEaddDevice2(dd, devname);
+#else
+	GEaddDevice(dd);
 	gsetVar(PROTECT(install(".Device")), PROTECT(mkString(devname)), R_NilValue);
 	UNPROTECT(2);
-	dd = GEcreateDevDesc(dev);
-	GEaddDevice(dd);
+#endif
 	GEinitDisplayList(dd);
     } END_SUSPEND_INTERRUPTS;
 #ifdef JGD_DEBUG
