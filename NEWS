@@ -1,5 +1,13 @@
 NEWS/Changelog
 
+1.6-3
+    o	Add support for glyph rendering (see grid.glyph()).
+
+    o	Fix compilation when CAIRO_HAS_PDF_SURFACE is false. (#48)
+
+    o	Replace gsetVar() with GEaddDevice2() where supported.
+
+
 1.6-2	(2023-11-28)
     o	Minor bugfixes: invalid format specified in UBiDi error
 	string, incorrect font name passed if the font family
