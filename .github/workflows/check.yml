@@ -1,0 +1,37 @@
+on: [push, pull_request]
+
+name: check
+
+jobs:
+  check:
+    runs-on: ${{ matrix.os }}
+
+    name: ${{ matrix.os }} R ${{ matrix.r-version }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ macos-13, macos-14, ubuntu-22.04, ubuntu-24.04, windows-2022 ]
+        r-version: [ release, devel ]
+
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Install R
+        uses: s-u/R-actions/install@v2
+        with:
+          r-version: ${{ matrix.r-version }}
+          tools: base
+
+      # believe it or not, GHA has tons of junk on the VM but not even XQuartz ... wow
+      - if: runner.os == 'macOS'
+        name: Install XQuartz
+        run: |
+          curl -L https://github.com/R-macos/XQuartz/releases/download/XQuartz-2.8.1/xquartz-2.8.1.tar.xz | sudo tar fxj - -C / && sudo sh /opt/X11/libexec/postinstall
+
+      - uses: s-u/R-actions/pkg-check@v2
+        with:
+          debian-deps: libcairo-dev libxt-dev libjpeg-dev
+          macos-deps: cairo
+          build-script: sh mkdist
+          check-flags: --as-cran
