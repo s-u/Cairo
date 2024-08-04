@@ -31,7 +31,7 @@ jobs:
 
       - uses: s-u/R-actions/pkg-check@v2
         with:
-          debian-deps: libcairo-dev libxt-dev libjpeg-dev
+          debian-deps: libcairo-dev libxt-dev libjpeg-dev devscripts
           macos-deps: cairo
           build-script: sh mkdist
           check-flags: --as-cran
