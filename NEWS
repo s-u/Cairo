@@ -1,6 +1,6 @@
 NEWS/Changelog
 
-1.6-3
+1.6-3	(2024-08-05)
     o	Add support for glyph rendering (see grid.glyph()).
 
     o	Fix compilation when CAIRO_HAS_PDF_SURFACE is false. (#48)
