@@ -4,9 +4,11 @@ NEWS/Changelog
     o	add dummy functions from GE 15 API (R 4.2.0) to avoid
 	segaults in grid.
 
+    o	silence warnings about loss of precision.
+
 
 1.6-4	(2025-08-19)
-    o	removed bashisms from the configure script
+    o	removed bashisms from the configure script.
 
     o	locatorBell option will be no longer honored in R 4.4.0
 	and higher for the X11 back-end, because Rf_GetOption()
