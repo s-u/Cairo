@@ -516,7 +516,7 @@ SEXP ptr_to_raw(SEXP ptr, SEXP off, SEXP len) {
 	if (TYPEOF(ptr) != EXTPTRSXP)
 		error("ptr argument must be an external pointer");
 	{
-		unsigned char *data = (unsigned char*) EXTPTR_PTR(ptr);
+		unsigned char *data = (unsigned char*) R_ExternalPtrAddr(ptr);
 		if (data) {
 			SEXP v = allocVector(RAWSXP, l);
 			Rbyte *rc = RAW(v);
@@ -536,7 +536,7 @@ SEXP raw_to_ptr(SEXP ptr, SEXP woff, SEXP raw, SEXP roff, SEXP len) {
 	if (TYPEOF(raw) != RAWSXP)
 		error("raw argument must be a raw vector");
 	{
-		unsigned char *data = (unsigned char*) EXTPTR_PTR(ptr);
+		unsigned char *data = (unsigned char*) R_ExternalPtrAddr(ptr);
 		Rbyte *rc = RAW(raw);
 		memcpy(data+o1, rc+o2, l);
 		return ptr;
