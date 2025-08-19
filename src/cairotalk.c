@@ -102,23 +102,32 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
                        R_GE_gcontext *gc, NewDevDesc *dd);
 static SEXP CairoGD_Cap(NewDevDesc *dd);
 static int  CairoGD_HoldFlush(NewDevDesc *dd, int level);
-/* additional GE 13 API */
+
+#if R_GE_version >= 13 /* R 4.1.0 */
 static SEXP     CairoGD_setPattern(SEXP pattern, pDevDesc dd);
 static void     CairoGD_releasePattern(SEXP ref, pDevDesc dd);
 static SEXP     CairoGD_setClipPath(SEXP path, SEXP ref, pDevDesc dd);
 static void     CairoGD_releaseClipPath(SEXP ref, pDevDesc dd);
 static SEXP     CairoGD_setMask(SEXP path, SEXP ref, pDevDesc dd);
 static void     CairoGD_releaseMask(SEXP ref, pDevDesc dd);
+#endif
+
+/* GE 14 - R 4.1.0 (no fns, just deviceVersion and deviceClip) */
+
+#if R_GE_version >= 15 /* R 4.2.0 */
+/* this is required since 15 otherwise R segfaults */
+static SEXP CairoGD_Capabilities(SEXP capabilities);
+/* there are more below (groups, paths, lum. masks)
+   which we don't bother declaring here */
+#endif
 
 #if R_GE_version >= 16
-/* this is required since 14 otherwise R segfaults */
-static SEXP CairoGD_Capabilities(SEXP capabilities);
-
-/* GE 16 glyph API */
+/* GE 16 glyph API (R 4.3.0) */
 static void CairoGD_Glyph(int n, int *glyphs, double *x, double *y,
 						  SEXP font, double size,
 						  int col, double rot, pDevDesc dd);
 #endif
+/* GE 17 = R 4.6.0 */
 
 /* fake mbcs support for old R versions */
 #if R_GE_version < 4
@@ -1429,14 +1438,16 @@ static void CairoGD_TextNative(double x, double y, constxt char *str,
 	CairoGD_TextEnc(x, y, str, rot, hadj, gc, dd, "");
 }
 
-#if R_GE_version >= 16
+#if R_GE_version >= 15
 static SEXP CairoGD_Capabilities(SEXP capabilities) {
 	SEXP glyphs = PROTECT(ScalarInteger(1));
 	SET_VECTOR_ELT(capabilities, R_GE_capability_glyphs, glyphs);
 	UNPROTECT(1);
 	return capabilities;
 }
+#endif
 
+#if R_GE_version >= 16
 static void CairoGD_Glyph(int n, int *glyphs, double *x, double *y,
 						  SEXP font, double size,
 						  int col, double rot, pDevDesc dd) {
@@ -1505,6 +1516,7 @@ static void CairoGD_Glyph(int n, int *glyphs, double *x, double *y,
 }
 #endif
 
+#if R_GE_version >= 13
 static SEXP CairoGD_setPattern(SEXP pattern, pDevDesc dd) {
     return R_NilValue;
 }
@@ -1523,6 +1535,23 @@ static SEXP CairoGD_setMask(SEXP path, SEXP ref, pDevDesc dd) {
 }
 
 static void CairoGD_releaseMask(SEXP ref, pDevDesc dd) {}
+#endif
+
+#if R_GE_version >= 15
+static SEXP CairoGD_defineGroup(SEXP source, int op, SEXP destination, pDevDesc dd) {
+	return R_NilValue;
+}
+
+static void CairoGD_useGroup(SEXP ref, SEXP trans, pDevDesc dd) {}
+
+static void CairoGD_releaseGroup(SEXP ref, pDevDesc dd) {}
+
+static void CairoGD_stroke(SEXP path, const pGEcontext gc, pDevDesc dd) {}
+
+static void CairoGD_fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd) {}
+static void CairoGD_fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd) {}
+#endif
+
 
 /** fill the R device structure with callback functions */
 void Rcairo_setup_gd_functions(NewDevDesc *dd) {
@@ -1561,10 +1590,19 @@ void Rcairo_setup_gd_functions(NewDevDesc *dd) {
     dd->releaseClipPath = CairoGD_releaseClipPath;
     dd->setMask         = CairoGD_setMask;
     dd->releaseMask     = CairoGD_releaseMask;
+/* 14 = deviceClip */
+#if R_GE_version >= 15
+	dd->defineGroup     = CairoGD_defineGroup;
+	dd->useGroup        = CairoGD_useGroup;
+	dd->releaseGroup    = CairoGD_releaseGroup;
+	dd->stroke          = CairoGD_stroke;
+	dd->fill            = CairoGD_fill;
+	dd->fillStroke      = CairoGD_fillStroke;
+	dd->capabilities    = CairoGD_Capabilities;
 #if R_GE_version >= 16
 	/* NOTE: caps must be set from 14 on or else R segfaults */
-	dd->capabilities    = CairoGD_Capabilities;
 	dd->glyph           = CairoGD_Glyph;
+#endif
 #endif
 #endif
 #endif
