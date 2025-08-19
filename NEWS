@@ -1,5 +1,10 @@
 NEWS/Changelog
 
+1.6-4	(2025-08-20)
+    o	add dummy functions from GE 15 API (R 4.2.0) to avoid
+	segaults in grid.
+
+
 1.6-4	(2025-08-19)
     o	removed bashisms from the configure script
 
