@@ -1,5 +1,13 @@
 NEWS/Changelog
 
+1.6-4	(2025-08-19)
+    o	removed bashisms from the configure script
+
+    o	locatorBell option will be no longer honored in R 4.4.0
+	and higher for the X11 back-end, because Rf_GetOption()
+	is no longer part of the API.
+
+
 1.6-3	(2024-08-05)
     o	Add support for glyph rendering (see grid.glyph()).
 
