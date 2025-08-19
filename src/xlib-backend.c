@@ -108,8 +108,13 @@ int  xlib_locator(struct st_Rcairo_backend *be, double *x, double *y) {
 			cdEvent = (Rcairo_xlib_data *) temp;
 			if (cdEvent == cd) {
 				if (event.xbutton.button == Button1) {
+#if R_VERSION < R_Version(4,4,0)
 					int useBeep = asLogical(GetOption(install("locatorBell"),
 													  R_BaseEnv));
+#else
+					/* GetOption was removed from the API in 4.4.0 so just ignore it */
+					int useBeep = 1;
+#endif
 					*x = event.xbutton.x;
 					*y = event.xbutton.y;
 					/* Make a beep! Was print "\07", but that
