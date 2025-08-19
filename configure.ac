@@ -33,7 +33,7 @@ AC_C_CONST
 AC_PATH_PROG([PKGCONF],[pkg-config],[],[$PATH:/usr/local/bin:ext/bin:ext:/sw/bin:/opt/bin])
 
 have_cairo=no
-if test "xx$CAIRO_LIBS" == "xx"; then
+if test "xx$CAIRO_LIBS" = "xx"; then
    if test "xx$PKGCONF" != "xx"; then
       AC_MSG_CHECKING([whether pkg-config knows about cairo])
       if "${PKGCONF}" --exists cairo; then
@@ -126,8 +126,8 @@ int main(void) {
 }])],[AC_MSG_RESULT([yes])
 uses_ats=yes],[AC_MSG_RESULT([no])])
 
-if test "xx${CAIRO_LIBS}" == "xx"; then
-   if test $uses_ats == "yes"; then
+if test "xx${CAIRO_LIBS}" = "xx"; then
+   if test $uses_ats = "yes"; then
       CAIRO_LIBS="-lcairo -lpng -lz -framework ApplicationServices"
    else
       CAIRO_LIBs="-lcairo -lpng -lz"
@@ -211,22 +211,28 @@ if test "${need_xtra_ft_flags}" = yes; then
    AC_MSG_CHECKING([whether fontconfig/freetype2 location can be guessed])
    FCI=''; FTI=''; FCL=''; FTL=''
    for pre in /usr /usr/X11 /usr/X11R6 /usr/local /opt /sw; do
-     if test -z "${FCI}" -a -e "${pre}/include/fontconfig/fontconfig.h"; then
-        FCI="-I${pre}/include"
-	FCL="-L${pre}/lib"
+     if test -z "${FCI}"; then
+        if test -e "${pre}/include/fontconfig/fontconfig.h"; then
+           FCI="-I${pre}/include"
+           FCL="-L${pre}/lib"
+	fi
      fi
-     if test -z "${FTI}" -a -e "${pre}/include/freetype2/freetype/freetype.h"; then
-        FTI="-I${pre}/include/freetype2"
-	FTL="-L${pre}/lib"
+     if test -z "${FTI}"; then
+        if test -e "${pre}/include/freetype2/freetype/freetype.h"; then
+           FTI="-I${pre}/include/freetype2"
+           FTL="-L${pre}/lib"
+	fi
      fi
    done
    if test "${FCI}" = -I/usr/include; then FCI=''; fi
    if test "${FCL}" = "-L/usr/lib"; then FCL=''; fi
    if test "${FTL}" = "-L/usr/lib"; then FTL=''; fi
    if test "${FTL}" = "${FCL}"; then FTL=''; fi
-   if test -z "${FCI}" -a -z "${FTI}"; then
-      AC_MSG_RESULT(no)
-      AC_MSG_ERROR([Cannot find fontconfig/freetype2 although cairo claims to support it. Please check your cairo installation and/or update cairo if necessary or set CAIRO_CFLAGS/CAIRO_LIBS accordingly.])
+   if test -z "${FCI}"; then
+      if test -z "${FTI}"; then
+         AC_MSG_RESULT(no)
+         AC_MSG_ERROR([Cannot find fontconfig/freetype2 although cairo claims to support it. Please check your cairo installation and/or update cairo if necessary or set CAIRO_CFLAGS/CAIRO_LIBS accordingly.])
+      fi
    fi
    FT_CPPFLAGS="${FCI} ${FTI}"
    FT_LIBS="${FCL} ${FTL} -lfontconfig -lfreetype -lz"
