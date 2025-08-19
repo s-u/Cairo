@@ -56,7 +56,7 @@ Rcairo_backend *Rcairo_new_ps_backend(Rcairo_backend *be, int conn, const char *
 	be->save_page = ps_save_page;
 	if (filename){
 		char *fn = NULL;
-		int len = strlen(filename);
+		size_t len = strlen(filename);
 
 		/* Add .ps extension if necessary */
 		if (len>3 && strcmp(filename+len-3,".ps")){

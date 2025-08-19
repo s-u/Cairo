@@ -68,12 +68,12 @@ static void xlib_save_page(Rcairo_backend* be, int pageno){
 static void xlib_resize(Rcairo_backend* be, double width, double height){
 	Rcairo_xlib_data *xd = (Rcairo_xlib_data *) be->backendSpecific;
 	if (xd) {
-		xd->width=width;
-		xd->height=height;
+		xd->width = (int) width;
+		xd->height = (int) height;
 	}
 	be->width=width;
 	be->height=height;
-	if (be->cs) cairo_xlib_surface_set_size(be->cs, width, height);
+	if (be->cs) cairo_xlib_surface_set_size(be->cs, (int) width, (int) height);
 	Rcairo_backend_repaint(be);
 	if (xd->display) XSync(xd->display, 0);
 }
@@ -376,9 +376,11 @@ Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, const char *display,
 		hint = XAllocSizeHints();
 		hint->x = 10;
 		hint->y = 10;
-		
-		xd->width = hint->width = be->width = width;
-		xd->height = hint->height = be->height = height;
+
+		be->width = width;
+		be->height = height;
+		xd->width = hint->width = (int) width;
+		xd->height = hint->height = (int) height;
 		hint->flags  = PPosition | PSize;
 	
 		xd->window = XCreateSimpleWindow(xd->display,
@@ -423,7 +425,7 @@ Rcairo_backend *Rcairo_new_xlib_backend(Rcairo_backend *be, const char *display,
 	}
 
 	be->cs = cairo_xlib_surface_create(xd->display, xd->window, xd->visual,
-									   (double)width,(double)height);
+									   (int) width, (int) height);
 	
 	if (cairo_surface_status(be->cs) != CAIRO_STATUS_SUCCESS){
 		free(be);

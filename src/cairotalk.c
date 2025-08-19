@@ -381,7 +381,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
     Rprintf("INFO: set font[%d] size to %.f (cex=%.f, ps=%.f, fontscale=%.f)\n", i,
 			(gc->cex * gc->ps * xd->fontscale + 0.5) * 64, gc->cex, gc->ps, xd->fontscale);
 #endif
-	long new_size = (gc->cex * gc->ps * xd->fontscale + 0.5) * 64;
+	long new_size = (long) ((gc->cex * gc->ps * xd->fontscale + 0.5) * 64.0);
 	if (Rcairo_fonts[i].font_size != new_size || !Rcairo_fonts[i].hb_font) {
 #ifdef JGD_DEBUG
 		Rprintf("INFO: allocating new instance of font %d for size %ld\n", i, new_size);
@@ -636,7 +636,7 @@ static int str2utf16(const char *c, int len, UChar **buf, const char *ifrom) {
         return 0;
     }
     size_t osize = sizeof(UChar) * (ce - c + 1), isize = ce - c;
-    UChar *js = buf[0] = (osize < sizeof(js_buf)) ? js_buf : (UChar*) R_alloc(sizeof(UChar), ce - c + 1);
+    UChar *js = buf[0] = (osize < sizeof(js_buf)) ? js_buf : (UChar*) R_alloc(sizeof(UChar), (int) (ce - c + 1));
     char *dst = (char*) js;
     int end_test = 1, is_le = (((char*)&end_test)[0] == 1) ? 1 : 0;
     if (!ifrom) ifrom = "";
@@ -781,7 +781,7 @@ static rc_text_shape *c_setup_ascii_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, c
 	int i = xd->fontface - 1;
 	if (i < 0 || i > 8) i = 0;
 	Rcairo_font_face *rf = &Rcairo_fonts[i];
-	chb_add_glyphs(ts, rf, (const UChar*) str, 0, strlen(str), CHB_DIR_LTR | CHB_FIRST | CHB_LAST | CHB_UTF8);
+	chb_add_glyphs(ts, rf, (const UChar*) str, 0, (int32_t) strlen(str), CHB_DIR_LTR | CHB_FIRST | CHB_LAST | CHB_UTF8);
 	return ts;
 }
 
@@ -799,7 +799,7 @@ static rc_text_shape *c_setup_glyphs(CairoGDDesc *xd, R_GE_gcontext *gc, const c
 	int32_t ulen = 0;
 	if (!bidi) bidi = ubidi_open();
 	if (!bidi) Rf_error("Unable to allocate memory for UBiDi");
-	ulen = str2utf16(str, strlen(str), &text, encoding) / sizeof(UChar); /* str2utf16 returns bytes, need chars */
+	ulen = str2utf16(str, (int) strlen(str), &text, encoding) / sizeof(UChar); /* str2utf16 returns bytes, need chars */
 	ubidi_setPara(bidi, text, ulen, UBIDI_DEFAULT_LTR, NULL, &err);
 	if (U_FAILURE(err))
 		Rf_error("Unable to compute UBiDi for string '%s'", str);
@@ -874,7 +874,7 @@ static void CairoGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, doubl
 		}
 #endif
 	} else {
-		str[0] = c; str[1] = 0;
+		str[0] = (char) c; str[1] = 0;
 		/* Here, we assume that c < 256 */
 	}
 
@@ -1263,12 +1263,12 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
 		/* allocate data and transform to pre-mpl alpha */
 		imageData = (unsigned char *) malloc(4*w*h);
 		for (i = 0; i < w * h; i++) {
-			int alpha = R_ALPHA(raster[i]);
-			imageData[i*4 + 3] = alpha;
+			unsigned int alpha = (unsigned int) R_ALPHA(raster[i]);
+			imageData[i*4 + 3] = (unsigned char) alpha;
 			if (alpha < 255) {
-				imageData[i*4 + 2] = R_RED(raster[i]) * alpha / 255;
-				imageData[i*4 + 1] = R_GREEN(raster[i]) * alpha / 255;
-				imageData[i*4 + 0] = R_BLUE(raster[i]) * alpha / 255;
+				imageData[i*4 + 2] = (unsigned char) (R_RED(raster[i]) * alpha / 255);
+				imageData[i*4 + 1] = (unsigned char) (R_GREEN(raster[i]) * alpha / 255);
+				imageData[i*4 + 0] = (unsigned char) (R_BLUE(raster[i]) * alpha / 255);
 			} else {
 				imageData[i*4 + 2] = R_RED(raster[i]);
 				imageData[i*4 + 1] = R_GREEN(raster[i]);
@@ -1315,9 +1315,9 @@ static void CairoGD_Size(double *left, double *right,  double *bottom, double *t
 static double CairoGD_StrWidthEnc(constxt char *str,  R_GE_gcontext *gc,  NewDevDesc *dd, const char *encoding)
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
-	int slen = strlen(str);
+	size_t slen = strlen(str);
 	if (!str) return 0;
-	if(!xd || !xd->cb) return slen*8;
+	if(!xd || !xd->cb) return ((double)slen) * 8.0;
 
 	Rcairo_setup_font(xd, gc);
 

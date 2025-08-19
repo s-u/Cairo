@@ -71,7 +71,7 @@ static void image_backend_destroy(Rcairo_backend* be)
 static char *image_filename(Rcairo_backend* be, int pageno) {
 	Rcairo_image_backend *image = (Rcairo_image_backend *)be->backendSpecific;
 	char *fn;
-	int l = strlen(image->filename)+16;
+	size_t l = strlen(image->filename) + 16;
 
 	fn=(char*) malloc(l);
 	fn[l-1] = 0;

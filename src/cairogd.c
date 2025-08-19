@@ -69,7 +69,7 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
     xd->fontface = -1;
     xd->fontsize = -1;
     xd->basefontface = 1;
-    xd->basefontsize = initps;
+    xd->basefontsize = (int) initps;
 	xd->canvas = canvas;
 	xd->bg = bgcolor;
 	xd->gamma = 1.0;

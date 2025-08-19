@@ -56,7 +56,7 @@ Rcairo_backend *Rcairo_new_svg_backend(Rcairo_backend *be, int conn, const char 
 	be->save_page = svg_save_page;
 	if (filename){
 		char *fn = NULL;
-		int len = strlen(filename);
+		size_t len = strlen(filename);
 
 		/* Add .svg extension if necessary */
 		if (len>3 && strcmp(filename+len-4,".svg")){
