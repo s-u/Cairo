@@ -144,11 +144,7 @@ Rboolean Rcairo_new_device_driver(NewDevDesc *dd, const char *type, int conn, co
 #endif
 
 #if R_GE_version >= 13
-	dd->deviceVersion = R_GE_definitions;
-#endif
-#if R_GE_version >= 16
-	/* FIXME: we don't actually implement 14 and 15 */
-	dd->deviceVersion = R_GE_glyphs;
+	dd->deviceVersion = (R_GE_version > CAIROGD_MAX_GE_VERSION) ? CAIROGD_MAX_GE_VERSION : R_GE_version;
 #endif
     dd->deviceSpecific = (void *) xd;
 

@@ -396,7 +396,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
 #endif
 }
 
-static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
+void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	cairo_t *cc = xd->cb->cc;
 	cairo_line_cap_t lend = CAIRO_LINE_CAP_SQUARE;
 	cairo_line_join_t ljoin = CAIRO_LINE_JOIN_ROUND;
@@ -434,9 +434,16 @@ static void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	}
 }
 
+/* from coreutil.c - replaces cairo_fill_preserve() but also supports pattern fills */
+void cairoFill(const R_GE_gcontext *gc, CairoGDDesc *xd);
+
 /*------- the R callbacks begin here ... ------------------------*/
 
 #define c_trunc(X) ((double)((int)(X)))  /* some Suns don't have trunc(), so we use the cast-way to truncate */
+
+/* from coreutil.c */
+bool cairoBegin(CairoGDDesc *xd);
+void cairoEnd(bool grouping, CairoGDDesc *xd);
 
 static void CairoGD_Activate(NewDevDesc *dd)
 {
@@ -499,25 +506,27 @@ static void CairoGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  Ne
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb) return;
-	{
-		cairo_t *cc = xd->cb->cc;
+	cairo_t *cc = xd->cb->cc;
 
 #ifdef JGD_DEBUG
-		Rprintf("circle %x %f/%f %f [%08x/%08x]\n",cc, x, y, r, gc->col, gc->fill);
+	Rprintf("circle %x %f/%f %f [%08x/%08x]\n",cc, x, y, r, gc->col, gc->fill);
 #endif
-
+	if (xd->appending) {
+		cairo_new_sub_path(cc);
+		cairo_arc(cc, x, y, r + 0.5 , 0., 2 * M_PI); /* Add 0.5 like devX11 */
+	} else {
+		bool grouping = cairoBegin(xd);
 		cairo_new_path(cc);
 		cairo_arc(cc, x, y, r + 0.5 , 0., 2 * M_PI); /* Add 0.5 like devX11 */
-		if (CALPHA(gc->fill)) {
-			Rcairo_set_color(cc, gc->fill);
-			cairo_fill_preserve(cc);
-		}
+		if ((gc->patternFill != R_NilValue) || CALPHA(gc->fill))
+			cairoFill(gc, xd);
 		if (CALPHA(gc->col) && gc->lty!=-1) {
 			Rcairo_set_color(cc, gc->col);
 			Rcairo_set_line(xd, gc);
 			cairo_stroke(cc);
 		} else cairo_new_path(cc);
-		xd->cb->serial++;
+		cairoEnd(grouping, xd);
+		if (!grouping) xd->cb->serial++;
 	}
 }
 
@@ -541,6 +550,9 @@ static void CairoGD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc
 #endif
 }
 
+/* coreutil.c */
+void CairoGD_CoreUtil_Destroy(CairoGDDesc *xd);
+
 static void CairoGD_Close(NewDevDesc *dd)
 {
   CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
@@ -556,6 +568,7 @@ static void CairoGD_Close(NewDevDesc *dd)
 	  R_ReleaseObject(xd->cb->onSave);
 	  xd->cb->onSave = 0;
   }
+  CairoGD_CoreUtil_Destroy(xd);
   xd->cb->destroy_backend(xd->cb);
 
   free(xd);
@@ -601,27 +614,33 @@ static void CairoGD_Line(double x1, double y1, double x2, double y2,  R_GE_gcont
 {
     CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
     if(!xd || !xd->cb) return;
-    
+	cairo_t *cc = xd->cb->cc;
+
 #ifdef JGD_DEBUG
     Rprintf("line %f/%f %f/%f [%08x/%08x]\n", x1, y1, x2, y2, gc->col, gc->fill);
 #endif
-
-    if (CALPHA(gc->col) && gc->lty!=-1) {
-      cairo_t *cc = xd->cb->cc;
-      cairo_new_path(cc);
-	  if ((x1==x2 || y1==y2) &&xd->cb->truncate_rect) {
-		  /* if we are snapping rectangles to grid, we also need to snap straight
-			 lines to make sure they match - e.g. tickmarks, baselines etc. */
-		  x1=c_trunc(x1)+0.5; x2=c_trunc(x2)+0.5;
-		  y1=c_trunc(y1)+0.5; y2=c_trunc(y2)+0.5;
-	  }
-      cairo_move_to(cc, x1, y1);
-      cairo_line_to(cc, x2, y2);
-      Rcairo_set_color(cc, gc->col);
-      Rcairo_set_line(xd, gc);
-      cairo_stroke(cc);
-	  xd->cb->serial++;
-    }
+	if (xd->appending) {
+		cairo_move_to(cc, x1, y1);
+		cairo_line_to(cc, x2, y2);
+		return;
+	}
+	if (CALPHA(gc->col) && gc->lty != -1) {
+		bool grouping = cairoBegin(xd);
+		cairo_new_path(cc);
+		if ((x1 == x2 || y1 == y2) && xd->cb->truncate_rect) {
+			/* if we are snapping rectangles to grid, we also need to snap straight
+			   lines to make sure they match - e.g. tickmarks, baselines etc. */
+			x1 = c_trunc(x1) + 0.5; x2 = c_trunc(x2) + 0.5;
+			y1 = c_trunc(y1) + 0.5; y2 = c_trunc(y2) + 0.5;
+		}
+		cairo_move_to(cc, x1, y1);
+		cairo_line_to(cc, x2, y2);
+		Rcairo_set_color(cc, gc->col);
+		Rcairo_set_line(xd, gc);
+		cairo_stroke(cc);
+		cairoEnd(grouping, xd);
+		if (!grouping) xd->cb->serial++;
+	}
 }
 
 #ifdef HAVE_HARFBUZZ
@@ -955,6 +974,9 @@ static SEXP findArg(const char *name, SEXP list) {
 	return 0;
 }
 
+/* coreutil.c (patterns etc.) */
+void CairoGD_CoreUtil_Init(CairoGDDesc *xd);
+
 Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int conn, const char *file, double w, double h,
 					  double umpl, SEXP aux)
 {
@@ -1078,6 +1100,8 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 	if (xd->dpix>0 && xd->dpiy>0) xd->asp = xd->dpix / xd->dpiy;
 
 	Rcairo_backend_init_surface(xd->cb);
+	CairoGD_CoreUtil_Init(xd);
+
 	/*
 	  cc = xd->cb->cc;
 	  cairo_save(cc);
@@ -1090,46 +1114,51 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 	return TRUE;
 }
 
+static void cc_define_path(cairo_t *cc, double *x, double *y, int npoly,
+                           int *nper, Rboolean winding) {
+	int i, j, n = 0;
+	for (i = 0; i < npoly; i++) {
+		cairo_move_to(cc, x[n], y[n]);
+		n++;
+		for(j = 1; j < nper[i]; j++) {
+			cairo_line_to(cc, x[n], y[n]);
+			n++;
+		}
+		cairo_close_path(cc);
+	}
+}
+
 static void CairoGD_Path(double *x, double *y, int npoly, int *nper, Rboolean winding,
                        R_GE_gcontext *gc, NewDevDesc *dd)
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb || !nper || npoly < 1) return;
-	{
-		int i, j, n;
-		cairo_t *cc = xd->cb->cc;
-		
+	cairo_t *cc = xd->cb->cc;
+#ifdef JGD_DEBUG
+	Rprintf("path %d polygons [%08x/%08x]\n", npoly, gc->col, gc->fill);
+#endif
+
+	if (xd->appending) {
+		cc_define_path(cc, x, y, npoly, nper, winding);
+	} else {
+		bool grouping = cairoBegin(xd);
 		Rcairo_set_line(xd, gc);
 
-#ifdef JGD_DEBUG
-		Rprintf("path %d polygons [%08x/%08x]\n", npoly, gc->col, gc->fill);
-#endif
-		
 		cairo_new_path(cc);
-		n = 0;
-		for (i = 0; i < npoly; i++) {
-			cairo_move_to(cc, x[n], y[n]);
-			n++;
-			for(j = 1; j < nper[i]; j++) {
-				cairo_line_to(cc, x[n], y[n]);
-				n++;
-			}
-			cairo_close_path(cc);
-		}
-
-		if (CALPHA(gc->fill)) {
+		cc_define_path(cc, x, y, npoly, nper, winding);
+		if ((gc->patternFill != R_NilValue) || CALPHA(gc->fill)) {
 			if (winding) 
 				cairo_set_fill_rule(cc, CAIRO_FILL_RULE_WINDING);
 			else 
 				cairo_set_fill_rule(cc, CAIRO_FILL_RULE_EVEN_ODD);
-			Rcairo_set_color(cc, gc->fill);
-			cairo_fill_preserve(cc);
+			cairoFill(gc, xd);
 		}
 		if (CALPHA(gc->col) && gc->lty != -1) {
 			Rcairo_set_color(cc, gc->col);
 			cairo_stroke(cc);
 		} else cairo_new_path(cc);
-		xd->cb->serial++;
+		cairoEnd(grouping, xd);
+		if (!grouping) xd->cb->serial++;
     }
 }
 
@@ -1137,10 +1166,14 @@ static void CairoGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  Ne
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb || n<2) return;
-	{
-		int i=1;
-		cairo_t *cc = xd->cb->cc;
-
+	cairo_t *cc = xd->cb->cc;
+	int i = 0;
+	if (xd->appending) {
+		cairo_move_to(cc, x[0], y[0]);
+		while (++i < n) cairo_line_to(cc, x[i], y[i]);
+		cairo_close_path(cc);
+	} else {
+		bool grouping = cairoBegin(xd);
 		Rcairo_set_line(xd, gc);
 
 #ifdef JGD_DEBUG
@@ -1148,17 +1181,16 @@ static void CairoGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  Ne
 #endif
 		cairo_new_path(cc);
 		cairo_move_to(cc, x[0], y[0]);
-		while (i<n) { cairo_line_to(cc, x[i], y[i]); i++; }
+		while (++i < n) cairo_line_to(cc, x[i], y[i]);
 		cairo_close_path(cc);
-		if (CALPHA(gc->fill)) {
-			Rcairo_set_color(cc, gc->fill);
-			cairo_fill_preserve(cc);
-		}
+		if ((gc->patternFill != R_NilValue) || CALPHA(gc->fill))
+			cairoFill(gc, xd);
 		if (CALPHA(gc->col) && gc->lty!=-1) {
 			Rcairo_set_color(cc, gc->col);
 			cairo_stroke(cc);
 		} else cairo_new_path(cc);
-		xd->cb->serial++;
+		cairoEnd(grouping, xd);
+		if (!grouping) xd->cb->serial++;
 	}
 }
 
@@ -1166,21 +1198,25 @@ static void CairoGD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  N
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb || n<2) return;
-	{
-		int i=1;
-		cairo_t *cc = xd->cb->cc;
-
+	cairo_t *cc = xd->cb->cc;
+	int i = 0;
+	if (xd->appending) {
+		cairo_move_to(cc, x[0], y[0]);
+		while (++i < n) cairo_line_to(cc, x[i], y[i]);
+	} else {
 #ifdef JGD_DEBUG
 		Rprintf("poly-line %d points [%08x]\n", n, gc->col);
 #endif
 		if (CALPHA(gc->col) && gc->lty!=-1) {
+			bool grouping = cairoBegin(xd);
 			cairo_new_path(cc);
 			cairo_move_to(cc, x[0], y[0]);
-			while (i<n) { cairo_line_to(cc, x[i], y[i]); i++; }
+			while (++i < n) cairo_line_to(cc, x[i], y[i]);
 			Rcairo_set_color(cc, gc->col);
 			Rcairo_set_line(xd, gc);
 			cairo_stroke(cc);
-			xd->cb->serial++;
+			cairoEnd(grouping, xd);
+			if (!grouping) xd->cb->serial++;
 		}
 	}
 }
@@ -1189,13 +1225,17 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
 	if(!xd || !xd->cb) return;
-	{
-		cairo_t *cc = xd->cb->cc;
+	cairo_t *cc = xd->cb->cc;
+
+	if (xd->appending) {
+		cairo_rectangle(cc, x0, y0, x1 - x0, y1 - y0);
+	} else {
 		double snap_add = 0.0;
 		if (x1<x0) { double h=x1; x1=x0; x0=h; }
 		if (y1<y0) { double h=y1; y1=y0; y0=h; }
 		/* if (x0<0) x0=0; if (y0<0) y0=0; */
 
+		bool grouping = cairoBegin(xd);
 		Rcairo_set_line(xd, gc);
 
 #ifdef JGD_DEBUG
@@ -1215,10 +1255,8 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 
 		cairo_new_path(cc);
 		cairo_rectangle(cc, x0, y0, x1-x0+snap_add, y1-y0+snap_add);
-		if (CALPHA(gc->fill)) {
-			Rcairo_set_color(cc, gc->fill);
-			cairo_fill_preserve(cc);
-		}
+		if ((gc->patternFill != R_NilValue) || CALPHA(gc->fill))
+			cairoFill(gc, xd);
 		if (CALPHA(gc->col) && gc->lty!=-1) {
 			/* if we are snapping, note that lines must be in 0.5 offset to fills in order
 			   hit the same pixels, because lines extend to both sides */
@@ -1229,7 +1267,8 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 			Rcairo_set_color(cc, gc->col);
 			cairo_stroke(cc);
 		} else cairo_new_path(cc);
-		xd->cb->serial++;
+		cairoEnd(grouping, xd);
+		if (!grouping) xd->cb->serial++;
 	}
 }
 
@@ -1239,7 +1278,7 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
                        R_GE_gcontext *gc, NewDevDesc *dd)
 {
 	CairoGDDesc *xd = (CairoGDDesc *) dd->deviceSpecific;
-	if(!xd || !xd->cb) return;
+	if(!xd || !xd->cb || xd->appending) return;
 	{   /* the code in this block has been adapted from R 2.12.1, src/modules/X11/cairoX11.c
 		   (c) 2010 R Development Core Team under GPL 2+ */
 		cairo_t *cc = xd->cb->cc;
@@ -1248,6 +1287,7 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
 		int i;
 
 		cairo_save(cc);
+        bool grouping = cairoBegin(xd);
 		cairo_translate(cc, x, y);
 		if (rot != 0.0)
 			cairo_rotate(cc, -rot * M_PI/180);
@@ -1291,11 +1331,12 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
 		cairo_rectangle(cc, 0, 0, w, h);
 		cairo_clip(cc);
 		cairo_paint(cc); 
-		
+        cairoEnd(grouping, xd);
+
 		cairo_restore(cc);
 		cairo_surface_destroy(image);
 		free(imageData);
-		xd->cb->serial++;
+		if (!grouping) xd->cb->serial++;
 	}
 }
 
@@ -1376,6 +1417,7 @@ static void CairoGD_TextEnc(double x, double y, constxt char *str,  double rot, 
 #endif
 
 	cairo_save(cc);
+	bool grouping = xd->appending ? false : cairoBegin(xd);
 
 	cairo_translate(cc, x, y);
 
@@ -1392,7 +1434,7 @@ static void CairoGD_TextEnc(double x, double y, constxt char *str,  double rot, 
 			cairo_translate(cc, -te.x_advance*hadj, 0);
 		/* Rcairo_set_color(cc, 0xff80ff); */
 	}
-	Rcairo_set_color(cc, gc->col);
+	if (!xd->appending) Rcairo_set_color(cc, gc->col);
 
 #ifdef HAVE_HARFBUZZ
 	cairo_show_glyphs(cc, ts->glyph, ts->glyphs);
@@ -1400,7 +1442,9 @@ static void CairoGD_TextEnc(double x, double y, constxt char *str,  double rot, 
 	cairo_move_to(cc, 0, 0);
 	cairo_show_text(cc, str);
 #endif
-	xd->cb->serial++;
+	if (!xd->appending)
+		cairoEnd(grouping, xd);
+	if (!grouping) xd->cb->serial++;
 
 #ifdef JGD_DEBUG
 	{
@@ -1458,6 +1502,8 @@ static void CairoGD_Glyph(int n, int *glyphs, double *x, double *y,
 
 	cc = xd->cb->cc;
 
+	bool grouping = xd->appending ? false : cairoBegin(xd);
+
 	/* font info is explicit so we don't use our regular cache and mapping */
 	double weight = R_GE_glyphFontWeight(font);
 	int style = R_GE_glyphFontStyle(font);
@@ -1490,7 +1536,7 @@ static void CairoGD_Glyph(int n, int *glyphs, double *x, double *y,
 	/* FIXME: not sure if we need to scale - Quartz uses 72 baseline - check sizes */
 	cairo_set_font_size (cc, size / (72*dd->ipr[0]));
 
-	Rcairo_set_color(cc, col);
+	if (!xd->appending) Rcairo_set_color(cc, col);
 
 	int i = 0;
 	while (i < n) {
@@ -1513,6 +1559,9 @@ static void CairoGD_Glyph(int n, int *glyphs, double *x, double *y,
 			cairo_restore(cc);
 		i++;
 	}
+	if (!xd->appending)
+		cairoEnd(grouping, xd);
+	if (!grouping) xd->cb->serial++;
 }
 #endif
 
@@ -1552,6 +1601,8 @@ static void CairoGD_fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd) 
 static void CairoGD_fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd) {}
 #endif
 
+/** from coreutil.c **/
+void CairoGD_CoreUtil_SetupFn(NewDevDesc *dd);
 
 /** fill the R device structure with callback functions */
 void Rcairo_setup_gd_functions(NewDevDesc *dd) {
@@ -1609,6 +1660,7 @@ void Rcairo_setup_gd_functions(NewDevDesc *dd) {
 #endif
 #endif
 #endif
+	CairoGD_CoreUtil_SetupFn(dd);
 }
 
 void Rcairo_backend_resize(Rcairo_backend *be, double width, double height) {
