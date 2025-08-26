@@ -1282,12 +1282,15 @@ void CairoGD_CoreUtil_Destroy(pX11Desc xd) {
 }
 
 void CairoGD_CoreUtil_SetupFn(pDevDesc dd) {
+#if R_GE_version >= 13
     dd->setPattern = Cairo_SetPattern;
     dd->releasePattern = Cairo_ReleasePattern;
     dd->setClipPath = Cairo_SetClipPath;
     dd->releaseClipPath = Cairo_ReleaseClipPath;
     dd->setMask = Cairo_SetMask;
     dd->releaseMask = Cairo_ReleaseMask;
+#endif
+#if R_GE_version >= 14
     dd->defineGroup = Cairo_DefineGroup;
     dd->useGroup = Cairo_UseGroup;
     dd->releaseGroup = Cairo_ReleaseGroup;
@@ -1295,4 +1298,6 @@ void CairoGD_CoreUtil_SetupFn(pDevDesc dd) {
     dd->fill = Cairo_Fill;
     dd->fillStroke = Cairo_FillStroke;
     dd->capabilities = Cairo_Capabilities;
+#endif
+    /* NOTE: we already support 15 (glyphs) natively */
 }
