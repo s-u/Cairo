@@ -1,5 +1,11 @@
 NEWS/Changelog
 
+1.7-0
+    o	add support for all R graphics device features up to
+	GE API 16 (R 4.5.0). This includes fill patterns, masks
+	(GE 13) and groups (GE 14). Thanks to Paul Murrell!
+
+
 1.6-5	(2025-08-20)
     o	add dummy functions from GE 15 API (R 4.2.0) to avoid
 	segaults in grid.
