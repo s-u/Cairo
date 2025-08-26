@@ -43,6 +43,8 @@
 #define xd_cc xd->cb->cc
 void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc); /* cairotalk.c */
 #define CairoLineType(GC, XD) Rcairo_set_line(XD, GC)
+#define ct_bool int
+#define ct_false 0
 
 static void CairoCol(unsigned int col, double* R, double* G, double* B)
 {
@@ -811,15 +813,15 @@ static SEXP CairoDefineGroup(SEXP src, int op, SEXP dst, pX11Desc xd)
     return ref;
 }
 
-bool cairoBegin(pX11Desc xd);
-void cairoEnd(bool grouping, pX11Desc xd);
+ct_bool cairoBegin(pX11Desc xd);
+void cairoEnd(ct_bool grouping, pX11Desc xd);
 
 static void CairoUseGroup(SEXP ref, SEXP trans, pX11Desc xd)
 {
     cairo_t *cc = xd_cc;
     int index;
     cairo_matrix_t transform;
-    bool grouping = false;
+    ct_bool grouping = ct_false;
 
     index = INTEGER(ref)[0];
     if (index < 0) {
@@ -876,16 +878,16 @@ static void CairoReleaseGroup(int index, pX11Desc xd)
  * Rendering
  ***************************
  */
-static bool implicitGroup(pX11Desc xd) {
+static ct_bool implicitGroup(pX11Desc xd) {
     return xd->currentGroup >= 0 && 
         (cairo_get_operator(xd_cc) == CAIRO_OPERATOR_CLEAR ||
          cairo_get_operator(xd_cc) == CAIRO_OPERATOR_SOURCE);
 }
 
 /* Set up for drawing a shape */
-bool cairoBegin(pX11Desc xd)
+ct_bool cairoBegin(pX11Desc xd)
 {
-    bool grouping = implicitGroup(xd);
+    ct_bool grouping = implicitGroup(xd);
     if (xd->currentMask >= 0) {
         /* If masking, draw temporary pattern */
         cairo_push_group(xd_cc);
@@ -896,7 +898,7 @@ bool cairoBegin(pX11Desc xd)
     return grouping;
 }
 
-void cairoEnd(bool grouping, pX11Desc xd)
+void cairoEnd(ct_bool grouping, pX11Desc xd)
 {
     if (grouping) {
         cairo_pattern_t *source = cairo_pop_group(xd_cc);
@@ -1036,7 +1038,7 @@ static void CairoStrokePath(SEXP path,
 {
     cairo_t *cc = xd_cc;
     SEXP R_fcall;
-    bool grouping = false;
+    ct_bool grouping = ct_false;
 
     if (!xd->appending) {
         grouping = cairoBegin(xd);
@@ -1075,7 +1077,7 @@ static void CairoFillPath(SEXP path,
 {
     cairo_t *cc = xd_cc;
     SEXP R_fcall;
-    bool grouping = false;
+    ct_bool grouping = ct_false;
 
     if (!xd->appending) {
         grouping = cairoBegin(xd);
@@ -1140,7 +1142,7 @@ static void CairoFillStroke(SEXP path, int rule,
 {
     pX11Desc xd = (pX11Desc) dd->deviceSpecific;
 
-    bool grouping = cairoBegin(xd);
+    ct_bool grouping = cairoBegin(xd);
     CairoFillStrokePath(path, rule, gc, xd);
     if (op) { /* fill */
         cairoFill(gc, xd);
@@ -1158,9 +1160,9 @@ static void Cairo_FillStroke(SEXP path, int rule,
     if (xd->appending) {
         CairoFillStrokePath(path, rule, gc, xd);
     } else {
-        bool fill = (gc->patternFill != R_NilValue) || 
+        ct_bool fill = (gc->patternFill != R_NilValue) ||
             (R_ALPHA(gc->fill) > 0);
-        bool stroke = (R_ALPHA(gc->col) > 0 && gc->lty != -1);
+        ct_bool stroke = (R_ALPHA(gc->col) > 0 && gc->lty != -1);
         if (fill) {
             switch (rule) {
             case R_GE_nonZeroWindingRule: 

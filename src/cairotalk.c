@@ -442,8 +442,9 @@ void cairoFill(const R_GE_gcontext *gc, CairoGDDesc *xd);
 #define c_trunc(X) ((double)((int)(X)))  /* some Suns don't have trunc(), so we use the cast-way to truncate */
 
 /* from coreutil.c */
-bool cairoBegin(CairoGDDesc *xd);
-void cairoEnd(bool grouping, CairoGDDesc *xd);
+#define ct_bool int
+ct_bool cairoBegin(CairoGDDesc *xd);
+void cairoEnd(ct_bool grouping, CairoGDDesc *xd);
 
 static void CairoGD_Activate(NewDevDesc *dd)
 {
@@ -515,7 +516,7 @@ static void CairoGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  Ne
 		cairo_new_sub_path(cc);
 		cairo_arc(cc, x, y, r + 0.5 , 0., 2 * M_PI); /* Add 0.5 like devX11 */
 	} else {
-		bool grouping = cairoBegin(xd);
+		ct_bool grouping = cairoBegin(xd);
 		cairo_new_path(cc);
 		cairo_arc(cc, x, y, r + 0.5 , 0., 2 * M_PI); /* Add 0.5 like devX11 */
 		if ((gc->patternFill != R_NilValue) || CALPHA(gc->fill))
@@ -625,7 +626,7 @@ static void CairoGD_Line(double x1, double y1, double x2, double y2,  R_GE_gcont
 		return;
 	}
 	if (CALPHA(gc->col) && gc->lty != -1) {
-		bool grouping = cairoBegin(xd);
+		ct_bool grouping = cairoBegin(xd);
 		cairo_new_path(cc);
 		if ((x1 == x2 || y1 == y2) && xd->cb->truncate_rect) {
 			/* if we are snapping rectangles to grid, we also need to snap straight
@@ -1141,7 +1142,7 @@ static void CairoGD_Path(double *x, double *y, int npoly, int *nper, Rboolean wi
 	if (xd->appending) {
 		cc_define_path(cc, x, y, npoly, nper, winding);
 	} else {
-		bool grouping = cairoBegin(xd);
+		ct_bool grouping = cairoBegin(xd);
 		Rcairo_set_line(xd, gc);
 
 		cairo_new_path(cc);
@@ -1173,7 +1174,7 @@ static void CairoGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  Ne
 		while (++i < n) cairo_line_to(cc, x[i], y[i]);
 		cairo_close_path(cc);
 	} else {
-		bool grouping = cairoBegin(xd);
+		ct_bool grouping = cairoBegin(xd);
 		Rcairo_set_line(xd, gc);
 
 #ifdef JGD_DEBUG
@@ -1208,7 +1209,7 @@ static void CairoGD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  N
 		Rprintf("poly-line %d points [%08x]\n", n, gc->col);
 #endif
 		if (CALPHA(gc->col) && gc->lty!=-1) {
-			bool grouping = cairoBegin(xd);
+			ct_bool grouping = cairoBegin(xd);
 			cairo_new_path(cc);
 			cairo_move_to(cc, x[0], y[0]);
 			while (++i < n) cairo_line_to(cc, x[i], y[i]);
@@ -1235,7 +1236,7 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 		if (y1<y0) { double h=y1; y1=y0; y0=h; }
 		/* if (x0<0) x0=0; if (y0<0) y0=0; */
 
-		bool grouping = cairoBegin(xd);
+		ct_bool grouping = cairoBegin(xd);
 		Rcairo_set_line(xd, gc);
 
 #ifdef JGD_DEBUG
@@ -1287,7 +1288,7 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
 		int i;
 
 		cairo_save(cc);
-        bool grouping = cairoBegin(xd);
+        ct_bool grouping = cairoBegin(xd);
 		cairo_translate(cc, x, y);
 		if (rot != 0.0)
 			cairo_rotate(cc, -rot * M_PI/180);
@@ -1417,7 +1418,7 @@ static void CairoGD_TextEnc(double x, double y, constxt char *str,  double rot, 
 #endif
 
 	cairo_save(cc);
-	bool grouping = xd->appending ? false : cairoBegin(xd);
+	ct_bool grouping = xd->appending ? false : cairoBegin(xd);
 
 	cairo_translate(cc, x, y);
 
@@ -1502,7 +1503,7 @@ static void CairoGD_Glyph(int n, int *glyphs, double *x, double *y,
 
 	cc = xd->cb->cc;
 
-	bool grouping = xd->appending ? false : cairoBegin(xd);
+	ct_bool grouping = xd->appending ? false : cairoBegin(xd);
 
 	/* font info is explicit so we don't use our regular cache and mapping */
 	double weight = R_GE_glyphFontWeight(font);
