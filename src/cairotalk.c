@@ -68,8 +68,10 @@ static void CairoGD_MetricInfo(int c,
 			      double* width, NewDevDesc *dd);
 static void CairoGD_Mode(int mode, NewDevDesc *dd);
 static void CairoGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd);
+#if R_GE_version >= 8
 static void CairoGD_Path(double *x, double *y, int npoly, int *nper, Rboolean winding,
                        R_GE_gcontext *gc, NewDevDesc *dd);
+#endif
 static void CairoGD_Polygon(int n, double *x, double *y,
 			   R_GE_gcontext *gc,
 			   NewDevDesc *dd);
@@ -96,12 +98,16 @@ static void CairoGD_TextUTF8(double x, double y, constxt char *str,
 			 double rot, double hadj,
 			 R_GE_gcontext *gc,
 			 NewDevDesc *dd);
+#if R_GE_version >= 6
 static void CairoGD_Raster(unsigned int *raster, int w, int h,
                        double x, double y, double width, double height,
                        double rot, Rboolean interpolate,
                        R_GE_gcontext *gc, NewDevDesc *dd);
+#endif
 static SEXP CairoGD_Cap(NewDevDesc *dd);
+#if R_GE_version >= 9
 static int  CairoGD_HoldFlush(NewDevDesc *dd, int level);
+#endif
 
 #if R_GE_version >= 13 /* R 4.1.0 */
 static SEXP     CairoGD_setPattern(SEXP pattern, pDevDesc dd);
@@ -599,6 +605,7 @@ static void CairoGD_Deactivate(NewDevDesc *dd)
 	if (xd->cb->activation) xd->cb->activation(xd->cb, 0);
 }
 
+#if R_GE_version >= 9
 static int  CairoGD_HoldFlush(NewDevDesc *dd, int level)
 {
 	int ol;
@@ -618,6 +625,7 @@ static int  CairoGD_HoldFlush(NewDevDesc *dd, int level)
     }
     return xd->holdlevel;
 }
+#endif
 
 static Rboolean CairoGD_Locator(double *x, double *y, NewDevDesc *dd)
 {
@@ -1131,6 +1139,7 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 	return TRUE;
 }
 
+#if R_GE_version >= 9
 static void cc_define_path(cairo_t *cc, double *x, double *y, int npoly,
                            int *nper, Rboolean winding) {
 	int i, j, n = 0;
@@ -1178,6 +1187,7 @@ static void CairoGD_Path(double *x, double *y, int npoly, int *nper, Rboolean wi
 		if (!grouping) xd->cb->serial++;
     }
 }
+#endif
 
 static void CairoGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
@@ -1289,6 +1299,7 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 	}
 }
 
+#if R_GE_version >= 6
 static void CairoGD_Raster(unsigned int *raster, int w, int h,
                        double x, double y, double width, double height,
                        double rot, Rboolean interpolate,
@@ -1356,6 +1367,7 @@ static void CairoGD_Raster(unsigned int *raster, int w, int h,
 		if (!grouping) xd->cb->serial++;
 	}
 }
+#endif
 
 static void CairoGD_Size(double *left, double *right,  double *bottom, double *top,  NewDevDesc *dd)
 {

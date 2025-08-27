@@ -4,7 +4,7 @@ Title: R Graphics Device using Cairo Graphics Library for Creating High-Quality 
 Author: Simon Urbanek [aut, cre, cph] (https://urbanek.org, <https://orcid.org/0000-0003-2297-1732>), Jeffrey Horner [aut]
 Maintainer: Simon Urbanek <Simon.Urbanek@r-project.org>
 Authors@R: c(person("Simon", "Urbanek", role=c("aut","cre","cph"), email="Simon.Urbanek@r-project.org", comment=c("https://urbanek.org", ORCID="0000-0003-2297-1732")), person("Jeffrey", "Horner", role="aut", email="jeff.horner@vanderbilt.edu"))
-Depends: R (>= 2.4.0)
+Depends: R (>= 2.7.0)
 Imports: grDevices, graphics
 Suggests: png
 Enhances: FastRWeb
