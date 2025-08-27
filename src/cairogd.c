@@ -304,10 +304,6 @@ void cairo_get_display_param(double *par) {
 	par[2] = jGDasp;
 }
 
-void gdd_get_version(int *ver) {
-	*ver=CAIROGD_VER;
-}
-
 SEXP cairo_font_match(SEXP args){
 #if USE_CAIRO_FT
 	SEXP v;

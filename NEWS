@@ -5,6 +5,10 @@ NEWS/Changelog
 	GE API 16 (R 4.5.0). This includes fill patterns, masks
 	(GE 13) and groups (GE 14). Thanks to Paul Murrell!
 
+    o	removed gdd_get_version C API and CAIROGD_VER.
+	This means that it no longer needs mkdist and can be
+	directly created with R CMD build.
+
 
 1.6-5	(2025-08-20)
     o	add dummy functions from GE 15 API (R 4.2.0) to avoid

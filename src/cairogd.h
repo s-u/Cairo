@@ -1,7 +1,7 @@
 #ifndef _DEV_GD_H
 #define _DEV_GD_H
 
-#define CAIROGD_VER 0x010700 /* Cairo v1.7-0 */
+/* NOTE: from Cairo 1.7-0 on we removed CAIROGD_VER, rely on the package version instead */
 
 #define CAIROGD_MAX_GE_VERSION 16 /* Highest GE version we support */
 
