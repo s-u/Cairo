@@ -46,6 +46,7 @@ void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc); /* cairotalk.c */
 #define ct_bool int
 #define ct_false 0
 
+#if R_GE_version >= 13
 static void CairoCol(unsigned int col, double* R, double* G, double* B)
 {
     *R = R_RED(col)/255.0;
@@ -406,6 +407,7 @@ static cairo_path_t* CairoCreateClipPath(SEXP clipPath, int index, pX11Desc xd)
     R_fcall = PROTECT(lang1(clipPath));
     eval(R_fcall, R_GlobalEnv);
     UNPROTECT(1);
+#if R_GE_version >= 15 /* R_GE_clipPathFillRule didn't exist whne clipping paths were introduced */
     /* Apply path fill rule */
     switch (R_GE_clipPathFillRule(clipPath)) {
     case R_GE_nonZeroWindingRule: 
@@ -413,6 +415,7 @@ static cairo_path_t* CairoCreateClipPath(SEXP clipPath, int index, pX11Desc xd)
     case R_GE_evenOddRule:
         cairo_set_fill_rule(xd_cc, CAIRO_FILL_RULE_EVEN_ODD); break;
     }
+#endif
     /* Set the clipping region from the path */
     cairo_reset_clip(cc);
     cairo_clip_preserve(cc);
@@ -596,10 +599,12 @@ static SEXP CairoSetMask(SEXP mask, SEXP ref, pX11Desc xd)
     if (isNull(mask)) {
         /* Set NO mask */
         index = -1;
+#if R_GE_version >= 15
     } else if (R_GE_maskType(mask) == R_GE_luminanceMask) {
         warning(_("Ignored luminance mask (not supported on this device)"));
         /* Set NO mask */
         index = -1;        
+#endif
     } else {
         if (isNull(ref)) {
             /* Create a new mask */
@@ -639,12 +644,14 @@ static void CairoReleaseMask(int index, pX11Desc xd)
         warning(_("Attempt to release non-existent mask"));
     }
 }
+#endif
 
 /*
  ***************************
  * Groups
  ***************************
  */
+#if R_GE_version >= 15
 
 /* Just a starting value */
 #define maxGroups 64
@@ -926,6 +933,13 @@ static void cairoStroke(const pGEcontext gc, pX11Desc xd)
     }
 }
 
+#else
+ct_bool cairoBegin(pX11Desc xd) { return ct_false; }
+void cairoEnd(ct_bool grouping, pX11Desc xd) {}
+#endif
+
+#if R_GE_version >= 13 /* patterns */
+
 void cairoFill(const pGEcontext gc, pX11Desc xd)
 {
     /* patternFill overrides fill */
@@ -999,6 +1013,9 @@ static void Cairo_ReleaseMask(SEXP ref, pDevDesc dd)
         }
     }
 }
+#endif
+
+#if R_GE_version >= 15 /* patterns */
 
 static SEXP Cairo_DefineGroup(SEXP source, int op, SEXP destination, 
                               pDevDesc dd)
@@ -1181,6 +1198,7 @@ static void Cairo_FillStroke(SEXP path, int rule,
         }
     }
 }
+#endif
 
 /*
  ***************************
@@ -1188,10 +1206,10 @@ static void Cairo_FillStroke(SEXP path, int rule,
  ***************************
  */
 
+#if R_GE_version >= 15
 static SEXP Cairo_Capabilities(SEXP capabilities) {
     /* NOTE: although some of the features below were added in
        GE 13 the capability defines didn't come until 15 */
-#if R_GE_version >= 15
     SEXP patterns = PROTECT(allocVector(INTSXP, 3));
     INTEGER(patterns)[0] = R_GE_linearGradientPattern;
     INTEGER(patterns)[1] = R_GE_radialGradientPattern;
@@ -1261,26 +1279,35 @@ static SEXP Cairo_Capabilities(SEXP capabilities) {
     UNPROTECT(1);
 #endif /* 17 */
 #endif /* 16 */
-#endif /* 15 */
     return capabilities;
 }
+#endif /* 15 */
 
 /* added interfaces to init xd and dd */
 void CairoGD_CoreUtil_Init(pX11Desc xd) {
+
+#if R_GE_version >= 13
     CairoInitPatterns(xd);
     CairoInitClipPaths(xd);
     CairoInitMasks(xd);
+#endif
+#if R_GE_version >= 15
     CairoInitGroups(xd);
+#endif
     xd->appending = 0;
     xd->lwdscale = 1.0;
     xd->antialias = CAIRO_ANTIALIAS_DEFAULT;
 }
 
 void CairoGD_CoreUtil_Destroy(pX11Desc xd) {
+#if R_GE_version >= 15
     CairoDestroyGroups(xd);
+#endif
+#if R_GE_version >= 13
     CairoDestroyMasks(xd);
     CairoDestroyClipPaths(xd);
     CairoDestroyPatterns(xd);
+#endif
 }
 
 void CairoGD_CoreUtil_SetupFn(pDevDesc dd) {
@@ -1292,7 +1319,7 @@ void CairoGD_CoreUtil_SetupFn(pDevDesc dd) {
     dd->setMask = Cairo_SetMask;
     dd->releaseMask = Cairo_ReleaseMask;
 #endif
-#if R_GE_version >= 14
+#if R_GE_version >= 15
     dd->defineGroup = Cairo_DefineGroup;
     dd->useGroup = Cairo_UseGroup;
     dd->releaseGroup = Cairo_ReleaseGroup;

@@ -110,6 +110,9 @@ static SEXP     CairoGD_setClipPath(SEXP path, SEXP ref, pDevDesc dd);
 static void     CairoGD_releaseClipPath(SEXP ref, pDevDesc dd);
 static SEXP     CairoGD_setMask(SEXP path, SEXP ref, pDevDesc dd);
 static void     CairoGD_releaseMask(SEXP ref, pDevDesc dd);
+#define hasPatternFill(GC) (GC->patternFill != R_NilValue)
+#else
+#define hasPatternFill(GC) 0
 #endif
 
 /* GE 14 - R 4.1.0 (no fns, just deviceVersion and deviceClip) */
@@ -434,8 +437,21 @@ void Rcairo_set_line(CairoGDDesc* xd, R_GE_gcontext *gc) {
 	}
 }
 
+#if R_GE_version >= 13
 /* from coreutil.c - replaces cairo_fill_preserve() but also supports pattern fills */
 void cairoFill(const R_GE_gcontext *gc, CairoGDDesc *xd);
+#else /* otherwise no pattern fills */
+void cairoFill(const R_GE_gcontext *gc, CairoGDDesc *xd) {
+	if (R_ALPHA(gc->fill) > 0) {
+		if(!xd || !xd->cb) return;
+		cairo_t *cc = xd->cb->cc;
+        cairo_set_antialias(cc, CAIRO_ANTIALIAS_NONE);
+		Rcairo_set_color(cc, gc->col);
+		cairo_fill_preserve(cc);
+        cairo_set_antialias(cc, xd->antialias);
+    }
+}
+#endif
 
 /*------- the R callbacks begin here ... ------------------------*/
 
@@ -519,7 +535,7 @@ static void CairoGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  Ne
 		ct_bool grouping = cairoBegin(xd);
 		cairo_new_path(cc);
 		cairo_arc(cc, x, y, r + 0.5 , 0., 2 * M_PI); /* Add 0.5 like devX11 */
-		if ((gc->patternFill != R_NilValue) || CALPHA(gc->fill))
+		if (hasPatternFill(gc) || CALPHA(gc->fill))
 			cairoFill(gc, xd);
 		if (CALPHA(gc->col) && gc->lty!=-1) {
 			Rcairo_set_color(cc, gc->col);
@@ -1147,7 +1163,7 @@ static void CairoGD_Path(double *x, double *y, int npoly, int *nper, Rboolean wi
 
 		cairo_new_path(cc);
 		cc_define_path(cc, x, y, npoly, nper, winding);
-		if ((gc->patternFill != R_NilValue) || CALPHA(gc->fill)) {
+		if (hasPatternFill(gc) || CALPHA(gc->fill)) {
 			if (winding) 
 				cairo_set_fill_rule(cc, CAIRO_FILL_RULE_WINDING);
 			else 
@@ -1184,7 +1200,7 @@ static void CairoGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  Ne
 		cairo_move_to(cc, x[0], y[0]);
 		while (++i < n) cairo_line_to(cc, x[i], y[i]);
 		cairo_close_path(cc);
-		if ((gc->patternFill != R_NilValue) || CALPHA(gc->fill))
+		if (hasPatternFill(gc) || CALPHA(gc->fill))
 			cairoFill(gc, xd);
 		if (CALPHA(gc->col) && gc->lty!=-1) {
 			Rcairo_set_color(cc, gc->col);
@@ -1256,7 +1272,7 @@ static void CairoGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcont
 
 		cairo_new_path(cc);
 		cairo_rectangle(cc, x0, y0, x1-x0+snap_add, y1-y0+snap_add);
-		if ((gc->patternFill != R_NilValue) || CALPHA(gc->fill))
+		if (hasPatternFill(gc) || CALPHA(gc->fill))
 			cairoFill(gc, xd);
 		if (CALPHA(gc->col) && gc->lty!=-1) {
 			/* if we are snapping, note that lines must be in 0.5 offset to fills in order
@@ -1485,9 +1501,11 @@ static void CairoGD_TextNative(double x, double y, constxt char *str,
 
 #if R_GE_version >= 15
 static SEXP CairoGD_Capabilities(SEXP capabilities) {
+#if R_GE_version >= 16
 	SEXP glyphs = PROTECT(ScalarInteger(1));
 	SET_VECTOR_ELT(capabilities, R_GE_capability_glyphs, glyphs);
 	UNPROTECT(1);
+#endif
 	return capabilities;
 }
 #endif
