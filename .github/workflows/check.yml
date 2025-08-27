@@ -33,5 +33,4 @@ jobs:
         with:
           debian-deps: libcairo-dev libxt-dev libjpeg-dev libharfbuzz-dev libtiff-dev devscripts
           macos-deps: cairo
-          build-script: sh mkdist
           check-flags: --as-cran
