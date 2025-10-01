@@ -2,7 +2,7 @@
 
 echo "  checking Windows runtime"
 
-runtime=`"${R_HOME}/bin/Rscript" -e 'cat(R.version$crt)'`
+runtime=`"${R_HOME}/bin/Rscript" --vanilla -e 'cat(R.version$crt)'`
 echo "  found: '$runtime'"
 
 if [ x"$runtime" = xucrt ]; then
