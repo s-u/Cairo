@@ -155,6 +155,50 @@ static void CairoGD_Glyph(int n, int *glyphs, double *x, double *y,
 
 int Rcairo_symbol_font_use_pua = 1;
 
+/* cairo 1.17+ has removed Win32 font support in cairo_select_font_face.
+   patch it back in if it has WIN32 font support */
+#if defined(WIN32) && CAIRO_VERSION > CAIRO_VERSION_ENCODE(1, 16, 0) && defined(CAIRO_HAS_WIN32_FONT)
+
+/* Select font face using win32 cairo backend instead of the default
+   which doesn't find all fonts */
+static void win32_cairo_select_font_face(cairo_t *cr, const char *family,
+										 cairo_font_slant_t slant, cairo_font_weight_t weight) {
+	LOGFONTW lf;
+	cairo_font_face_t *ff;
+
+	memset(&lf, 0, sizeof(LOGFONTW));
+	if (mbstowcs(lf.lfFaceName, family, LF_FACESIZE - 1) < 1) {
+		/* this is unlikely to work, but can try ... */
+		cairo_select_font_face(cr, family, slant, weight);
+		return;
+	}
+	lf.lfFaceName[LF_FACESIZE - 1] = L'\0';
+
+	lf.lfWeight = (weight == CAIRO_FONT_WEIGHT_BOLD) ? FW_BOLD : FW_NORMAL;
+	if (slant == CAIRO_FONT_SLANT_ITALIC ||
+		slant == CAIRO_FONT_SLANT_OBLIQUE)
+		lf.lfItalic = 1;
+	lf.lfCharSet = DEFAULT_CHARSET;
+	lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
+	lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+	lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
+
+	ff = cairo_win32_font_face_create_for_logfontw(&lf);
+	if (ff && cairo_font_face_status(ff) == CAIRO_STATUS_SUCCESS) {
+		cairo_set_font_face(cr, ff);
+		cairo_font_face_destroy(ff);
+	} else /* fall back to default if it fails */
+		cairo_select_font_face(cr, family, slant, weight);
+}
+
+/* re-map cairo_select_font_face to win32_cairo_select_font_face */
+#ifdef cairo_select_font_face
+#undef cairo_select_font_face
+#endif
+#define cairo_select_font_face win32_cairo_select_font_face
+
+#endif /* Win32 fall-back */
+
 #if USE_CAIRO_FT
 FT_Library Rcairo_ft_library = NULL;
 
