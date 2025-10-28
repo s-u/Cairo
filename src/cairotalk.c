@@ -509,6 +509,7 @@ void cairoFill(const R_GE_gcontext *gc, CairoGDDesc *xd) {
 
 /* from coreutil.c */
 #define ct_bool int
+#define ct_false 0
 ct_bool cairoBegin(CairoGDDesc *xd);
 void cairoEnd(ct_bool grouping, CairoGDDesc *xd);
 
@@ -1490,7 +1491,7 @@ static void CairoGD_TextEnc(double x, double y, constxt char *str,  double rot, 
 #endif
 
 	cairo_save(cc);
-	ct_bool grouping = xd->appending ? false : cairoBegin(xd);
+	ct_bool grouping = xd->appending ? ct_false : cairoBegin(xd);
 
 	cairo_translate(cc, x, y);
 
@@ -1577,7 +1578,7 @@ static void CairoGD_Glyph(int n, int *glyphs, double *x, double *y,
 
 	cc = xd->cb->cc;
 
-	ct_bool grouping = xd->appending ? false : cairoBegin(xd);
+	ct_bool grouping = xd->appending ? ct_false : cairoBegin(xd);
 
 	/* font info is explicit so we don't use our regular cache and mapping */
 	double weight = R_GE_glyphFontWeight(font);
