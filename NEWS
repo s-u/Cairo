@@ -1,6 +1,6 @@
 NEWS/Changelog
 
-1.7-0
+1.7-0	(2025-10-29)
     o	add support for all R graphics device features up to
 	GE API 16 (R 4.5.0). This includes fill patterns, masks
 	(GE 13) and groups (GE 14). Thanks to Paul Murrell!
@@ -8,6 +8,10 @@ NEWS/Changelog
     o	removed gdd_get_version C API and CAIROGD_VER.
 	This means that it no longer needs mkdist and can be
 	directly created with R CMD build.
+
+    o	restore the use of WIN32 API to find fonts for
+	cairographics > 1.16 (where avaiable) since it was
+	removed in those versions. (#50)
 
 
 1.6-5	(2025-08-20)
