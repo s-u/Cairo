@@ -29,16 +29,3 @@ install.packages("Cairo", repo="https://RForge.net")
 
 [![CRAN](https://rforge.net/do/cransvg/Cairo)](https://cran.r-project.org/package=PKI)
 [![RForge](https://rforge.net/do/versvg/Cairo)](https://RForge.net/Cairo)
-
-## Building from this repository
-
-This repostiroy does NOT include the actual package but rather source
-files necessary to create one. In order to create a valid package you
-need GNU `autoconf`. To build the package, run
-
-```
-sh mkdist
-```
-
-in the root of the repository which will create a tar-ball containing
-the Cairo package.
