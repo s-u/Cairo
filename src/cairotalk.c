@@ -20,7 +20,7 @@
 
 #ifdef HAVE_HARFBUZZ
 #include <string.h>
-#include <sys/errno.h>
+#include <errno.h>
 
 #include <unicode/utypes.h>
 #include <unicode/ubidi.h>
