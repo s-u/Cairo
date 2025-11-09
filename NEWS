@@ -1,5 +1,10 @@
 NEWS/Changelog
 
+1.7-1
+    o	Replace `sys/errno.h` with `errno.h` for compatibiliy with
+	OpenIndiana. (#53)
+
+
 1.7-0	(2025-10-29)
     o	add support for all R graphics device features up to
 	GE API 16 (R 4.5.0). This includes fill patterns, masks
