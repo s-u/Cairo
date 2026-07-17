@@ -8,6 +8,7 @@
 \alias{CairoWin}
 \alias{CairoJPEG}
 \alias{CairoTIFF}
+\alias{CairoWayland}
 \title{
   Create a new Cairo-based graphics device
 }
@@ -34,6 +35,8 @@ Cairo(width = 640, height = 480, file="", type="png", pointsize=12,
 CairoX11(display=Sys.getenv("DISPLAY"), width = 7, height = 7,
          pointsize = 12, gamma = getOption("gamma"), bg = "transparent",
          canvas = "white", xpos = NA, ypos = NA, ...)
+CairoWayland(width = 7, height = 7, pointsize = 12, bg = "transparent",
+         canvas = "white", ...)
 CairoPNG(filename = "Rplot\%03d.png", width = 480, height = 480,
          pointsize = 12, bg = "white",  res = NA, ...)
 CairoJPEG(filename = "Rplot\%03d.jpeg", width = 480, height = 480,
@@ -75,7 +78,8 @@ CairoPS(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   \item{type}{output type. This version of Cario supports "png", "jpeg"
   and "tiff" bitmaps (png/tiff with transparent background), "pdf"
   PDF-file with embedded fonts, "svg" SVG-file, "ps" PostScript-file,
-  "x11" X11 interactive window and "win" Windows graphics.
+  "x11" X11 interactive window, "win" Windows graphics and "wayland"
+  native Wayland interactive window (no X11/XWayland dependency).
   A special type "raster" creates an image back-end that produces no
   actual output file but can be used in conjunction with any of
   \code{dev.capture()}, \code{grid.cap()} or \code{Cairo:::.image()}

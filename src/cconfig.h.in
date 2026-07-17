@@ -1,7 +1,7 @@
 /* src/cconfig.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if you have the declaration of
-   `cairo_image_surface_get_format', and to 0 if you don't. */
+   'cairo_image_surface_get_format', and to 0 if you don't. */
 #undef HAVE_DECL_CAIRO_IMAGE_SURFACE_GET_FORMAT
 
 /* Define to 1 if Harfbuzz and ICU are present and working */
@@ -40,6 +40,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to 1 to build the native Wayland on-screen backend */
+#undef HAVE_WAYLAND
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
@@ -58,7 +61,7 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
@@ -69,5 +72,5 @@
 /* Define to 1 if libtiff is present and working */
 #undef SUPPORTS_TIFF
 
-/* Define to empty if `const' does not conform to ANSI C. */
+/* Define to empty if 'const' does not conform to ANSI C. */
 #undef const

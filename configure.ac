@@ -375,6 +375,57 @@ int main(void) {
   [ AC_MSG_RESULT(no)
     LIBS="${zLIBS}"])
 
+# --- check for Wayland on-screen backend (wl_shm + xdg-shell) ---
+AC_ARG_WITH([wayland],
+  AS_HELP_STRING([--with-wayland],[compile the native Wayland on-screen backend (type="wayland") if wayland-client and wayland-scanner are present. (default is @<:@auto@:>@).]),
+        [with_wayland=$withval], [with_wayland=auto])
+
+AC_MSG_CHECKING([whether the Wayland backend is desired])
+AC_MSG_RESULT(${with_wayland})
+
+WAYLAND_CFLAGS=''
+WAYLAND_LIBS=''
+WAYLAND_SCANNER=''
+have_wayland=no
+if test x${with_wayland} != xno; then
+  if test -n "${PKGCONF}" && "${PKGCONF}" --exists wayland-client; then
+    AC_MSG_CHECKING([for wayland-scanner])
+    WAYLAND_SCANNER=`"${PKGCONF}" --variable=wayland_scanner wayland-scanner 2>/dev/null`
+    if test -z "${WAYLAND_SCANNER}"; then
+      AC_PATH_PROG([WAYLAND_SCANNER],[wayland-scanner],[])
+    else
+      AC_MSG_RESULT([${WAYLAND_SCANNER}])
+    fi
+    if test -n "${WAYLAND_SCANNER}" && test -f "src/xdg-shell.xml" && test -f "src/xdg-decoration-unstable-v1.xml"; then
+      have_wayland=yes
+      WAYLAND_CFLAGS=`"${PKGCONF}" --cflags wayland-client`
+      WAYLAND_LIBS=`"${PKGCONF}" --libs wayland-client`
+      AC_DEFINE(HAVE_WAYLAND, 1, [Define to 1 to build the native Wayland on-screen backend])
+    fi
+  fi
+fi
+AC_MSG_CHECKING([whether the Wayland backend will be built])
+AC_MSG_RESULT([${have_wayland}])
+if test x${with_wayland} = xyes && test x${have_wayland} = xno; then
+  AC_MSG_ERROR([Wayland backend requested but wayland-client and/or wayland-scanner are unavailable.])
+fi
+
+# Generate the xdg-shell / xdg-decoration client glue now (at configure time,
+# before make) so R's default object list picks up the generated .c without any
+# non-portable make rules. Always remove stale output first so a disabled build
+# never compiles leftover protocol sources without -lwayland.
+rm -f src/xdg-shell-client-protocol.h src/xdg-shell-protocol.c
+rm -f src/xdg-decoration-unstable-v1-client-protocol.h src/xdg-decoration-unstable-v1-protocol.c
+if test x${have_wayland} = xyes; then
+  AC_MSG_NOTICE([generating Wayland protocol sources with ${WAYLAND_SCANNER}])
+  "${WAYLAND_SCANNER}" client-header src/xdg-shell.xml src/xdg-shell-client-protocol.h || AC_MSG_ERROR([wayland-scanner failed on xdg-shell.xml])
+  "${WAYLAND_SCANNER}" private-code src/xdg-shell.xml src/xdg-shell-protocol.c || AC_MSG_ERROR([wayland-scanner failed on xdg-shell.xml])
+  "${WAYLAND_SCANNER}" client-header src/xdg-decoration-unstable-v1.xml src/xdg-decoration-unstable-v1-client-protocol.h || AC_MSG_ERROR([wayland-scanner failed on xdg-decoration-unstable-v1.xml])
+  "${WAYLAND_SCANNER}" private-code src/xdg-decoration-unstable-v1.xml src/xdg-decoration-unstable-v1-protocol.c || AC_MSG_ERROR([wayland-scanner failed on xdg-decoration-unstable-v1.xml])
+fi
+AC_SUBST(WAYLAND_CFLAGS)
+AC_SUBST(WAYLAND_LIBS)
+
 ## our CPPFLAGS included R's CPPFLAGS which we don't need to
 ## set so only include those we detected in addition to the
 ## R CMD config CPPFLAGS
