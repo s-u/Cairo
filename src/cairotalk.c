@@ -434,7 +434,7 @@ static void Rcairo_setup_font(CairoGDDesc* xd, R_GE_gcontext *gc) {
     Rprintf("INFO: set font[%d] size to %.f (cex=%.f, ps=%.f, fontscale=%.f)\n", i,
 			(gc->cex * gc->ps * xd->fontscale + 0.5) * 64, gc->cex, gc->ps, xd->fontscale);
 #endif
-	long new_size = (long) ((gc->cex * gc->ps * xd->fontscale + 0.5) * 64.0);
+	long new_size = (long) ((gc->cex * gc->ps * xd->fontscale) * 64.0);
 	if (Rcairo_fonts[i].font_size != new_size || !Rcairo_fonts[i].hb_font) {
 #ifdef JGD_DEBUG
 		Rprintf("INFO: allocating new instance of font %d for size %ld\n", i, new_size);
