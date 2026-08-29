@@ -5,7 +5,7 @@
 ### as of 1.3-2 png/png24/png32 are the same (we don't support png8 anyway)
 .supported.types <- c(png="png",png24="png",png32="png",jpeg="jpeg",jpg="jpeg",tiff="tiff",tif="tiff",
 					  pdf="pdf",svg="svg",ps="ps",postscript="ps",x11="x11",xlib="x11",
-					  win="win",win32="win",window="win",windows="win",w32="win",raster="raster")
+					  win="win",win32="win",window="win",windows="win",w32="win",wayland="wayland",raster="raster")
 
 Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="transparent", canvas="white", units="px", dpi="auto", ...) {
 	ctype <- tolower(type)
@@ -13,7 +13,7 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 		stop("Unknown output type `",type,"'.")
 	ctype <- .supported.types[ctype==names(.supported.types)]
 	if (is.null(file) || !nchar(file))
-		file <- if (ctype != 'x11') paste("plot.",ctype,sep='') else Sys.getenv("DISPLAY")
+		file <- if (ctype == 'x11') Sys.getenv("DISPLAY") else if (ctype == 'wayland') Sys.getenv("WAYLAND_DISPLAY") else paste("plot.",ctype,sep='')
 
 	if (is.character(file) && length(file) != 1)
 		stop("file must be a character vector of length 1 or a connection")
@@ -30,6 +30,11 @@ Cairo <- function(width=640, height=480, file="", type="png", pointsize=12, bg="
 	if (length(dpi)!=1 || !is.numeric(dpi) || dpi<0)
 		stop("invalid dpi specification (must be 'auto' or a positive number)")
 	dpi <- as.double(dpi)
+	## Wayland has no reliable screen DPI and the backend renders its canvas
+	## at 96dpi; default 'auto' to 96 so the font/line metrics (derived from
+	## the dpi argument in cairogd.c) agree with the canvas rather than
+	## defaulting to 72dpi, which would render text ~0.75x too small.
+	if (identical(as.character(ctype), "wayland") && all(dpi == 0)) dpi <- 96
 	## unit multiplier: >0 mpl to get inches, <0 mpl to get device pixels
 	umpl <- as.double(c(-1, 1/72, 1, 1/2.54, 1/25.4)[units==c("px","pt","in","cm","mm")])
 	gdn<-.External("cairo_create_new_device", as.character(ctype), file, width, height, pointsize, bg, canvas, umpl, dpi, ..., PACKAGE="Cairo")
@@ -86,6 +91,11 @@ CairoX11 <- function(display=Sys.getenv("DISPLAY"), width = 7, height = 7, point
 					 gamma = getOption("gamma"), bg = "transparent", canvas = "white",
 					 xpos = NA, ypos = NA, ...) {
 	Cairo(width, height, file=display, type='x11', pointsize=pointsize, bg=bg, units="in", ...)
+}
+
+CairoWayland <- function(width = 7, height = 7, pointsize = 12,
+						 bg = "transparent", canvas = "white", ...) {
+	Cairo(width, height, type='wayland', pointsize=pointsize, bg=bg, units="in", ...)
 }
 
 CairoPNG <- function(filename = "Rplot%03d.png", width = 480, height = 480,

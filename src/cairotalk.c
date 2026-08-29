@@ -8,6 +8,7 @@
 #include "svg-backend.h"
 #include "ps-backend.h"
 #include "xlib-backend.h"
+#include "wayland-backend.h"
 #include "w32-backend.h"
 #include "img-tiff.h" /* for TIFF_COMPR_LZW */
 #include <Rversion.h>
@@ -1154,8 +1155,10 @@ Rboolean CairoGD_Open(NewDevDesc *dd, CairoGDDesc *xd,  const char *type, int co
 			xd->cb = Rcairo_new_xlib_backend(xd->cb, file, w, h, umpl);
 		else if (!strncmp(type,"win",3))
 			xd->cb = Rcairo_new_w32_backend(xd->cb, file, w, h, umpl);
+		else if (!strcmp(type,"wayland"))
+			xd->cb = Rcairo_new_wayland_backend(xd->cb, file, w, h, umpl);
 		else {
-			error("Unsupported output type \"%s\" - choose from png, png24, jpeg, tiff, pdf, ps, svg, win and x11.", type);
+			error("Unsupported output type \"%s\" - choose from png, png24, jpeg, tiff, pdf, ps, svg, win, x11 and wayland.", type);
 			return FALSE;
 		}
 	}
@@ -1813,6 +1816,7 @@ void Rcairo_register_builtin_backends(void) {
 	if (RcairoBackendDef_svg) Rcairo_register_backend(RcairoBackendDef_svg);
 	if (RcairoBackendDef_xlib) Rcairo_register_backend(RcairoBackendDef_xlib);
 	if (RcairoBackendDef_w32) Rcairo_register_backend(RcairoBackendDef_w32);
+	if (RcairoBackendDef_wayland) Rcairo_register_backend(RcairoBackendDef_wayland);
 }
 
 static const R_CallMethodDef callMethods[] = {
